@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { PaperStack } from "./components/PaperStack";
 import {
@@ -57,6 +58,61 @@ function Step({
       <p className="mt-2 text-base leading-relaxed text-deep-text-soft">
         {body}
       </p>
+    </div>
+  );
+}
+
+function LeadershipCard({
+  title,
+  name,
+  role,
+  imageSrc,
+  imageAlt,
+  imageSide,
+  body,
+}: {
+  title: string;
+  name: string;
+  role: string;
+  imageSrc: string;
+  imageAlt: string;
+  imageSide: "left" | "right";
+  body: string;
+}) {
+  const imageBlock = (
+    <div className="relative flex min-h-[260px] items-end justify-center overflow-hidden rounded-3xl border border-deep-border bg-gradient-to-b from-deep-accent-soft via-deep-panel to-deep-panel2 p-4 sm:min-h-[320px]">
+      <div className="absolute inset-x-8 bottom-5 h-12 rounded-full bg-deep-border/60 blur-2xl" />
+      <Image
+        src={imageSrc}
+        alt={imageAlt}
+        width={540}
+        height={700}
+        className="relative z-10 h-auto max-h-[300px] w-auto object-contain sm:max-h-[360px]"
+      />
+    </div>
+  );
+
+  const textBlock = (
+    <div className="card flex h-full flex-col justify-center p-8 sm:p-10">
+      <p className="mono text-[10px] font-semibold uppercase tracking-[0.18em] text-deep-accent">
+        Leadership Note
+      </p>
+      <h3 className="poiret mt-3 text-3xl text-deep-text sm:text-4xl">
+        {title}
+      </h3>
+      <div className="mt-3 text-sm uppercase tracking-[0.16em] text-deep-accent">
+        {name} . {role}
+      </div>
+      <p className="serif mt-5 text-lg leading-relaxed text-deep-text-soft">
+        {body}
+      </p>
+    </div>
+  );
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-stretch">
+      {imageSide === "left" ? imageBlock : textBlock}
+      {imageSide === "left" ? textBlock : imageBlock}
     </div>
   );
 }
@@ -278,6 +334,44 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <section className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
+        <div className="mb-12 text-center">
+          <h2 className="poiret text-4xl text-deep-text sm:text-5xl">
+            A few words from the{" "}
+            <span className="display text-deep-accent">team</span>.
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-deep-text-soft">
+            The people building DocuPeer care deeply about useful feedback,
+            open access, and keeping the platform grounded in real academic
+            and professional needs.
+          </p>
+        </div>
+
+        <div className="space-y-8">
+          <LeadershipCard
+            title="A Word From Our CEO"
+            name="Rahul Awasthi"
+            role="Co-Founder & CEO"
+            imageSrc="/team/rahul-cutout.png"
+            imageAlt="Rahul Awasthi"
+            imageSide="left"
+            body="Hello everyone! It is a pleasure to welcome you to DocuPeer as your CEO. We started this platform because strong feedback should not depend on connections, luck, or how much money someone can spend. My responsibility is to keep us moving with clarity, protect the quality of the community, and fight to keep DocuPeer free for everyone who needs it. I want this to be a place where serious writers help one another generously, and where every thoughtful review makes the whole platform stronger."
+          />
+
+          <LeadershipCard
+            title="A Word From Our CMO"
+            name="Pritam Avuthu"
+            role="Interim CMO"
+            imageSrc="/team/pritam-cutout.png"
+            imageAlt="Pritam Avuthu"
+            imageSide="right"
+            body="Hello, researchers! I am excited to help you get feedback on the research papers you have worked so hard to write as your CMO. As someone who has struggled to find trustworthy feedback on my own work, it matters a lot to me that you do not run into the same problem. We want to grow this platform across disciplines and industries so people from all walks of life and levels of experience can take part in the community. We are committed to keeping DocuPeer 100% free forever, so everyone can use these resources without worrying about cost, and that only happens with your help as a peer reviewer."
+          />
+        </div>
+      </section>
+
+      <div className="rule mx-auto max-w-6xl" />
 
       {/* Principles */}
       <section className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
