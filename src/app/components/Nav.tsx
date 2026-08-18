@@ -33,9 +33,9 @@ export function Nav() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-deep-border/70 bg-deep-panel/80 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
+      <div className="mx-auto flex h-[4.5rem] max-w-6xl items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-6">
-          <Logo />
+          <Logo size={50} />
           <nav className="hidden items-center gap-1 md:flex">
             {links.map((l) => {
               const active = pathname === l.href;

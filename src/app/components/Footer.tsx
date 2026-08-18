@@ -54,7 +54,7 @@ export function Footer() {
         <div className="mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
           {/* Brand column */}
           <div>
-            <Logo />
+            <Logo size={42} />
             <p className="mt-5 max-w-xs text-[15px] leading-relaxed text-deep-text-soft">
               A free peer-review community for papers. Review two, submit one,
               improve.
