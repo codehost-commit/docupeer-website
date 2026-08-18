@@ -80,8 +80,8 @@ function LeadershipCard({
   body: string;
 }) {
   const imageBlock = (
-    <div className="relative flex min-h-[260px] items-end justify-center overflow-hidden rounded-3xl border border-deep-border bg-gradient-to-b from-deep-accent-soft via-deep-panel to-deep-panel2 p-4 sm:min-h-[320px]">
-      <div className="absolute inset-x-8 bottom-5 h-12 rounded-full bg-deep-border/60 blur-2xl" />
+    <div className="relative flex min-h-[260px] items-end justify-center overflow-hidden sm:min-h-[320px]">
+      <div className="absolute inset-x-12 bottom-4 h-10 rounded-full bg-deep-border/50 blur-2xl" />
       <Image
         src={imageSrc}
         alt={imageAlt}
@@ -93,7 +93,7 @@ function LeadershipCard({
   );
 
   const textBlock = (
-    <div className="card flex h-full flex-col justify-center p-8 sm:p-10">
+    <div className="flex h-full flex-col justify-center">
       <p className="mono text-[10px] font-semibold uppercase tracking-[0.18em] text-deep-accent">
         Leadership Note
       </p>
@@ -110,9 +110,19 @@ function LeadershipCard({
   );
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-stretch">
-      {imageSide === "left" ? imageBlock : textBlock}
-      {imageSide === "left" ? textBlock : imageBlock}
+    <div
+      className={`card overflow-hidden p-8 sm:p-10 lg:grid lg:items-center lg:gap-10 ${
+        imageSide === "left"
+          ? "lg:grid-cols-[280px_minmax(0,1fr)]"
+          : "lg:grid-cols-[minmax(0,1fr)_280px]"
+      }`}
+    >
+      <div className={imageSide === "left" ? "order-1" : "order-2"}>
+        {imageSide === "left" ? imageBlock : textBlock}
+      </div>
+      <div className={imageSide === "left" ? "order-2 mt-8 lg:mt-0" : "order-1 mt-8 lg:mt-0"}>
+        {imageSide === "left" ? textBlock : imageBlock}
+      </div>
     </div>
   );
 }
