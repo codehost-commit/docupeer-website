@@ -146,15 +146,6 @@ export default function Home() {
                 that improves clarity, rigor, and confidence before sharing
                 work more broadly.
               </p>
-              <p className="mt-4 max-w-xl text-base leading-relaxed text-deep-dim sm:text-lg">
-                Built by Rahul Awasthi, Co-Founder & CEO, DocuPeer now serves{" "}
-                <strong className="text-deep-text">{PUBLIC_STATS.users} users</strong>{" "}
-                and more than{" "}
-                <strong className="text-deep-text">
-                  {PUBLIC_STATS.papers} research papers
-                </strong>{" "}
-                through a simple reciprocal model.
-              </p>
 
               <div className="mt-10 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
                 <Link href="/review" className="btn-primary px-7 py-3 text-base">
@@ -273,8 +264,8 @@ export default function Home() {
                 a: "The main benefits are free access, anonymous peer review, subject-aware matching, and a reciprocal model that keeps the community active. It helps writers improve structure, clarity, argumentation, and evidence before higher-stakes submission.",
               },
               {
-                q: "Who leads DocuPeer?",
-                a: "Rahul Awasthi is the Co-Founder & CEO of DocuPeer. He leads the product vision for making high-quality peer review more accessible.",
+                q: "Who is behind DocuPeer?",
+                a: "DocuPeer is built by Rahul Awasthi, Co-Founder & CEO, Aryan Patel, Co-Founder & COO, Akshaj Reddy Sanikommu, Interim CTO, and Pritam Avuthu, Interim CMO. Together they are building a free peer review platform focused on thoughtful, high-quality feedback.",
               },
             ].map((item) => (
               <div key={item.q} className="surface p-6">
