@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { PaperStack } from "./components/PaperStack";
 
 function Step({
   n,
@@ -31,50 +31,47 @@ function Step({
 export default function Home() {
   return (
     <div>
-      {/* Hero */}
+      {/* Hero — left copy, right interactive paper stack */}
       <section className="relative overflow-hidden">
-        <div className="mx-auto max-w-6xl px-4 pb-16 pt-24 sm:px-6 sm:pt-32">
-          <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
-            <div className="flex flex-col items-center gap-7 sm:flex-row sm:gap-8">
-              <Image
-                src="/logo.png"
-                alt="DocuPeer"
-                width={288}
-                height={288}
-                priority
-                className="h-24 w-24 rounded-[22%] shadow-glow ring-1 ring-black/5 sm:h-28 sm:w-28"
-              />
-              <span className="poiret text-6xl font-normal tracking-wide text-deep-text sm:text-8xl">
-                DocuPeer
-              </span>
+        <div className="mx-auto max-w-6xl px-4 pb-16 pt-20 sm:px-6 sm:pt-28">
+          <div className="grid items-center gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-16">
+            {/* Left: copy */}
+            <div className="text-left">
+              <p className="mb-5 text-[11px] font-semibold uppercase tracking-[0.28em] text-deep-accent">
+                Reciprocal peer review
+              </p>
+              <h1 className="poiret text-balance text-5xl leading-[1.05] text-deep-text sm:text-6xl">
+                Peer review that{" "}
+                <span className="display text-deep-accent">gives back</span>.
+              </h1>
+              <p className="mt-6 max-w-xl text-pretty text-lg leading-relaxed text-deep-text-soft sm:text-xl">
+                Review two papers, unlock one submission of your own. DocuPeer
+                connects your writing with people who understand the subject
+                and are at the right level to help. Anonymously, thoughtfully,
+                and for free.
+              </p>
+
+              <div className="mt-10 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+                <Link href="/review" className="btn-primary px-7 py-3 text-base">
+                  Start reviewing
+                </Link>
+                <Link
+                  href="/register"
+                  className="btn-secondary px-7 py-3 text-base"
+                >
+                  Create an account
+                </Link>
+              </div>
             </div>
 
-            <h1 className="poiret mt-14 text-balance text-4xl leading-tight text-deep-text sm:text-6xl">
-              Peer review that{" "}
-              <span className="display text-deep-accent">gives back</span>.
-            </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-deep-text-soft sm:text-xl">
-              Review two papers, unlock one submission of your own. DocuPeer
-              connects your writing with people who understand the subject and
-              are at the right level to help. Anonymously, thoughtfully, and
-              for free.
-            </p>
-
-            <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link href="/review" className="btn-primary px-7 py-3 text-base">
-                Start reviewing
-              </Link>
-              <Link
-                href="/register"
-                className="btn-secondary px-7 py-3 text-base"
-              >
-                Create an account
-              </Link>
+            {/* Right: interactive paper stack */}
+            <div className="relative">
+              <PaperStack />
             </div>
           </div>
 
           {/* Stat strip */}
-          <div className="mx-auto mt-20 grid max-w-4xl grid-cols-2 gap-px overflow-hidden rounded-2xl border border-deep-border bg-deep-border/60 sm:grid-cols-4">
+          <div className="mx-auto mt-24 grid max-w-4xl grid-cols-2 gap-px overflow-hidden rounded-2xl border border-deep-border bg-deep-border/60 sm:grid-cols-4">
             {[
               { k: "2 : 1", v: "reviews per submission" },
               { k: "350+", v: "word minimum" },

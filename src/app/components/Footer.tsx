@@ -33,6 +33,14 @@ const COLUMNS: Col[] = [
       { href: "/about", label: "Anonymity" },
     ],
   },
+  {
+    heading: "Legal",
+    links: [
+      { href: "/legal#privacy", label: "Privacy" },
+      { href: "/legal#terms", label: "Terms" },
+      { href: "/legal#attributions", label: "Attributions" },
+    ],
+  },
 ];
 
 export function Footer() {
@@ -43,7 +51,7 @@ export function Footer() {
     <footer className="relative mt-24 font-sans">
       <div className="rule" />
       <div className="bg-deep-panel/70">
-        <div className="mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+        <div className="mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
           {/* Brand column */}
           <div>
             <Logo />
