@@ -11,7 +11,9 @@ import {
 } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: HOME_TAGLINE,
+  title: {
+    absolute: SITE_TITLE,
+  },
   description: SITE_DESCRIPTION,
   keywords: SITE_KEYWORDS,
   alternates: {
