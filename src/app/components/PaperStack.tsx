@@ -161,30 +161,49 @@ function RunSpan({ run }: { run: Run }) {
 }
 
 // A single manuscript page rendered in a LaTeX-manuscript style.
-function PageContent({ page }: { page: Page }) {
+// pageNumber is 1-indexed for display, isFirstPage controls whether the
+// title/author/abstract block is shown (only on the opening page).
+function PageContent({
+  page,
+  pageNumber,
+  totalPages,
+  isFirstPage,
+}: {
+  page: Page;
+  pageNumber: number;
+  totalPages: number;
+  isFirstPage: boolean;
+}) {
   return (
     <div className="latex-page relative flex h-full w-full flex-col bg-[#fbf9f2] px-10 py-10 sm:px-14 sm:py-12">
-      {/* Header slug */}
+      {/* Running header slug — the short title on continuation pages, per
+          LaTeX manuscript convention. */}
       <div className="mb-6 flex items-baseline justify-between border-b border-black/10 pb-2 font-serif text-[9.5px] uppercase tracking-[0.32em] text-black/45">
-        <span>DocuPeer Working Papers &middot; Vol. 1</span>
+        <span>
+          {isFirstPage
+            ? "DocuPeer Working Papers · Vol. 1"
+            : "Awasthi & Patel · Reciprocal Peer Review"}
+        </span>
         <span className="tabular-nums">2026-08-18</span>
       </div>
 
-      {/* Title block, centered like a real LaTeX \maketitle */}
-      <div className="text-center">
-        <h3 className="font-serif text-[19px] font-semibold leading-tight text-black/85 sm:text-[21px]">
-          {page.title}
-        </h3>
-        <p className="mt-3 font-serif text-[12.5px] italic text-black/70">
-          {page.authors}
-        </p>
-        <p className="font-serif text-[10.5px] italic text-black/50">
-          {page.affiliation}
-        </p>
-      </div>
+      {/* Title block (first page only) */}
+      {isFirstPage && (
+        <div className="text-center">
+          <h3 className="font-serif text-[19px] font-semibold leading-tight text-black/85 sm:text-[21px]">
+            {page.title}
+          </h3>
+          <p className="mt-3 font-serif text-[12.5px] italic text-black/70">
+            {page.authors}
+          </p>
+          <p className="font-serif text-[10.5px] italic text-black/50">
+            {page.affiliation}
+          </p>
+        </div>
+      )}
 
       {/* Abstract (first page only) */}
-      {page.abstract && (
+      {isFirstPage && page.abstract && (
         <div className="mx-auto mt-6 max-w-[92%]">
           <p className="text-center font-serif text-[11px] font-semibold uppercase tracking-[0.28em] text-black/60">
             Abstract
@@ -197,7 +216,7 @@ function PageContent({ page }: { page: Page }) {
       )}
 
       {/* Sections */}
-      <div className="mt-6 space-y-5">
+      <div className={isFirstPage ? "mt-6 space-y-5" : "mt-2 space-y-5"}>
         {page.sections.map((s) => (
           <div key={s.n}>
             <h4 className="font-serif text-[13.5px] font-semibold text-black/85">
@@ -224,7 +243,9 @@ function PageContent({ page }: { page: Page }) {
       {/* Footer */}
       <div className="mt-auto flex items-center justify-between border-t border-black/10 pt-3 font-serif text-[10px] italic text-black/45">
         <span>Anonymous manuscript</span>
-        <span className="tabular-nums">Page 1 of 12</span>
+        <span className="tabular-nums">
+          Page {pageNumber} of {totalPages}
+        </span>
       </div>
     </div>
   );
@@ -282,7 +303,12 @@ export function PaperStack() {
         <div
           className="absolute inset-0 overflow-hidden rounded-[10px] border border-black/10 bg-white shadow-[0_24px_50px_-24px_rgba(15,32,50,0.4),0_2px_6px_-3px_rgba(15,32,50,0.2)]"
         >
-          <PageContent page={PAGES[i]} />
+          <PageContent
+            page={PAGES[i]}
+            pageNumber={i + 1}
+            totalPages={PAGES.length}
+            isFirstPage={i === 0}
+          />
         </div>
       </div>
 
