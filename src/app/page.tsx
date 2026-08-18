@@ -70,6 +70,7 @@ function LeadershipCard({
   imageAlt,
   imageSide,
   body,
+  imageClassName = "",
 }: {
   title: string;
   name: string;
@@ -78,22 +79,22 @@ function LeadershipCard({
   imageAlt: string;
   imageSide: "left" | "right";
   body: string;
+  imageClassName?: string;
 }) {
   const imageBlock = (
-    <div className="relative flex min-h-[260px] items-end justify-center overflow-hidden sm:min-h-[320px]">
-      <div className="absolute inset-x-12 bottom-4 h-10 rounded-full bg-deep-border/50 blur-2xl" />
+    <div className="relative flex min-h-[260px] items-end justify-center overflow-hidden px-4 pt-8 sm:min-h-[320px] sm:px-6">
       <Image
         src={imageSrc}
         alt={imageAlt}
         width={540}
         height={700}
-        className="relative z-10 h-auto max-h-[300px] w-auto object-contain sm:max-h-[360px]"
+        className={`relative z-10 h-auto w-auto object-contain object-bottom ${imageClassName}`}
       />
     </div>
   );
 
   const textBlock = (
-    <div className="flex h-full flex-col justify-center">
+    <div className="flex h-full flex-col justify-center px-8 py-8 sm:px-10 sm:py-10">
       <p className="mono text-[10px] font-semibold uppercase tracking-[0.18em] text-deep-accent">
         Leadership Note
       </p>
@@ -110,19 +111,22 @@ function LeadershipCard({
   );
 
   return (
-    <div
-      className={`card overflow-hidden p-8 sm:p-10 lg:grid lg:items-center lg:gap-10 ${
-        imageSide === "left"
-          ? "lg:grid-cols-[280px_minmax(0,1fr)]"
-          : "lg:grid-cols-[minmax(0,1fr)_280px]"
-      }`}
-    >
-      <div className={imageSide === "left" ? "order-1" : "order-2"}>
-        {imageSide === "left" ? imageBlock : textBlock}
-      </div>
-      <div className={imageSide === "left" ? "order-2 mt-8 lg:mt-0" : "order-1 mt-8 lg:mt-0"}>
-        {imageSide === "left" ? textBlock : imageBlock}
-      </div>
+    <div className="card overflow-hidden lg:grid lg:items-end">
+      {imageSide === "left" ? (
+        <div className="lg:grid lg:grid-cols-[250px_minmax(0,1fr)] lg:items-end">
+          <div className="border-b border-deep-border lg:border-b-0 lg:border-r">
+            {imageBlock}
+          </div>
+          {textBlock}
+        </div>
+      ) : (
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:items-end">
+          {textBlock}
+          <div className="border-t border-deep-border lg:border-l lg:border-t-0">
+            {imageBlock}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -366,6 +370,7 @@ export default function Home() {
             imageSrc="/team/rahul-cutout.png"
             imageAlt="Rahul Awasthi"
             imageSide="left"
+            imageClassName="max-h-[300px] sm:max-h-[360px] lg:max-h-[390px]"
             body="Hello everyone! It is a pleasure to welcome you to DocuPeer as your CEO. We started this platform because strong feedback should not depend on connections, luck, or how much money someone can spend. My responsibility is to keep us moving with clarity, protect the quality of the community, and fight to keep DocuPeer free for everyone who needs it. I want this to be a place where serious writers help one another generously, and where every thoughtful review makes the whole platform stronger."
           />
 
@@ -376,6 +381,7 @@ export default function Home() {
             imageSrc="/team/pritam-cutout.png"
             imageAlt="Pritam Avuthu"
             imageSide="right"
+            imageClassName="max-h-[320px] sm:max-h-[380px] lg:max-h-[430px]"
             body="Hello, researchers! I am excited to help you get feedback on the research papers you have worked so hard to write as your CMO. As someone who has struggled to find trustworthy feedback on my own work, it matters a lot to me that you do not run into the same problem. We want to grow this platform across disciplines and industries so people from all walks of life and levels of experience can take part in the community. We are committed to keeping DocuPeer 100% free forever, so everyone can use these resources without worrying about cost, and that only happens with your help as a peer reviewer."
           />
         </div>
