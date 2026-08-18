@@ -1,0 +1,97 @@
+// DocuPeer data model.
+// SQLite for zero-config local dev; swap `provider`/`DATABASE_URL` for Postgres
+// later without touching application code.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String   @id @default(cuid())
+  name              String
+  email             String   @unique
+  passwordHash      String
+
+  // Reviewer profile
+  expertiseCategory String
+  specialty         String
+  educationLevel    String // high_school | college | graduate | researcher | professor | professional | other
+  gradeYear         String? // required when educationLevel is high_school or college
+  strength          Int      @default(50) // 0-100 self-rated strength in specialty
+
+  createdAt         DateTime @default(now())
+
+  papers            Paper[]  @relation("AuthoredPapers")
+  reviews           Review[] @relation("AuthoredReviews")
+
+  @@index([expertiseCategory, specialty])
+}
+
+model Paper {
+  id             String   @id @default(cuid())
+  authorId       String
+  author         User     @relation("AuthoredPapers", fields: [authorId], references: [id], onDelete: Cascade)
+
+  title          String
+  text           String
+  category       String
+  specialty      String
+  educationLevel String
+  paperType      String
+  feedbackWanted String? // optional: what kind of feedback the author wants
+  wordCount      Int
+
+  createdAt      DateTime @default(now())
+
+  reviews        Review[] @relation("PaperReviews")
+
+  @@index([authorId])
+  @@index([category, specialty, educationLevel])
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  reviewerId String
+  reviewer   User     @relation("AuthoredReviews", fields: [reviewerId], references: [id], onDelete: Cascade)
+  paperId    String
+  paper      Paper    @relation("PaperReviews", fields: [paperId], references: [id], onDelete: Cascade)
+
+  // Overall constructive written feedback.
+  comment    String
+
+  // AI-detection audit fields.
+  aiScore    Float    @default(0)
+  aiProvider String   @default("heuristic")
+
+  createdAt  DateTime @default(now())
+
+  annotations Annotation[] @relation("ReviewAnnotations")
+
+  // A reviewer can review a given paper at most once. This guarantees a single
+  // completed review can never be double-counted toward submission credits.
+  @@unique([reviewerId, paperId])
+  @@index([paperId])
+  @@index([reviewerId])
+}
+
+model Annotation {
+  id          String @id @default(cuid())
+  reviewId    String
+  review      Review @relation("ReviewAnnotations", fields: [reviewId], references: [id], onDelete: Cascade)
+
+  // Character offsets into the paper text that this annotation targets.
+  startOffset Int
+  endOffset   Int
+  quotedText  String
+
+  // "comment" | "add" | "remove"
+  kind        String
+  body        String // reviewer's explanation / suggested change
+
+  @@index([reviewId])
+}

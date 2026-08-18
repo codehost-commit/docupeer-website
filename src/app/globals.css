@@ -1,0 +1,148 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Local Versailles (drop in /public/fonts/versailles.ttf). */
+@font-face {
+  font-family: "Versailles";
+  src: url("/fonts/versailles.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: light;
+  --font-display: "Versailles", "Cormorant Garamond", "Georgia", serif;
+  --font-poiret: "Poiret One", "Versailles", serif;
+  --font-serif: "Cormorant Garamond", "Iowan Old Style", Georgia, Cambria, serif;
+  --font-sans: "Space Grotesk", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
+}
+
+html {
+  background-color: theme("colors.deep.bg");
+  color: theme("colors.deep.text");
+}
+body {
+  background-color: theme("colors.deep.bg");
+  color: theme("colors.deep.text");
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='180' height='180' filter='url(%23n)' opacity='0.28'/></svg>");
+  background-size: 180px 180px;
+  background-attachment: fixed;
+}
+
+::selection {
+  background: rgba(53, 109, 151, 0.22);
+  color: #0d1a26;
+}
+
+/* Headings default to Versailles serif; individual headings can opt into
+   Poiret One via the .poiret utility for the two-font combo. */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  color: theme("colors.deep.text");
+  letter-spacing: 0.005em;
+}
+
+.display { font-family: var(--font-display); }   /* Versailles */
+.poiret  { font-family: var(--font-poiret);  }   /* Poiret One */
+.serif   { font-family: var(--font-serif);   }
+.mono    { font-family: var(--font-mono);    }
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold tracking-tight transition
+      focus:outline-none focus-visible:ring-2 focus-visible:ring-deep-accent focus-visible:ring-offset-2 focus-visible:ring-offset-deep-bg
+      disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-deep-accent text-white hover:bg-deep-accent-strong shadow-sm;
+  }
+  .btn-secondary {
+    @apply btn border border-deep-border bg-deep-panel/90 text-deep-text hover:border-deep-accent hover:text-deep-accent;
+  }
+  .btn-ghost {
+    @apply btn text-deep-dim hover:text-deep-text hover:bg-black/[0.04];
+  }
+  .btn-outline {
+    @apply btn border border-deep-accent/70 text-deep-accent hover:bg-deep-accent/10;
+  }
+  .btn-danger {
+    @apply btn bg-deep-bad text-white hover:opacity-90;
+  }
+
+  .card {
+    @apply rounded-2xl border border-deep-border bg-deep-panel/90 shadow-panel backdrop-blur-[2px];
+  }
+  .surface {
+    @apply rounded-xl border border-deep-border bg-deep-panel2/80;
+  }
+
+  .input {
+    @apply w-full rounded-md border border-deep-border bg-deep-panel px-3.5 py-2.5 text-sm text-deep-text
+      placeholder:text-deep-dim/70 focus:border-deep-accent focus:outline-none focus:ring-2 focus:ring-deep-accent/25;
+  }
+  .label {
+    @apply mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.10em] text-deep-dim;
+  }
+  .field-error {
+    @apply mt-1 text-xs font-medium text-deep-bad;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full border border-deep-border bg-deep-panel px-2.5 py-1 text-[11px] font-medium tracking-wide text-deep-text-soft;
+  }
+  .chip-accent {
+    @apply chip border-deep-accent/40 bg-deep-accent-soft text-deep-accent;
+  }
+  .pill-locked {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-deep-warn/40 bg-deep-warn/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-deep-warn;
+  }
+  .pill-unlocked {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-deep-good/40 bg-deep-good/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-deep-good;
+  }
+  .link {
+    @apply text-deep-accent hover:text-deep-accent-strong underline-offset-4 hover:underline;
+  }
+  .rule {
+    @apply h-px w-full bg-gradient-to-r from-transparent via-deep-border-strong to-transparent;
+  }
+}
+
+/* Highlight styles for the reviewing surface. */
+.hl-comment {
+  background-color: rgba(168, 119, 23, 0.18);
+  border-bottom: 2px solid rgba(168, 119, 23, 0.85);
+}
+.hl-add {
+  background-color: rgba(79, 138, 95, 0.16);
+  border-bottom: 2px solid rgba(79, 138, 95, 0.85);
+}
+.hl-remove {
+  background-color: rgba(179, 69, 94, 0.14);
+  border-bottom: 2px solid rgba(179, 69, 94, 0.85);
+  text-decoration: line-through;
+  text-decoration-color: rgba(179, 69, 94, 0.55);
+}
+.hl-active {
+  outline: 2px solid theme("colors.deep.accent");
+  border-radius: 3px;
+}
+
+.paper-prose {
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  line-height: 1.8;
+  color: #23253a;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.reading-col {
+  scrollbar-width: thin;
+  scrollbar-color: theme("colors.deep.border-strong") transparent;
+}
