@@ -117,7 +117,7 @@ function LeadershipCard({
   return (
     <div className="card overflow-hidden lg:grid lg:items-end">
       {imageSide === "left" ? (
-        <div className="lg:grid lg:grid-cols-[300px_minmax(0,1fr)] lg:items-end">
+        <div className="lg:grid lg:grid-cols-[320px_minmax(0,1fr)] lg:items-end">
           <div className="border-b border-deep-border lg:border-b-0 lg:border-r">
             {imageBlock}
           </div>
@@ -375,7 +375,7 @@ export default function Home() {
             imageAlt="Rahul Awasthi"
             imageSide="left"
             imagePaneClassName="justify-center px-2 sm:px-4 lg:px-3"
-            imageClassName="max-h-[350px] sm:max-h-[405px] lg:max-h-[465px] translate-y-[2px]"
+            imageClassName="max-h-[370px] sm:max-h-[430px] lg:max-h-[505px] translate-y-[18px]"
             body="Hello everyone! It is a pleasure to welcome you to DocuPeer as your CEO. We started this platform because strong feedback should not depend on connections, luck, or how much money someone can spend. My responsibility is to keep us moving with clarity, protect the quality of the community, and fight to keep DocuPeer free for everyone who needs it. I want this to be a place where serious writers help one another generously, and where every thoughtful review makes the whole platform stronger."
           />
 
