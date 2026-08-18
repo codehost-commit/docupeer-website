@@ -1,4 +1,28 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { SITE_DESCRIPTION, absoluteUrl } from "@/lib/seo";
+
+export const metadata: Metadata = {
+  title: "Legal",
+  description:
+    "Read DocuPeer's privacy policy, terms of use, and legal information for the free peer review platform.",
+  alternates: {
+    canonical: "/legal",
+  },
+  openGraph: {
+    title: "DocuPeer Legal",
+    description: SITE_DESCRIPTION,
+    url: "/legal",
+    images: [
+      {
+        url: absoluteUrl("/opengraph-image"),
+        width: 1200,
+        height: 630,
+        alt: "DocuPeer legal and privacy information",
+      },
+    ],
+  },
+};
 
 const UPDATED = "August 18, 2026";
 const CONTENT_LINKS = [

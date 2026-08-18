@@ -1,4 +1,28 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { PUBLIC_STATS, SITE_DESCRIPTION, absoluteUrl } from "@/lib/seo";
+
+export const metadata: Metadata = {
+  title: "About",
+  description:
+    "Learn what DocuPeer is, why it exists, and how Rahul Awasthi, Co-Founder & CEO, is building a free peer review platform for research papers.",
+  alternates: {
+    canonical: "/about",
+  },
+  openGraph: {
+    title: "About DocuPeer and Rahul Awasthi",
+    description: SITE_DESCRIPTION,
+    url: "/about",
+    images: [
+      {
+        url: absoluteUrl("/opengraph-image"),
+        width: 1200,
+        height: 630,
+        alt: "About DocuPeer",
+      },
+    ],
+  },
+};
 
 type Person = {
   name: string;
@@ -113,8 +137,33 @@ function SectionHeader({ title }: { title: string }) {
 }
 
 export default function AboutPage() {
+  const aboutJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    name: "About DocuPeer",
+    url: absoluteUrl("/about"),
+    description:
+      "About the DocuPeer team, including Rahul Awasthi, Co-Founder & CEO, and the mission behind the free peer review platform.",
+    mainEntity: [
+      {
+        "@type": "Person",
+        name: "Rahul Awasthi",
+        jobTitle: "Co-Founder & CEO",
+      },
+      {
+        "@type": "Organization",
+        name: "DocuPeer",
+        description: SITE_DESCRIPTION,
+      },
+    ],
+  };
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 sm:py-20">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(aboutJsonLd) }}
+      />
       {/* Intro */}
       <header className="text-center">
         <h1 className="poiret text-4xl text-deep-text sm:text-6xl">
@@ -126,6 +175,12 @@ export default function AboutPage() {
           money, prestige, or the right connections. It is built by a small
           founding team that believes writing improves when the people
           reviewing it are qualified, honest, and treated as equals.
+        </p>
+        <p className="serif mx-auto mt-4 max-w-3xl text-lg leading-relaxed text-deep-dim">
+          Rahul Awasthi is the Co-Founder & CEO of DocuPeer. Together with the
+          founding team, he is building a free peer review platform that now
+          supports {PUBLIC_STATS.users} users and {PUBLIC_STATS.papers} research
+          papers with anonymous, reciprocal feedback.
         </p>
       </header>
 

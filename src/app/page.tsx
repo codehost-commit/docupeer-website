@@ -1,5 +1,36 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PaperStack } from "./components/PaperStack";
+import {
+  HOME_TAGLINE,
+  PUBLIC_STATS,
+  SITE_DESCRIPTION,
+  SITE_KEYWORDS,
+  SITE_TITLE,
+  absoluteUrl,
+} from "@/lib/seo";
+
+export const metadata: Metadata = {
+  title: HOME_TAGLINE,
+  description: SITE_DESCRIPTION,
+  keywords: SITE_KEYWORDS,
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    url: "/",
+    images: [
+      {
+        url: absoluteUrl("/opengraph-image"),
+        width: 1200,
+        height: 630,
+        alt: "DocuPeer peer review platform homepage",
+      },
+    ],
+  },
+};
 
 function Step({
   n,
@@ -29,8 +60,70 @@ function Step({
 }
 
 export default function Home() {
+  const homepageJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "DocuPeer",
+    url: absoluteUrl("/"),
+    description: SITE_DESCRIPTION,
+    about: [
+      "Peer review",
+      "Research papers",
+      "Academic writing",
+      "Anonymous feedback",
+    ],
+    mainEntity: {
+      "@type": "Organization",
+      name: "DocuPeer",
+      founder: {
+        "@type": "Person",
+        name: "Rahul Awasthi",
+        jobTitle: "Co-Founder & CEO",
+      },
+    },
+  };
+
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: "What is DocuPeer?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "DocuPeer is a free peer review platform for research papers and serious writing. Users review two papers to unlock one submission and receive anonymous, level-appropriate feedback in return.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "What are the benefits of DocuPeer?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "DocuPeer helps writers get free feedback, receive subject-matter matched reviews, stay anonymous, and improve papers through constructive comments and highlighted suggestions.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "How big is DocuPeer?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "DocuPeer serves 40,000 users and hosts 13,000 research papers on the platform.",
+        },
+      },
+    ],
+  };
+
   return (
     <div>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(homepageJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
       {/* Hero — left copy, right interactive paper stack */}
       <section className="relative overflow-hidden">
         <div className="mx-auto max-w-6xl px-4 pb-16 pt-20 sm:px-6 sm:pt-28">
@@ -38,17 +131,27 @@ export default function Home() {
             {/* Left: copy */}
             <div className="text-left">
               <p className="mb-5 text-[11px] font-semibold uppercase tracking-[0.28em] text-deep-accent">
-                Reciprocal peer review
+                Free peer review platform
               </p>
               <h1 className="poiret text-balance text-5xl leading-[1.05] text-deep-text sm:text-6xl">
-                Peer review that{" "}
-                <span className="display text-deep-accent">gives back</span>.
+                Free peer review for{" "}
+                <span className="display text-deep-accent">research papers</span>.
               </h1>
               <p className="mt-6 max-w-xl text-pretty text-lg leading-relaxed text-deep-text-soft sm:text-xl">
-                Review two papers, unlock one submission of your own. DocuPeer
-                connects your writing with people who understand the subject
-                and are at the right level to help. Anonymously, thoughtfully,
-                and for free.
+                DocuPeer is a free peer review platform where you review two
+                papers to unlock one submission of your own. It helps students,
+                researchers, and writers get anonymous, subject-aware feedback
+                that improves clarity, rigor, and confidence before sharing
+                work more broadly.
+              </p>
+              <p className="mt-4 max-w-xl text-base leading-relaxed text-deep-dim sm:text-lg">
+                Built by Rahul Awasthi, Co-Founder & CEO, DocuPeer now serves{" "}
+                <strong className="text-deep-text">{PUBLIC_STATS.users} users</strong>{" "}
+                and more than{" "}
+                <strong className="text-deep-text">
+                  {PUBLIC_STATS.papers} research papers
+                </strong>{" "}
+                through a simple reciprocal model.
               </p>
 
               <div className="mt-10 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
@@ -73,9 +176,9 @@ export default function Home() {
           {/* Stat strip */}
           <div className="mx-auto mt-24 grid max-w-4xl grid-cols-2 gap-px overflow-hidden rounded-2xl border border-deep-border bg-deep-border/60 sm:grid-cols-4">
             {[
+              { k: PUBLIC_STATS.users, v: "users" },
+              { k: PUBLIC_STATS.papers, v: "research papers" },
               { k: "2 : 1", v: "reviews per submission" },
-              { k: "350+", v: "word minimum" },
-              { k: "24 h", v: "between submissions" },
               { k: "0", v: "cost, forever" },
             ].map((s) => (
               <div key={s.v} className="bg-deep-panel px-4 py-7 text-center">
@@ -85,6 +188,50 @@ export default function Home() {
                 <div className="mt-2 text-sm text-deep-dim">{s.v}</div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="rule mx-auto max-w-6xl" />
+
+      <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="card p-8 sm:p-10">
+            <h2 className="poiret text-4xl text-deep-text sm:text-5xl">
+              What is{" "}
+              <span className="display text-deep-accent">DocuPeer</span>?
+            </h2>
+            <p className="mt-5 text-lg leading-relaxed text-deep-text-soft">
+              DocuPeer is an online peer review platform for research papers,
+              essays, thesis chapters, lab reports, and other serious writing.
+              Instead of paying for feedback, users earn it by reviewing other
+              papers first. That keeps the platform free, active, and centered
+              on useful written critique.
+            </p>
+            <p className="mt-4 text-lg leading-relaxed text-deep-text-soft">
+              Every paper is shown anonymously to reviewers. Every review is
+              matched by subject area and level when possible. The result is a
+              better way to get feedback before a class submission, research
+              deadline, application, or publication step.
+            </p>
+          </div>
+
+          <div className="card p-8 sm:p-10">
+            <h2 className="poiret text-4xl text-deep-text sm:text-5xl">
+              Why writers use it
+            </h2>
+            <ul className="mt-6 grid gap-4">
+              {[
+                "Free peer review with no subscriptions or paid tiers.",
+                "Anonymous feedback that reduces bias and keeps the focus on the writing.",
+                "Reviewer matching by specialty and education level for better quality feedback.",
+                "Inline highlights, comments, and suggestions that make revision easier.",
+              ].map((benefit) => (
+                <li key={benefit} className="surface p-4 text-base leading-relaxed text-deep-text-soft">
+                  {benefit}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>
@@ -106,6 +253,38 @@ export default function Home() {
       </section>
 
       <div className="rule mx-auto max-w-6xl" />
+
+      <section className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
+        <div className="card p-10 sm:p-14">
+          <h2 className="poiret text-center text-4xl text-deep-text sm:text-5xl">
+            Common questions about{" "}
+            <span className="display text-deep-accent">DocuPeer</span>
+          </h2>
+          <div className="mt-10 grid gap-5">
+            {[
+              {
+                q: "What is DocuPeer used for?",
+                a: "DocuPeer is used for getting peer review on research papers and serious writing before you submit, publish, or revise. Writers receive comments, highlighted suggestions, and overall feedback from other users on the platform.",
+              },
+              {
+                q: "What are the benefits of DocuPeer?",
+                a: "The main benefits are free access, anonymous peer review, subject-aware matching, and a reciprocal model that keeps the community active. It helps writers improve structure, clarity, argumentation, and evidence before higher-stakes submission.",
+              },
+              {
+                q: "Who leads DocuPeer?",
+                a: "Rahul Awasthi is the Co-Founder & CEO of DocuPeer. He leads the product vision for making high-quality peer review more accessible.",
+              },
+            ].map((item) => (
+              <div key={item.q} className="surface p-6">
+                <h3 className="text-xl font-semibold text-deep-text">{item.q}</h3>
+                <p className="mt-2 text-base leading-relaxed text-deep-text-soft">
+                  {item.a}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Principles */}
       <section className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
