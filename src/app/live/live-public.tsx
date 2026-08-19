@@ -13,6 +13,7 @@ function TheatrePanel({ snapshot }: { snapshot: LiveSnapshotPayload }) {
 }
 
 export function LivePublic({ initialSnapshot }: { initialSnapshot: LiveSnapshotPayload }) {
+  const [mounted, setMounted] = useState(false);
   const [snapshot, setSnapshot] = useState(initialSnapshot);
   const [editorOpen, setEditorOpen] = useState(false);
   const [viewerCountDraft, setViewerCountDraft] = useState(String(initialSnapshot.live.viewerCount));
@@ -28,11 +29,17 @@ export function LivePublic({ initialSnapshot }: { initialSnapshot: LiveSnapshotP
   }
 
   useEffect(() => {
-    const timer = window.setInterval(() => refresh(), 5000);
-    return () => window.clearInterval(timer);
-  }, [editorOpen]);
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
+    if (!mounted) return;
+    const timer = window.setInterval(() => refresh(), 5000);
+    return () => window.clearInterval(timer);
+  }, [editorOpen, mounted]);
+
+  useEffect(() => {
+    if (!mounted) return;
     const pressed = new Set<string>();
 
     function maybeOpenEditor() {
@@ -60,7 +67,7 @@ export function LivePublic({ initialSnapshot }: { initialSnapshot: LiveSnapshotP
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
     };
-  }, []);
+  }, [mounted]);
 
   async function saveViewerCount() {
     setSaveMessage("Saving...");
@@ -77,6 +84,38 @@ export function LivePublic({ initialSnapshot }: { initialSnapshot: LiveSnapshotP
     setSnapshot(payload.data);
     setViewerCountDraft(String(payload.data.live.viewerCount));
     setSaveMessage("Saved.");
+  }
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-[#f8f7f3] text-[#171b24]">
+        <div className="mx-auto flex min-h-screen w-full max-w-[1500px] flex-col px-5 py-6 sm:px-8 lg:px-10">
+          <header className="flex flex-col gap-4 border-b border-[#ded8cc] pb-6 sm:flex-row sm:items-center sm:justify-between">
+            <Link href="/" className="flex items-center gap-3">
+              <span className="grid h-10 w-10 place-items-center rounded-lg bg-[#1f3447] text-sm font-bold text-white">DP</span>
+              <span>
+                <span className="block text-sm font-semibold uppercase tracking-[0.16em] text-[#596272]">DocuPeer</span>
+                <span className="block text-xl font-semibold tracking-normal">DocuPeer Live</span>
+              </span>
+            </Link>
+          </header>
+          <main className="flex-1 py-8">
+            <section className="overflow-hidden rounded-lg border border-[#1d2531] bg-[#090d13] shadow-[0_26px_80px_rgba(8,13,20,0.28)]">
+              <div className="relative grid aspect-video w-full place-items-center bg-[#0b1017] px-5 text-center">
+                <div>
+                  <div className="mx-auto inline-flex items-center gap-2 rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm font-semibold text-[#d4deea]">
+                    Loading
+                  </div>
+                  <h1 className="mt-6 text-4xl font-semibold tracking-normal text-white sm:text-6xl">
+                    DocuPeer Live
+                  </h1>
+                </div>
+              </div>
+            </section>
+          </main>
+        </div>
+      </div>
+    );
   }
 
   return (

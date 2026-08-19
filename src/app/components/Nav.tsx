@@ -15,6 +15,8 @@ export function Nav() {
   const isStatusSurface =
     pathname === "/status" ||
     pathname === "/status-manage" ||
+    pathname === "/live" ||
+    pathname === "/live-manage" ||
     (typeof window !== "undefined" && window.location.hostname.startsWith("status."));
 
   if (isStatusSurface) return null;
