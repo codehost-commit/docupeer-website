@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   STATUS_META,
   STATUS_PHASE_LABELS,
@@ -13,11 +14,6 @@ import {
   type StatusPhase,
   type StatusSnapshotPayload,
 } from "@/lib/status-shared";
-
-const ADMIN_USERNAME = "ADMIN";
-const ADMIN_PASSWORD = "12345678";
-const SESSION_KEY = "docupeer-status-admin-session";
-const ADMIN_HEADER = { "x-docupeer-status-admin": "browser-managed" };
 
 function toLocalInput(value: number | null) {
   if (!value) return "";
@@ -104,52 +100,10 @@ function StatusPreview({
   );
 }
 
-function Login({ onLogin }: { onLogin: () => void }) {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
-
-  function submit(event: React.FormEvent) {
-    event.preventDefault();
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      window.localStorage.setItem(SESSION_KEY, "1");
-      setMessage("");
-      onLogin();
-      return;
-    }
-    setMessage("Those credentials do not match.");
-  }
-
-  return (
-    <div className="grid min-h-screen place-items-center bg-[#f8f7f3] px-5 py-10 text-[#171b24]">
-      <form onSubmit={submit} className="w-full max-w-md rounded-lg border border-[#dcd6cb] bg-white p-6 shadow-[0_24px_70px_rgba(29,33,42,0.10)]">
-        <Link href="/" className="inline-flex items-center gap-3">
-          <span className="grid h-10 w-10 place-items-center rounded-lg bg-[#1f3447] text-sm font-bold text-white">DP</span>
-          <span className="font-semibold">DocuPeer Status</span>
-        </Link>
-        <h1 className="mt-8 text-3xl font-semibold tracking-normal">Manage service status</h1>
-        <p className="mt-2 text-sm leading-6 text-[#606978]">Use the temporary browser-side credentials to update public availability and maintenance mode.</p>
-        <div className="mt-7 space-y-4">
-          <label className="block">
-            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#707887]">Username</span>
-            <input value={username} onChange={(event) => setUsername(event.target.value)} className="mt-2 w-full rounded-md border border-[#d6d0c5] bg-[#fbfaf7] px-3 py-3 text-sm outline-none transition focus:border-[#1f3447] focus:ring-2 focus:ring-[#1f3447]/15" autoComplete="username" />
-          </label>
-          <label className="block">
-            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#707887]">Password</span>
-            <input value={password} onChange={(event) => setPassword(event.target.value)} type="password" className="mt-2 w-full rounded-md border border-[#d6d0c5] bg-[#fbfaf7] px-3 py-3 text-sm outline-none transition focus:border-[#1f3447] focus:ring-2 focus:ring-[#1f3447]/15" autoComplete="current-password" />
-          </label>
-        </div>
-        {message ? <div className="mt-4 rounded-md border border-[#e7bbc3] bg-[#fff1f3] px-3 py-2 text-sm font-medium text-[#842839]">{message}</div> : null}
-        <button className="mt-6 w-full rounded-md bg-[#1f3447] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#162635]" type="submit">
-          Sign in
-        </button>
-      </form>
-    </div>
-  );
-}
-
 export function StatusManage() {
-  const [authenticated, setAuthenticated] = useState(false);
+  const router = useRouter();
+  const [allowed, setAllowed] = useState(false);
+  const [checkingAccess, setCheckingAccess] = useState(true);
   const [snapshot, setSnapshot] = useState<StatusSnapshotPayload>(() => defaultSnapshot());
   const [draft, setDraft] = useState(defaultSnapshot().status);
   const [report, setReport] = useState("");
@@ -165,7 +119,6 @@ export function StatusManage() {
   async function loadData() {
     const response = await fetch("/api/status-manage/data", {
       cache: "no-store",
-      headers: ADMIN_HEADER,
     });
     if (!response.ok) throw new Error("Could not load status controls.");
     const data = await response.json();
@@ -174,15 +127,25 @@ export function StatusManage() {
   }
 
   useEffect(() => {
-    if (window.localStorage.getItem(SESSION_KEY) === "1") {
-      setAuthenticated(true);
+    async function checkAccess() {
+      try {
+        const response = await fetch("/api/admin/me", { cache: "no-store" });
+        if (!response.ok) throw new Error("Unauthorized");
+        setAllowed(true);
+      } catch {
+        router.replace("/admin?next=/status-manage");
+      } finally {
+        setCheckingAccess(false);
+      }
     }
-  }, []);
+
+    checkAccess();
+  }, [router]);
 
   useEffect(() => {
-    if (!authenticated) return;
+    if (!allowed) return;
     loadData().catch((err) => setMessage(err.message || "Could not load status controls."));
-  }, [authenticated]);
+  }, [allowed]);
 
   function updateDraft(partial: Partial<typeof draft>) {
     setDraft((current) => {
@@ -201,7 +164,6 @@ export function StatusManage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...ADMIN_HEADER,
         },
         body: JSON.stringify(draft),
       });
@@ -229,7 +191,6 @@ export function StatusManage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...ADMIN_HEADER,
         },
         body: JSON.stringify({ message: report }),
       });
@@ -246,7 +207,14 @@ export function StatusManage() {
     }
   }
 
-  if (!authenticated) return <Login onLogin={() => setAuthenticated(true)} />;
+  async function logout() {
+    await fetch("/api/admin/logout", { method: "POST" });
+    router.push("/admin");
+  }
+
+  if (checkingAccess || !allowed) {
+    return <div className="grid min-h-screen place-items-center bg-[#f8f7f3] text-sm font-semibold text-[#606978]">Loading status controls.</div>;
+  }
 
   return (
     <div className="min-h-screen bg-[#f8f7f3] text-[#171b24]">
@@ -260,14 +228,14 @@ export function StatusManage() {
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
+            <Link href="/admin" className="rounded-md border border-[#d6d0c5] bg-white px-4 py-2 text-sm font-semibold text-[#2d3342] transition hover:border-[#1f3447]">
+              Admin home
+            </Link>
             <Link href="/" className="rounded-md border border-[#d6d0c5] bg-white px-4 py-2 text-sm font-semibold text-[#2d3342] transition hover:border-[#1f3447]">
               Public page
             </Link>
             <button
-              onClick={() => {
-                window.localStorage.removeItem(SESSION_KEY);
-                setAuthenticated(false);
-              }}
+              onClick={logout}
               className="rounded-md bg-[#1f3447] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#162635]"
               type="button"
             >

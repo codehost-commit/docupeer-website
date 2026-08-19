@@ -13,30 +13,30 @@ datasource db {
 }
 
 model User {
-  id                String   @id @default(cuid())
-  name              String
-  email             String   @unique
-  passwordHash      String
+  id           String @id @default(cuid())
+  name         String
+  email        String @unique
+  passwordHash String
 
   // Reviewer profile
   expertiseCategory String
   specialty         String
   educationLevel    String // high_school | college | graduate | researcher | professor | professional | other
   gradeYear         String? // required when educationLevel is high_school or college
-  strength          Int      @default(50) // 0-100 self-rated strength in specialty
+  strength          Int     @default(50) // 0-100 self-rated strength in specialty
 
-  createdAt         DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  papers            Paper[]  @relation("AuthoredPapers")
-  reviews           Review[] @relation("AuthoredReviews")
+  papers  Paper[]  @relation("AuthoredPapers")
+  reviews Review[] @relation("AuthoredReviews")
 
   @@index([expertiseCategory, specialty])
 }
 
 model Paper {
-  id             String   @id @default(cuid())
-  authorId       String
-  author         User     @relation("AuthoredPapers", fields: [authorId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  authorId String
+  author   User   @relation("AuthoredPapers", fields: [authorId], references: [id], onDelete: Cascade)
 
   title          String
   text           String
@@ -47,29 +47,29 @@ model Paper {
   feedbackWanted String? // optional: what kind of feedback the author wants
   wordCount      Int
 
-  createdAt      DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  reviews        Review[] @relation("PaperReviews")
+  reviews Review[] @relation("PaperReviews")
 
   @@index([authorId])
   @@index([category, specialty, educationLevel])
 }
 
 model Review {
-  id         String   @id @default(cuid())
+  id         String @id @default(cuid())
   reviewerId String
-  reviewer   User     @relation("AuthoredReviews", fields: [reviewerId], references: [id], onDelete: Cascade)
+  reviewer   User   @relation("AuthoredReviews", fields: [reviewerId], references: [id], onDelete: Cascade)
   paperId    String
-  paper      Paper    @relation("PaperReviews", fields: [paperId], references: [id], onDelete: Cascade)
+  paper      Paper  @relation("PaperReviews", fields: [paperId], references: [id], onDelete: Cascade)
 
   // Overall constructive written feedback.
-  comment    String
+  comment String
 
   // AI-detection audit fields.
-  aiScore    Float    @default(0)
-  aiProvider String   @default("heuristic")
+  aiScore    Float  @default(0)
+  aiProvider String @default("heuristic")
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 
   annotations Annotation[] @relation("ReviewAnnotations")
 
@@ -81,9 +81,9 @@ model Review {
 }
 
 model Annotation {
-  id          String @id @default(cuid())
-  reviewId    String
-  review      Review @relation("ReviewAnnotations", fields: [reviewId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  reviewId String
+  review   Review @relation("ReviewAnnotations", fields: [reviewId], references: [id], onDelete: Cascade)
 
   // Character offsets into the paper text that this annotation targets.
   startOffset Int
@@ -91,19 +91,19 @@ model Annotation {
   quotedText  String
 
   // "comment" | "add" | "remove"
-  kind        String
-  body        String // reviewer's explanation / suggested change
+  kind String
+  body String // reviewer's explanation / suggested change
 
   @@index([reviewId])
 }
 
 model SiteStatusState {
-  id              String   @id @default("global")
-  level           Int      @default(1)
+  id              String    @id @default("global")
+  level           Int       @default(1)
   phase           String?
-  maintenanceMode Boolean  @default(false)
+  maintenanceMode Boolean   @default(false)
   etaAt           DateTime?
-  updatedAt       DateTime @updatedAt
+  updatedAt       DateTime  @updatedAt
 }
 
 model SiteStatusHistory {
@@ -122,15 +122,15 @@ model SiteStatusReport {
 }
 
 model SiteLiveState {
-  id          String   @id @default("global")
-  isLive      Boolean  @default(false)
-  title       String   @default("DocuPeer Live")
-  description String   @default("Live conversations, walkthroughs, and work sessions from the DocuPeer team.")
+  id          String    @id @default("global")
+  isLive      Boolean   @default(false)
+  title       String    @default("DocuPeer Live")
+  description String    @default("Live conversations, walkthroughs, and work sessions from the DocuPeer team.")
   roomName    String
-  viewerCount Int      @default(0)
+  viewerCount Int       @default(0)
   startedAt   DateTime?
   endedAt     DateTime?
-  updatedAt   DateTime @updatedAt
+  updatedAt   DateTime  @updatedAt
 }
 
 model SiteLivePeer {
@@ -147,7 +147,7 @@ model SiteLivePeer {
 
 model SiteLiveCandidate {
   id        String   @id @default(cuid())
-  viewerId String
+  viewerId  String
   side      String
   candidate String
   createdAt DateTime @default(now())
@@ -165,4 +165,12 @@ model SiteLiveChunk {
 
   @@unique([sequence])
   @@index([createdAt])
+}
+
+model AdminMetrics {
+  id                     String   @id @default("global")
+  pageViews              Int      @default(0)
+  signedUpUsersOverride  Int?
+  papersUploadedOverride Int?
+  updatedAt              DateTime @updatedAt
 }

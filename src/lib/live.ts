@@ -1,4 +1,5 @@
 import "server-only";
+import { hasAdminSession } from "@/lib/admin-auth";
 import { prisma } from "@/lib/db";
 import {
   DEFAULT_LIVE_DESCRIPTION,
@@ -149,8 +150,8 @@ export async function saveLiveViewerCount(input: { viewerCount?: unknown }) {
   });
 }
 
-export function hasLiveManageAccess(req: Request) {
-  return req.headers.get("x-docupeer-live-admin") === "browser-managed";
+export async function hasLiveManageAccess(_req: Request) {
+  return hasAdminSession();
 }
 
 async function pruneLivePeers() {

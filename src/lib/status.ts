@@ -1,4 +1,5 @@
 import "server-only";
+import { hasAdminSession } from "@/lib/admin-auth";
 import { prisma } from "@/lib/db";
 import {
   STATUS_LEVELS,
@@ -286,6 +287,6 @@ export async function addStatusReport(messageInput: unknown) {
   });
 }
 
-export function hasStatusManageAccess(req: Request) {
-  return req.headers.get("x-docupeer-status-admin") === "browser-managed";
+export async function hasStatusManageAccess(_req: Request) {
+  return hasAdminSession();
 }

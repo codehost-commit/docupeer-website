@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
-    if (!hasLiveManageAccess(req)) return error("Unauthorized", 401);
+    if (!(await hasLiveManageAccess(req))) return error("Unauthorized", 401);
     const candidates = await liveCandidates({
       viewerId: req.nextUrl.searchParams.get("viewerId"),
       side: "viewer",

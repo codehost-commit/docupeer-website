@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Nav } from "./components/Nav";
 import { Footer } from "./components/Footer";
+import { PageViewTracker } from "./components/PageViewTracker";
 import {
   SITE_DESCRIPTION,
   SITE_KEYWORDS,
@@ -106,6 +107,7 @@ export default function RootLayout({
         />
       </head>
       <body className="flex min-h-screen flex-col bg-deep-bg text-deep-text antialiased">
+        <PageViewTracker />
         <Nav />
         <main className="flex-1">{children}</main>
         <Footer />

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ScreenBroadcaster } from "./ScreenBroadcaster";
 import {
   DEFAULT_LIVE_DESCRIPTION,
@@ -10,11 +11,6 @@ import {
   formatLiveTime,
   type LiveSnapshotPayload,
 } from "@/lib/live-shared";
-
-const ADMIN_USERNAME = "ADMIN";
-const ADMIN_PASSWORD = "12345678";
-const SESSION_KEY = "docupeer-live-admin-session";
-const ADMIN_HEADER = { "x-docupeer-live-admin": "browser-managed" };
 
 function defaultSnapshot(): LiveSnapshotPayload {
   const now = Date.now();
@@ -33,52 +29,10 @@ function defaultSnapshot(): LiveSnapshotPayload {
   };
 }
 
-function Login({ onLogin }: { onLogin: () => void }) {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
-
-  function submit(event: React.FormEvent) {
-    event.preventDefault();
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      window.localStorage.setItem(SESSION_KEY, "1");
-      setMessage("");
-      onLogin();
-      return;
-    }
-    setMessage("Those credentials do not match.");
-  }
-
-  return (
-    <div className="grid min-h-screen place-items-center bg-[#f8f7f3] px-5 py-10 text-[#171b24]">
-      <form onSubmit={submit} className="w-full max-w-md rounded-lg border border-[#dcd6cb] bg-white p-6 shadow-[0_24px_70px_rgba(29,33,42,0.10)]">
-        <Link href="/live" className="inline-flex items-center gap-3">
-          <span className="grid h-10 w-10 place-items-center rounded-lg bg-[#1f3447] text-sm font-bold text-white">DP</span>
-          <span className="font-semibold">DocuPeer Live</span>
-        </Link>
-        <h1 className="mt-8 text-3xl font-semibold tracking-normal">Manage live broadcast</h1>
-        <p className="mt-2 text-sm leading-6 text-[#606978]">Sign in to update the public live room, session title, description, and broadcast state.</p>
-        <div className="mt-7 space-y-4">
-          <label className="block">
-            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#707887]">Username</span>
-            <input value={username} onChange={(event) => setUsername(event.target.value)} className="mt-2 w-full rounded-md border border-[#d6d0c5] bg-[#fbfaf7] px-3 py-3 text-sm outline-none transition focus:border-[#1f3447] focus:ring-2 focus:ring-[#1f3447]/15" autoComplete="username" />
-          </label>
-          <label className="block">
-            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#707887]">Password</span>
-            <input value={password} onChange={(event) => setPassword(event.target.value)} type="password" className="mt-2 w-full rounded-md border border-[#d6d0c5] bg-[#fbfaf7] px-3 py-3 text-sm outline-none transition focus:border-[#1f3447] focus:ring-2 focus:ring-[#1f3447]/15" autoComplete="current-password" />
-          </label>
-        </div>
-        {message ? <div className="mt-4 rounded-md border border-[#e7bbc3] bg-[#fff1f3] px-3 py-2 text-sm font-medium text-[#842839]">{message}</div> : null}
-        <button className="mt-6 w-full rounded-md bg-[#1f3447] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#162635]" type="submit">
-          Sign in
-        </button>
-      </form>
-    </div>
-  );
-}
-
 export function LiveManage() {
-  const [authenticated, setAuthenticated] = useState(false);
+  const router = useRouter();
+  const [allowed, setAllowed] = useState(false);
+  const [checkingAccess, setCheckingAccess] = useState(true);
   const [snapshot, setSnapshot] = useState<LiveSnapshotPayload>(() => defaultSnapshot());
   const [draft, setDraft] = useState(defaultSnapshot().live);
   const [message, setMessage] = useState("");
@@ -96,7 +50,6 @@ export function LiveManage() {
   async function loadData() {
     const response = await fetch("/api/live-manage/state", {
       cache: "no-store",
-      headers: ADMIN_HEADER,
     });
     if (!response.ok) throw new Error("Could not load live controls.");
     const data = await response.json();
@@ -105,15 +58,25 @@ export function LiveManage() {
   }
 
   useEffect(() => {
-    if (window.localStorage.getItem(SESSION_KEY) === "1") {
-      setAuthenticated(true);
+    async function checkAccess() {
+      try {
+        const response = await fetch("/api/admin/me", { cache: "no-store" });
+        if (!response.ok) throw new Error("Unauthorized");
+        setAllowed(true);
+      } catch {
+        router.replace("/admin?next=/live-manage");
+      } finally {
+        setCheckingAccess(false);
+      }
     }
-  }, []);
+
+    checkAccess();
+  }, [router]);
 
   useEffect(() => {
-    if (!authenticated) return;
+    if (!allowed) return;
     loadData().catch((err) => setMessage(err.message || "Could not load live controls."));
-  }, [authenticated]);
+  }, [allowed]);
 
   async function save(nextDraft = draft) {
     setBusy(true);
@@ -123,7 +86,6 @@ export function LiveManage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...ADMIN_HEADER,
         },
         body: JSON.stringify(nextDraft),
       });
@@ -151,7 +113,14 @@ export function LiveManage() {
     setMessage("New room created. Save before going live.");
   }
 
-  if (!authenticated) return <Login onLogin={() => setAuthenticated(true)} />;
+  async function logout() {
+    await fetch("/api/admin/logout", { method: "POST" });
+    router.push("/admin");
+  }
+
+  if (checkingAccess || !allowed) {
+    return <div className="grid min-h-screen place-items-center bg-[#f8f7f3] text-sm font-semibold text-[#606978]">Loading live controls.</div>;
+  }
 
   return (
     <div className="min-h-screen bg-[#f8f7f3] text-[#171b24]">
@@ -165,14 +134,14 @@ export function LiveManage() {
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
+            <Link href="/admin" className="rounded-md border border-[#d6d0c5] bg-white px-4 py-2 text-sm font-semibold text-[#2d3342] transition hover:border-[#1f3447]">
+              Admin home
+            </Link>
             <Link href="/live" className="rounded-md border border-[#d6d0c5] bg-white px-4 py-2 text-sm font-semibold text-[#2d3342] transition hover:border-[#1f3447]">
               Public live page
             </Link>
             <button
-              onClick={() => {
-                window.localStorage.removeItem(SESSION_KEY);
-                setAuthenticated(false);
-              }}
+              onClick={logout}
               className="rounded-md bg-[#1f3447] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#162635]"
               type="button"
             >

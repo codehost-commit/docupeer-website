@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
-    if (!hasLiveManageAccess(req)) return error("Unauthorized", 401);
+    if (!(await hasLiveManageAccess(req))) return error("Unauthorized", 401);
     const body = await req.json().catch(() => ({}));
     await addLiveCandidate({ ...body, side: "host" });
     return json({ ok: true });

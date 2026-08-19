@@ -41,7 +41,6 @@ export function ScreenBroadcaster({
         method: "POST",
         headers: {
           "Content-Type": "application/octet-stream",
-          "x-docupeer-live-admin": "browser-managed",
           "x-docupeer-live-mime": blob.type || "video/webm",
         },
         body: blob,

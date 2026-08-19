@@ -60,6 +60,8 @@ export async function middleware(req: NextRequest) {
     pathname === "/live" ||
     pathname === "/live-manage" ||
     pathname.startsWith("/api/live") ||
+    pathname === "/admin" ||
+    pathname.startsWith("/api/admin") ||
     isStaticPath(pathname)
   ) {
     return NextResponse.next();
