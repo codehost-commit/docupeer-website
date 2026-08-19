@@ -4,54 +4,12 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   formatLiveTime,
-  liveRoomUrl,
   type LiveSnapshotPayload,
 } from "@/lib/live-shared";
+import { LivePlayer } from "./LivePlayer";
 
 function TheatrePanel({ snapshot }: { snapshot: LiveSnapshotPayload }) {
-  const { live } = snapshot;
-  const roomUrl = liveRoomUrl(live.roomName);
-
-  return (
-    <section className="overflow-hidden rounded-lg border border-[#1d2531] bg-[#090d13] shadow-[0_26px_80px_rgba(8,13,20,0.28)]">
-      <div className="relative aspect-video w-full">
-        <div className="absolute inset-0 bg-[linear-gradient(135deg,#0b1017_0%,#1b2936_50%,#0d141d_100%)]" />
-        <div className="absolute inset-0 opacity-[0.14] [background-image:linear-gradient(#ffffff_1px,transparent_1px),linear-gradient(90deg,#ffffff_1px,transparent_1px)] [background-size:46px_46px]" />
-        <div className="relative z-10 grid h-full place-items-center px-5 text-center">
-          <div className="max-w-2xl">
-            <div className={`mx-auto inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-semibold ${live.isLive ? "border-[#5fb47d]/40 bg-[#173321] text-[#dff7e8]" : "border-white/15 bg-white/5 text-[#d4deea]"}`}>
-              <span className={`h-2.5 w-2.5 rounded-full ${live.isLive ? "bg-[#5fb47d]" : "bg-[#8b96a5]"}`} />
-              {live.isLive ? "Live now" : "Offline"}
-            </div>
-            <h1 className="mt-6 text-4xl font-semibold tracking-normal text-white sm:text-6xl">
-              {live.title}
-            </h1>
-            <p className="mx-auto mt-5 max-w-xl text-sm leading-6 text-[#bac7d5] sm:text-base">
-              {live.isLive
-                ? "The live room is open in Jitsi. Join there to watch the current screen share and audio."
-                : "The room will open here when DocuPeer Live starts."}
-            </p>
-            <div className="mt-8 flex justify-center">
-              {live.isLive ? (
-                <a
-                  href={roomUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-md bg-white px-6 py-3 text-sm font-semibold text-[#10151d] transition hover:bg-[#e9eef4]"
-                >
-                  Open live room
-                </a>
-              ) : (
-                <span className="rounded-md border border-white/15 px-6 py-3 text-sm font-semibold text-[#c8d3df]">
-                  Standing by
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
+  return <LivePlayer snapshot={snapshot} />;
 }
 
 export function LivePublic({ initialSnapshot }: { initialSnapshot: LiveSnapshotPayload }) {

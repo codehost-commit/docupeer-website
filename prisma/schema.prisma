@@ -131,3 +131,15 @@ model SiteLiveState {
   endedAt     DateTime?
   updatedAt   DateTime @updatedAt
 }
+
+model SiteLivePeer {
+  viewerId  String   @id
+  offerSdp  String
+  answerSdp String?
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, updatedAt])
+  @@index([updatedAt])
+}
