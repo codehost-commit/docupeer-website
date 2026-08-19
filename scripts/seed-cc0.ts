@@ -21,6 +21,8 @@
 
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import path from "node:path";
 
 const prisma = new PrismaClient();
 
@@ -32,6 +34,10 @@ const WIPE = process.env.WIPE_PAPERS === "1";
 // CC-BY: all freely redistributable, giving a big enough pool to hit 1000.
 // Override with LICENSES=cc0 for strict CC0 only.
 const LICENSES = (process.env.LICENSES ?? "cc0|public-domain|cc-by").trim();
+const CHECKPOINT_PATH =
+  process.env.CHECKPOINT_PATH ??
+  path.join(process.cwd(), "_to_delete", "openalex-cc0-checkpoint.json");
+const RESUME = process.env.RESUME === "1";
 
 // Map an OpenAlex `primary_topic.field.display_name` to our own category list.
 // OpenAlex field names come from a controlled vocabulary; we fold them into the
@@ -105,6 +111,34 @@ function abstractFromInvertedIndex(
 // abstracts. Strip them so DocuPeer displays clean prose.
 function stripXmlTags(s: string): string {
   return s.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+}
+
+function titleKey(title: string): string {
+  return title.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+}
+
+async function readCheckpoint(): Promise<string | null> {
+  if (!RESUME) return null;
+  try {
+    const raw = await readFile(CHECKPOINT_PATH, "utf8");
+    const parsed = JSON.parse(raw) as { cursor?: unknown };
+    return typeof parsed.cursor === "string" && parsed.cursor ? parsed.cursor : null;
+  } catch {
+    return null;
+  }
+}
+
+async function saveCheckpoint(input: {
+  cursor: string;
+  inserted: number;
+  skipped: number;
+  pages: number;
+}) {
+  await mkdir(path.dirname(CHECKPOINT_PATH), { recursive: true });
+  await writeFile(
+    CHECKPOINT_PATH,
+    JSON.stringify({ ...input, updatedAt: new Date().toISOString() }, null, 2),
+  );
 }
 
 type OpenAlexWork = {
@@ -200,7 +234,17 @@ async function main() {
   const already = await prisma.paper.count({ where: { authorId } });
   console.log(`Anonymous author currently owns ${already} papers.`);
 
-  let cursor = "*";
+  const existingTitles = new Set<string>();
+  const existing = await prisma.paper.findMany({
+    where: { authorId },
+    select: { title: true },
+  });
+  for (const paper of existing) existingTitles.add(titleKey(paper.title));
+
+  let cursor = (await readCheckpoint()) ?? "*";
+  if (cursor !== "*") {
+    console.log(`Resuming from checkpoint: ${CHECKPOINT_PATH}`);
+  }
   let inserted = 0;
   let skipped = 0;
   let pages = 0;
@@ -241,6 +285,11 @@ async function main() {
         skipped++;
         continue;
       }
+      const key = titleKey(title);
+      if (existingTitles.has(key)) {
+        skipped++;
+        continue;
+      }
       if (!w.primary_topic) {
         skipped++;
         continue;
@@ -263,6 +312,7 @@ async function main() {
         paperType: guessPaperType(w.primary_topic.display_name),
         wordCount: wc,
       });
+      existingTitles.add(key);
     }
 
     if (batch.length) {
@@ -296,6 +346,7 @@ async function main() {
       break;
     }
     cursor = page.meta.next_cursor;
+    await saveCheckpoint({ cursor, inserted, skipped, pages });
 
     // Be polite: brief pause between pages.
     await new Promise((r) => setTimeout(r, 300));
