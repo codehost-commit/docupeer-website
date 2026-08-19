@@ -109,38 +109,54 @@ export function ScreenBroadcaster({
   async function answerPeer(peerData: PendingPeer) {
     if (!streamRef.current || peersRef.current.has(peerData.viewerId)) return;
     const peer = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-    peersRef.current.set(peerData.viewerId, peer);
-    setViewerCount(peersRef.current.size);
+    try {
+      peersRef.current.set(peerData.viewerId, peer);
+      setViewerCount(peersRef.current.size);
 
-    streamRef.current.getTracks().forEach((track) => {
-      if (streamRef.current) peer.addTrack(track, streamRef.current);
-    });
+      streamRef.current.getTracks().forEach((track) => {
+        if (streamRef.current) peer.addTrack(track, streamRef.current);
+      });
 
-    peer.onconnectionstatechange = () => {
-      if (["failed", "closed", "disconnected"].includes(peer.connectionState)) {
-        peer.close();
-        peersRef.current.delete(peerData.viewerId);
-        setViewerCount(peersRef.current.size);
-      }
-    };
+      peer.onconnectionstatechange = () => {
+        if (["failed", "closed", "disconnected"].includes(peer.connectionState)) {
+          peer.close();
+          peersRef.current.delete(peerData.viewerId);
+          setViewerCount(peersRef.current.size);
+        }
+      };
 
-    await peer.setRemoteDescription({ type: "offer", sdp: peerData.offerSdp });
-    const answer = await peer.createAnswer();
-    await peer.setLocalDescription(answer);
-    await waitForIceGathering(peer);
-    if (!peer.localDescription) return;
+      await peer.setRemoteDescription({ type: "offer", sdp: peerData.offerSdp });
+      const answer = await peer.createAnswer();
+      await peer.setLocalDescription(answer);
+      await waitForIceGathering(peer);
+      if (!peer.localDescription) throw new Error("Missing local description.");
 
-    await fetch("/api/live-manage/webrtc/answer", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-docupeer-live-admin": "browser-managed",
-      },
-      body: JSON.stringify({
-        viewerId: peerData.viewerId,
-        answerSdp: peer.localDescription.sdp,
-      }),
-    });
+      const response = await fetch("/api/live-manage/webrtc/answer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-docupeer-live-admin": "browser-managed",
+        },
+        body: JSON.stringify({
+          viewerId: peerData.viewerId,
+          answerSdp: peer.localDescription.sdp,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Could not save answer.");
+    } catch {
+      peer.close();
+      peersRef.current.delete(peerData.viewerId);
+      setViewerCount(peersRef.current.size);
+      await fetch("/api/live-manage/webrtc/fail", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-docupeer-live-admin": "browser-managed",
+        },
+        body: JSON.stringify({ viewerId: peerData.viewerId }),
+      }).catch(() => {});
+    }
   }
 
   useEffect(() => {
@@ -157,7 +173,9 @@ export function ScreenBroadcaster({
         const data = await response.json();
         const peers: PendingPeer[] = Array.isArray(data.peers) ? data.peers : [];
         for (const peer of peers) {
-          if (!cancelled) await answerPeer(peer);
+          if (!cancelled) {
+            await answerPeer(peer);
+          }
         }
       } catch {
         setMessage("Still live, but viewer signaling is having trouble.");

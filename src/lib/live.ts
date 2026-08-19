@@ -225,6 +225,15 @@ export async function pendingLivePeers() {
   });
 }
 
+export async function failLivePeer(viewerIdInput: unknown) {
+  const viewerId = cleanViewerId(viewerIdInput);
+  if (!viewerId) return;
+  await prisma.siteLivePeer.updateMany({
+    where: { viewerId },
+    data: { status: "failed" },
+  });
+}
+
 export async function answerLivePeer(input: { viewerId?: unknown; answerSdp?: unknown }) {
   const viewerId = cleanViewerId(input.viewerId);
   const answerSdp = cleanSdp(input.answerSdp);

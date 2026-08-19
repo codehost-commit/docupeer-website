@@ -21,6 +21,7 @@ export const DEFAULT_LIVE_DESCRIPTION =
 export function formatLiveTime(value: number | null) {
   if (!value) return "Not started";
   return new Date(value).toLocaleString([], {
+    timeZone: "America/Chicago",
     dateStyle: "medium",
     timeStyle: "short",
   });
