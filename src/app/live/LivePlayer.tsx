@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { type LiveSnapshotPayload } from "@/lib/live-shared";
+import { sanitizeSessionDescriptionSdp } from "@/lib/webrtc-sdp";
 
 const ICE_SERVERS: RTCIceServer[] = [
   { urls: "stun:stun.l.google.com:19302" },
@@ -90,7 +91,7 @@ export function LivePlayer({ snapshot }: { snapshot: LiveSnapshotPayload }) {
       const offerResponse = await fetch("/api/live/webrtc/offer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ viewerId: id, offerSdp: peer.localDescription.sdp }),
+        body: JSON.stringify({ viewerId: id, offerSdp: sanitizeSessionDescriptionSdp(peer.localDescription.sdp) }),
       });
       if (!offerResponse.ok) throw new Error("The live room is not accepting viewers yet.");
       setState("Waiting for host console");
@@ -117,7 +118,7 @@ export function LivePlayer({ snapshot }: { snapshot: LiveSnapshotPayload }) {
         if (answerResponse.ok) {
           const data = await answerResponse.json();
           if (data.answerSdp) {
-            await peer.setRemoteDescription({ type: "answer", sdp: data.answerSdp });
+            await peer.setRemoteDescription({ type: "answer", sdp: sanitizeSessionDescriptionSdp(data.answerSdp) });
             setState("Waiting for media");
             return;
           }

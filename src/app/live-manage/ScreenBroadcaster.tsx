@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { sanitizeSessionDescriptionSdp } from "@/lib/webrtc-sdp";
 
 const ICE_SERVERS: RTCIceServer[] = [
   { urls: "stun:stun.l.google.com:19302" },
@@ -193,7 +194,7 @@ export function ScreenBroadcaster({
         }
       };
 
-      await peer.setRemoteDescription({ type: "offer", sdp: peerData.offerSdp });
+      await peer.setRemoteDescription({ type: "offer", sdp: sanitizeSessionDescriptionSdp(peerData.offerSdp) });
       candidateTimer = window.setInterval(async () => {
         try {
           const response = await fetch(`/api/live-manage/webrtc/candidates?viewerId=${encodeURIComponent(peerData.viewerId)}&after=${lastViewerCandidateAt}`, {
@@ -222,7 +223,7 @@ export function ScreenBroadcaster({
         },
         body: JSON.stringify({
           viewerId: peerData.viewerId,
-          answerSdp: peer.localDescription.sdp,
+          answerSdp: sanitizeSessionDescriptionSdp(peer.localDescription.sdp),
         }),
       });
 

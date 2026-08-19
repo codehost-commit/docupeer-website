@@ -6,6 +6,7 @@ import {
   type LiveSnapshotPayload,
   type LiveStatePayload,
 } from "@/lib/live-shared";
+import { sanitizeSessionDescriptionSdp } from "@/lib/webrtc-sdp";
 
 const LIVE_STATE_ID = "global";
 const LIVE_PEER_TTL_MS = 2 * 60 * 1000;
@@ -163,7 +164,7 @@ function cleanViewerId(value: unknown) {
 }
 
 function cleanSdp(value: unknown) {
-  return String(value || "").trim().slice(0, 200000);
+  return sanitizeSessionDescriptionSdp(String(value || "").trim()).slice(0, 200000);
 }
 
 function cleanCandidate(value: unknown) {
@@ -210,7 +211,7 @@ export async function getLiveAnswer(viewerIdInput: unknown) {
   const viewerId = cleanViewerId(viewerIdInput);
   if (!viewerId) return null;
   await pruneLivePeers();
-  return prisma.siteLivePeer.findUnique({
+  const answer = await prisma.siteLivePeer.findUnique({
     where: { viewerId },
     select: {
       answerSdp: true,
@@ -218,6 +219,11 @@ export async function getLiveAnswer(viewerIdInput: unknown) {
       updatedAt: true,
     },
   });
+  if (!answer?.answerSdp) return answer;
+  return {
+    ...answer,
+    answerSdp: sanitizeSessionDescriptionSdp(answer.answerSdp),
+  };
 }
 
 export async function addLiveCandidate(input: {
@@ -265,7 +271,7 @@ export async function liveCandidates(input: {
 
 export async function pendingLivePeers() {
   await pruneLivePeers();
-  return prisma.siteLivePeer.findMany({
+  const peers = await prisma.siteLivePeer.findMany({
     where: { status: "pending" },
     orderBy: { createdAt: "asc" },
     take: 25,
@@ -275,6 +281,10 @@ export async function pendingLivePeers() {
       createdAt: true,
     },
   });
+  return peers.map((peer) => ({
+    ...peer,
+    offerSdp: sanitizeSessionDescriptionSdp(peer.offerSdp),
+  }));
 }
 
 export async function failLivePeer(viewerIdInput: unknown) {
