@@ -57,6 +57,9 @@ export async function middleware(req: NextRequest) {
     pathname === "/status" ||
     pathname === "/status-manage" ||
     pathname.startsWith("/api/status") ||
+    pathname === "/live" ||
+    pathname === "/live-manage" ||
+    pathname.startsWith("/api/live") ||
     isStaticPath(pathname)
   ) {
     return NextResponse.next();

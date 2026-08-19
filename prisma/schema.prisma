@@ -120,3 +120,14 @@ model SiteStatusReport {
 
   @@index([createdAt])
 }
+
+model SiteLiveState {
+  id          String   @id @default("global")
+  isLive      Boolean  @default(false)
+  title       String   @default("DocuPeer Live")
+  description String   @default("Live conversations, walkthroughs, and work sessions from the DocuPeer team.")
+  roomName    String
+  startedAt   DateTime?
+  endedAt     DateTime?
+  updatedAt   DateTime @updatedAt
+}

@@ -31,10 +31,12 @@ export function Nav() {
         { href: "/submit", label: "Submit" },
         { href: "/dashboard", label: "Dashboard" },
         { href: "/history", label: "History" },
+        { href: "/live", label: "DocuPeer Live" },
         { href: "/about", label: "About" },
       ]
     : [
         { href: "/review", label: "Start reviewing" },
+        { href: "/live", label: "DocuPeer Live" },
         { href: "/about", label: "About" },
       ];
 
