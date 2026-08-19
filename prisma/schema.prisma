@@ -96,3 +96,27 @@ model Annotation {
 
   @@index([reviewId])
 }
+
+model SiteStatusState {
+  id              String   @id @default("global")
+  level           Int      @default(1)
+  phase           String?
+  maintenanceMode Boolean  @default(false)
+  etaAt           DateTime?
+  updatedAt       DateTime @updatedAt
+}
+
+model SiteStatusHistory {
+  bucketTs    DateTime @id
+  statusLevel Int
+}
+
+model SiteStatusReport {
+  id          String   @id @default(cuid())
+  statusLevel Int
+  phase       String?
+  message     String
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+}

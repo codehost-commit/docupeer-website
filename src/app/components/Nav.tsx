@@ -12,6 +12,13 @@ export function Nav() {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const isStatusSurface =
+    pathname === "/status" ||
+    pathname === "/status-manage" ||
+    (typeof window !== "undefined" && window.location.hostname.startsWith("status."));
+
+  if (isStatusSurface) return null;
+
   async function logout() {
     await apiPost("/api/auth/logout", {});
     await refresh();
@@ -32,7 +39,7 @@ export function Nav() {
       ];
 
   return (
-    <header className="sticky top-0 z-40 border-b border-deep-border/70 bg-deep-panel/80 backdrop-blur-md">
+    <header className="site-nav sticky top-0 z-40 border-b border-deep-border/70 bg-deep-panel/80 backdrop-blur-md">
       <div className="mx-auto flex h-[4.5rem] max-w-6xl items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-6">
           <Logo size={50} />

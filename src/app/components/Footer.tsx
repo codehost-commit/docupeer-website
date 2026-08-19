@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Logo } from "./Logo";
 
 // Editorial multi-column footer, Space Grotesk throughout.
@@ -44,11 +47,18 @@ const COLUMNS: Col[] = [
 ];
 
 export function Footer() {
+  const pathname = usePathname();
   const year = 2026;
   const domain = "docupeer.org";
+  const isStatusSurface =
+    pathname === "/status" ||
+    pathname === "/status-manage" ||
+    (typeof window !== "undefined" && window.location.hostname.startsWith("status."));
+
+  if (isStatusSurface) return null;
 
   return (
-    <footer className="relative mt-24 font-sans">
+    <footer className="site-footer relative mt-24 font-sans">
       <div className="rule" />
       <div className="bg-deep-panel/70">
         <div className="mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
