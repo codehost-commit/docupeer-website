@@ -48,15 +48,16 @@ function Step({
   body: string;
 }) {
   return (
-    <div className="card p-7">
-      <div className="poiret text-3xl font-normal tracking-wide text-deep-accent">
+    <div className="relative pl-14 sm:pl-0 sm:pt-16">
+      <div className="absolute left-[17px] top-1 h-full w-px bg-deep-border sm:left-1/2 sm:top-0 sm:h-11 sm:-translate-x-1/2" />
+      <div className="absolute left-0 top-1 grid h-9 w-9 place-items-center rounded-full border border-deep-accent/50 bg-deep-bg text-sm text-deep-accent shadow-[0_0_0_8px_rgba(248,246,240,0.85)] sm:left-1/2 sm:top-11 sm:-translate-x-1/2">
         {n.toString().padStart(2, "0")}
       </div>
-      <h3 className="poiret mt-2 text-2xl text-deep-text">
+      <h3 className="poiret text-2xl text-deep-text">
         {title}{" "}
         <span className="display text-deep-accent">{highlight}</span>
       </h3>
-      <p className="mt-2 text-base leading-relaxed text-deep-text-soft">
+      <p className="mt-3 max-w-[15rem] text-base leading-relaxed text-deep-text-soft sm:mx-auto">
         {body}
       </p>
     </div>
@@ -312,11 +313,15 @@ export default function Home() {
           Review, unlock,{" "}
           <span className="display text-deep-accent">submit, learn</span>.
         </h2>
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <Step n={1} title="Review 2" highlight="papers" body="Read anonymous papers matched to your expertise and level. Highlight, suggest, and explain." />
-          <Step n={2} title="Unlock a" highlight="submission" body="Every 2 completed reviews earns you 1 submission credit. Fair by design." />
-          <Step n={3} title="Submit your" highlight="paper" body="Post a paper of 350 or more words. One submission per day keeps quality high." />
-          <Step n={4} title="Receive real" highlight="feedback" body="Constructive, subject-matter feedback from qualified peers. No numeric grades." />
+        <div className="relative mx-auto max-w-5xl">
+          <div className="absolute left-[17px] top-5 h-[calc(100%-2.5rem)] w-px bg-deep-border sm:hidden" />
+          <div className="absolute left-0 right-0 top-11 hidden h-px bg-deep-border sm:block" />
+          <div className="grid gap-12 sm:grid-cols-4 sm:gap-8">
+            <Step n={1} title="Review 2" highlight="papers" body="Read anonymous papers matched to your expertise and level. Highlight, suggest, and explain." />
+            <Step n={2} title="Unlock a" highlight="submission" body="Every 2 completed reviews earns you 1 submission credit. Fair by design." />
+            <Step n={3} title="Submit your" highlight="paper" body="Post a paper of 350 or more words. One submission per day keeps quality high." />
+            <Step n={4} title="Receive real" highlight="feedback" body="Constructive, subject-matter feedback from qualified peers. No numeric grades." />
+          </div>
         </div>
       </section>
 
