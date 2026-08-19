@@ -4,6 +4,7 @@ import Link from "next/link";
 import { PaperStack } from "./components/PaperStack";
 import {
   HOME_TAGLINE,
+  PUBLIC_DISPLAY_STATS,
   PUBLIC_STATS,
   SITE_DESCRIPTION,
   SITE_KEYWORDS,
@@ -243,13 +244,13 @@ export default function Home() {
           {/* Stat strip */}
           <div className="mx-auto mt-24 grid max-w-4xl grid-cols-2 gap-px overflow-hidden rounded-2xl border border-deep-border bg-deep-border/60 sm:grid-cols-4">
             {[
-              { k: PUBLIC_STATS.users, v: "users" },
+              { k: PUBLIC_DISPLAY_STATS.users, v: "users" },
               { k: PUBLIC_STATS.papers, v: "research papers" },
               { k: "2 : 1", v: "reviews per submission" },
-              { k: "0", v: "cost, forever" },
+              { k: "$0", v: "cost, forever", valueClassName: "text-5xl sm:text-[3.4rem]" },
             ].map((s) => (
               <div key={s.v} className="bg-deep-panel px-4 py-7 text-center">
-                <div className="poiret text-4xl font-normal tracking-wide text-deep-text">
+                <div className={`poiret font-normal tracking-wide text-deep-text ${s.valueClassName || "text-4xl"}`}>
                   {s.k}
                 </div>
                 <div className="mt-2 text-sm text-deep-dim">{s.v}</div>
@@ -320,38 +321,6 @@ export default function Home() {
       </section>
 
       <div className="rule mx-auto max-w-6xl" />
-
-      <section className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
-        <div className="card p-10 sm:p-14">
-          <h2 className="poiret text-center text-4xl text-deep-text sm:text-5xl">
-            Common questions about{" "}
-            <span className="display text-deep-accent">DocuPeer</span>
-          </h2>
-          <div className="mt-10 grid gap-5">
-            {[
-              {
-                q: "What is DocuPeer used for?",
-                a: "DocuPeer is used for getting peer review on research papers and serious writing before you submit, publish, or revise. Writers receive comments, highlighted suggestions, and overall feedback from other users on the platform.",
-              },
-              {
-                q: "What are the benefits of DocuPeer?",
-                a: "The main benefits are free access, anonymous peer review, subject-aware matching, and a reciprocal model that keeps the community active. It helps writers improve structure, clarity, argumentation, and evidence before higher-stakes submission.",
-              },
-              {
-                q: "Who is behind DocuPeer?",
-                a: "DocuPeer is built by Rahul Awasthi, Co-Founder & CEO, Aryan Patel, Co-Founder & COO, Akshaj Reddy Sanikommu, Interim CTO, and Pritam Avuthu, CMO. Together they are building a free peer review platform focused on thoughtful, high-quality feedback.",
-              },
-            ].map((item) => (
-              <div key={item.q} className="surface p-6">
-                <h3 className="text-xl font-semibold text-deep-text">{item.q}</h3>
-                <p className="mt-2 text-base leading-relaxed text-deep-text-soft">
-                  {item.a}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       <section className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
         <div className="mb-12 text-center">
@@ -438,6 +407,38 @@ export default function Home() {
               </li>
             ))}
           </ul>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 pb-24 pt-8 sm:px-6">
+        <div className="mb-12 text-center">
+          <h2 className="poiret text-4xl text-deep-text sm:text-5xl">
+            Common questions about{" "}
+            <span className="display text-deep-accent">DocuPeer</span>
+          </h2>
+        </div>
+        <div className="grid gap-6 lg:grid-cols-3">
+          {[
+            {
+              q: "What is DocuPeer used for?",
+              a: "DocuPeer is used for getting peer review on research papers and serious writing before you submit, publish, or revise. Writers receive comments, highlighted suggestions, and overall feedback from other users on the platform.",
+            },
+            {
+              q: "What are the benefits of DocuPeer?",
+              a: "The main benefits are free access, anonymous peer review, subject-aware matching, and a reciprocal model that keeps the community active. It helps writers improve structure, clarity, argumentation, and evidence before higher-stakes submission.",
+            },
+            {
+              q: "Who is behind DocuPeer?",
+              a: "DocuPeer is built by Rahul Awasthi, Co-Founder & CEO, Aryan Patel, Co-Founder & COO, Akshaj Reddy Sanikommu, Interim CTO, and Pritam Avuthu, CMO. Together they are building a free peer review platform focused on thoughtful, high-quality feedback.",
+            },
+          ].map((item) => (
+            <div key={item.q} className="card h-full p-7 sm:p-8">
+              <h3 className="text-xl font-semibold text-deep-text">{item.q}</h3>
+              <p className="mt-4 text-base leading-relaxed text-deep-text-soft">
+                {item.a}
+              </p>
+            </div>
+          ))}
         </div>
       </section>
     </div>

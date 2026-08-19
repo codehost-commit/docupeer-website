@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PUBLIC_STATS, SITE_DESCRIPTION, absoluteUrl } from "@/lib/seo";
+import { PUBLIC_DISPLAY_STATS, PUBLIC_STATS, SITE_DESCRIPTION, absoluteUrl } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "About",
@@ -179,7 +179,7 @@ export default function AboutPage() {
         <p className="serif mx-auto mt-4 max-w-3xl text-lg leading-relaxed text-deep-dim">
           Rahul Awasthi is the Co-Founder & CEO of DocuPeer. Together with the
           founding team, he is building a free peer review platform that now
-          supports {PUBLIC_STATS.users} users and {PUBLIC_STATS.papers} research
+          supports {PUBLIC_DISPLAY_STATS.users} users and {PUBLIC_STATS.papers} research
           papers with anonymous, reciprocal feedback.
         </p>
       </header>

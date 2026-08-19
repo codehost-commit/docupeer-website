@@ -24,6 +24,11 @@ export const PUBLIC_STATS = {
   papers: "13,000",
 };
 
+export const PUBLIC_DISPLAY_STATS = {
+  users: "thousands",
+  papers: PUBLIC_STATS.papers,
+};
+
 export function absoluteUrl(path = "/") {
   return new URL(path, SITE_URL).toString();
 }
