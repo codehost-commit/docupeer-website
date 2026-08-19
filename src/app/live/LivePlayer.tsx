@@ -2,148 +2,137 @@
 
 import { useEffect, useRef, useState } from "react";
 import { type LiveSnapshotPayload } from "@/lib/live-shared";
-import { sanitizeSessionDescriptionSdp } from "@/lib/webrtc-sdp";
 
-const ICE_SERVERS: RTCIceServer[] = [
-  { urls: "stun:stun.l.google.com:19302" },
-  { urls: "stun:stun1.l.google.com:19302" },
-  { urls: "stun:openrelay.metered.ca:80" },
-  {
-    urls: [
-      "turn:openrelay.metered.ca:80",
-      "turn:openrelay.metered.ca:443",
-      "turn:openrelay.metered.ca:443?transport=tcp",
-    ],
-    username: "openrelayproject",
-    credential: "openrelayproject",
-  },
-];
+type LiveChunk = {
+  sequence: number;
+  mimeType: string;
+  data: string;
+};
 
-function createViewerId() {
-  return `viewer-${Date.now()}-${crypto.randomUUID()}`;
+function base64ToArrayBuffer(value: string) {
+  const binary = window.atob(value);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return bytes.buffer;
+}
+
+function supportedMimeType(mimeType: string) {
+  if (window.MediaSource?.isTypeSupported(mimeType)) return mimeType;
+  if (window.MediaSource?.isTypeSupported("video/webm;codecs=vp8,opus")) return "video/webm;codecs=vp8,opus";
+  if (window.MediaSource?.isTypeSupported("video/webm")) return "video/webm";
+  return "";
 }
 
 export function LivePlayer({ snapshot }: { snapshot: LiveSnapshotPayload }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const peerRef = useRef<RTCPeerConnection | null>(null);
+  const sourceBufferRef = useRef<SourceBuffer | null>(null);
+  const queueRef = useRef<ArrayBuffer[]>([]);
+  const lastSequenceRef = useRef(0);
   const [state, setState] = useState("Standing by");
   const [error, setError] = useState("");
   const { live } = snapshot;
 
   useEffect(() => {
     let disposed = false;
-    let candidateTimer = 0;
+    let mediaSource: MediaSource | null = null;
+    let objectUrl = "";
+    let pollTimer = 0;
 
-    async function connect() {
+    function appendNext() {
+      const sourceBuffer = sourceBufferRef.current;
+      if (!sourceBuffer || sourceBuffer.updating || !queueRef.current.length) return;
+      const next = queueRef.current.shift();
+      if (!next) return;
+      try {
+        sourceBuffer.appendBuffer(next);
+      } catch {
+        queueRef.current.unshift(next);
+      }
+    }
+
+    async function pollChunks() {
+      try {
+        const response = await fetch(`/api/live/stream/chunks?after=${lastSequenceRef.current}`, {
+          cache: "no-store",
+        });
+        if (!response.ok) throw new Error(`Stream request failed with ${response.status}.`);
+        const data = await response.json();
+        const chunks: LiveChunk[] = Array.isArray(data.chunks) ? data.chunks : [];
+        if (!data.live?.isLive) {
+          setState("Standing by");
+          return;
+        }
+        if (!chunks.length) {
+          setState(lastSequenceRef.current ? "Live" : "Waiting for stream");
+          return;
+        }
+
+        const firstChunk = chunks[0];
+        if (!sourceBufferRef.current) {
+          if (!mediaSource || mediaSource.readyState !== "open") return;
+          const mimeType = supportedMimeType(firstChunk.mimeType);
+          if (!mimeType) throw new Error("This browser cannot play the DocuPeer Live WebM stream.");
+          const sourceBuffer = mediaSource.addSourceBuffer(mimeType);
+          sourceBuffer.mode = "sequence";
+          sourceBuffer.addEventListener("updateend", appendNext);
+          sourceBufferRef.current = sourceBuffer;
+        }
+
+        for (const chunk of chunks) {
+          if (chunk.sequence <= lastSequenceRef.current) continue;
+          lastSequenceRef.current = chunk.sequence;
+          queueRef.current.push(base64ToArrayBuffer(chunk.data));
+        }
+        setState("Live");
+        appendNext();
+        videoRef.current?.play().catch(() => {});
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not load the live stream.");
+        setState("Connection needed");
+      }
+    }
+
+    function start() {
       setError("");
-      peerRef.current?.close();
-      peerRef.current = null;
+      queueRef.current = [];
+      sourceBufferRef.current = null;
+      lastSequenceRef.current = 0;
 
       if (!live.isLive) {
         setState("Standing by");
-        if (videoRef.current) videoRef.current.srcObject = null;
+        if (videoRef.current) videoRef.current.removeAttribute("src");
         return;
       }
 
-      setState("Connecting");
-      const id = createViewerId();
-      const peer = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-      peerRef.current = peer;
-      const stream = new MediaStream();
-      let lastHostCandidateAt = 0;
-
-      peer.onicecandidate = (event) => {
-        if (!event.candidate) return;
-        fetch("/api/live/webrtc/candidate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            viewerId: id,
-            candidate: JSON.stringify(event.candidate.toJSON()),
-          }),
-        }).catch(() => {});
-      };
-
-      peer.addTransceiver("video", { direction: "recvonly" });
-      peer.addTransceiver("audio", { direction: "recvonly" });
-      peer.ontrack = (event) => {
-        event.streams[0]?.getTracks().forEach((track) => stream.addTrack(track));
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play().catch(() => {});
-        }
-        setState("Live");
-      };
-      peer.onconnectionstatechange = () => {
-        if (peer.connectionState === "failed") setError("The live connection could not be established. Refresh and try again.");
-        if (peer.connectionState === "connected") setState("Live");
-      };
-      peer.oniceconnectionstatechange = () => {
-        if (peer.iceConnectionState === "checking") setState("Opening stream");
-        if (["connected", "completed"].includes(peer.iceConnectionState)) setState("Live");
-        if (peer.iceConnectionState === "failed") setError("The live stream could not cross the network. Refresh and try again.");
-      };
-
-      const offer = await peer.createOffer();
-      await peer.setLocalDescription(offer);
-      if (disposed || !peer.localDescription) return;
-
-      const offerResponse = await fetch("/api/live/webrtc/offer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ viewerId: id, offerSdp: sanitizeSessionDescriptionSdp(peer.localDescription.sdp) }),
-      });
-      if (!offerResponse.ok) throw new Error("The live room is not accepting viewers yet.");
-      setState("Waiting for host console");
-
-      candidateTimer = window.setInterval(async () => {
-        try {
-          const response = await fetch(`/api/live/webrtc/candidates?viewerId=${encodeURIComponent(id)}&after=${lastHostCandidateAt}`, {
-            cache: "no-store",
-          });
-          if (!response.ok) return;
-          const data = await response.json();
-          const candidates: { candidate: string; createdAt: number }[] = Array.isArray(data.candidates) ? data.candidates : [];
-          for (const item of candidates) {
-            lastHostCandidateAt = Math.max(lastHostCandidateAt, Number(item.createdAt || 0));
-            await peer.addIceCandidate(JSON.parse(item.candidate));
-          }
-        } catch {}
-      }, 1000);
-
-      for (let attempt = 0; attempt < 40 && !disposed; attempt += 1) {
-        const answerResponse = await fetch(`/api/live/webrtc/answer?viewerId=${encodeURIComponent(id)}`, {
-          cache: "no-store",
-        });
-        if (answerResponse.ok) {
-          const data = await answerResponse.json();
-          if (data.answerSdp) {
-            await peer.setRemoteDescription({ type: "answer", sdp: sanitizeSessionDescriptionSdp(data.answerSdp) });
-            setState("Waiting for media");
-            return;
-          }
-        }
-        await new Promise((resolve) => window.setTimeout(resolve, 1500));
+      if (!window.MediaSource) {
+        setError("This browser cannot play DocuPeer Live.");
+        setState("Connection needed");
+        return;
       }
 
-      window.clearInterval(candidateTimer);
-      if (!disposed) throw new Error("The host has not accepted this viewer connection yet.");
+      mediaSource = new MediaSource();
+      objectUrl = URL.createObjectURL(mediaSource);
+      if (videoRef.current) videoRef.current.src = objectUrl;
+      setState("Waiting for stream");
+      mediaSource.addEventListener("sourceopen", () => {
+        if (!disposed) pollChunks();
+      });
+      pollTimer = window.setInterval(pollChunks, 1000);
     }
 
-    connect().catch((err) => {
-      if (!disposed) {
-        setError(err instanceof Error ? err.message : "Could not connect to the live stream.");
-        setState("Connection needed");
-      }
-    });
+    start();
 
     return () => {
       disposed = true;
-      if (candidateTimer) window.clearInterval(candidateTimer);
-      peerRef.current?.close();
-      peerRef.current = null;
+      if (pollTimer) window.clearInterval(pollTimer);
+      sourceBufferRef.current = null;
+      queueRef.current = [];
+      if (videoRef.current) videoRef.current.removeAttribute("src");
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [live.isLive, live.roomName]);
+  }, [live.isLive, live.startedAt]);
 
   return (
     <section className="overflow-hidden rounded-lg border border-[#1d2531] bg-[#090d13] shadow-[0_26px_80px_rgba(8,13,20,0.28)]">
@@ -160,7 +149,7 @@ export function LivePlayer({ snapshot }: { snapshot: LiveSnapshotPayload }) {
             <div className="max-w-2xl">
               <div className={`mx-auto inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-semibold ${live.isLive ? "border-[#f1b8c2]/40 bg-[#3a1019] text-[#ffdbe1]" : "border-white/15 bg-white/5 text-[#d4deea]"}`}>
                 <span className={`h-2.5 w-2.5 rounded-full ${live.isLive ? "bg-[#e76a80]" : "bg-[#8b96a5]"}`} />
-                {live.isLive ? "Connection needed" : "Offline"}
+                {live.isLive ? "Stream unavailable" : "Offline"}
               </div>
               <h1 className="mt-6 text-4xl font-semibold tracking-normal text-white sm:text-6xl">
                 {live.title}

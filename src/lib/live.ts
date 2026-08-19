@@ -10,6 +10,8 @@ import { sanitizeSessionDescriptionSdp } from "@/lib/webrtc-sdp";
 
 const LIVE_STATE_ID = "global";
 const LIVE_PEER_TTL_MS = 2 * 60 * 1000;
+const LIVE_CHUNK_TTL_MS = 6 * 60 * 1000;
+const MAX_LIVE_CHUNK_BYTES = 2_500_000;
 
 function defaultRoomName() {
   return `DocuPeerLive-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-main`;
@@ -129,6 +131,11 @@ export async function saveLiveState(input: {
   if (!nextIsLive) {
     await prisma.siteLivePeer.deleteMany({});
     await prisma.siteLiveCandidate.deleteMany({});
+    await prisma.siteLiveChunk.deleteMany({});
+  } else if (!current.isLive) {
+    await prisma.siteLivePeer.deleteMany({});
+    await prisma.siteLiveCandidate.deleteMany({});
+    await prisma.siteLiveChunk.deleteMany({});
   }
 }
 
@@ -169,6 +176,98 @@ function cleanSdp(value: unknown) {
 
 function cleanCandidate(value: unknown) {
   return String(value || "").trim().slice(0, 50000);
+}
+
+function cleanMimeType(value: unknown) {
+  const mimeType = String(value || "").trim().toLowerCase().slice(0, 120);
+  if (!mimeType.startsWith("video/webm")) return "video/webm";
+  return mimeType;
+}
+
+async function pruneLiveChunks() {
+  await prisma.siteLiveChunk.deleteMany({
+    where: {
+      createdAt: {
+        lt: new Date(Date.now() - LIVE_CHUNK_TTL_MS),
+      },
+    },
+  });
+
+  const latest = await prisma.siteLiveChunk.findFirst({
+    orderBy: { sequence: "desc" },
+    select: { sequence: true },
+  });
+  if (latest && latest.sequence > 240) {
+    await prisma.siteLiveChunk.deleteMany({
+      where: { sequence: { lt: latest.sequence - 240 } },
+    });
+  }
+}
+
+export async function saveLiveChunk(input: {
+  mimeType?: unknown;
+  data: ArrayBuffer;
+}) {
+  const state = liveToPayload(await ensureLiveState());
+  if (!state.isLive) {
+    const err = new Error("DocuPeer Live is offline.") as Error & { status?: number };
+    err.status = 409;
+    throw err;
+  }
+
+  const bytes = Buffer.from(input.data);
+  if (!bytes.byteLength || bytes.byteLength > MAX_LIVE_CHUNK_BYTES) {
+    const err = new Error("Live chunk is empty or too large.") as Error & { status?: number };
+    err.status = 400;
+    throw err;
+  }
+
+  await pruneLiveChunks();
+  const latest = await prisma.siteLiveChunk.findFirst({
+    orderBy: { sequence: "desc" },
+    select: { sequence: true },
+  });
+  const sequence = (latest?.sequence ?? 0) + 1;
+
+  const chunk = await prisma.siteLiveChunk.create({
+    data: {
+      sequence,
+      mimeType: cleanMimeType(input.mimeType),
+      data: bytes,
+    },
+    select: {
+      sequence: true,
+      createdAt: true,
+    },
+  });
+
+  return {
+    sequence: chunk.sequence,
+    createdAt: chunk.createdAt.getTime(),
+  };
+}
+
+export async function liveChunks(afterInput: unknown) {
+  const after = Math.max(0, Math.floor(Number(afterInput || 0)));
+  await pruneLiveChunks();
+  const chunks = await prisma.siteLiveChunk.findMany({
+    where: after ? { sequence: { gt: after } } : undefined,
+    orderBy: { sequence: "asc" },
+    take: 8,
+    select: {
+      sequence: true,
+      mimeType: true,
+      data: true,
+      createdAt: true,
+    },
+  });
+
+  return chunks.map((chunk) => ({
+    sequence: chunk.sequence,
+    mimeType: chunk.mimeType,
+    data: Buffer.from(chunk.data).toString("base64"),
+    createdAt: chunk.createdAt.getTime(),
+  }));
 }
 
 export async function registerLiveOffer(input: { viewerId?: unknown; offerSdp?: unknown }) {
