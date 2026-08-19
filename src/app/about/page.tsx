@@ -177,10 +177,10 @@ export default function AboutPage() {
           reviewing it are qualified, honest, and treated as equals.
         </p>
         <p className="serif mx-auto mt-4 max-w-3xl text-lg leading-relaxed text-deep-dim">
-          Rahul Awasthi is the Co-Founder & CEO of DocuPeer. Together with the
-          founding team, he is building a free peer review platform that now
-          supports {PUBLIC_DISPLAY_STATS.users} users and {PUBLIC_STATS.papers} research
-          papers with anonymous, reciprocal feedback.
+          Rahul Awasthi and Aryan Patel are the co-founders of DocuPeer.
+          Together with the founding team, they are building a free peer review
+          platform that now supports {PUBLIC_DISPLAY_STATS.users.toLowerCase()} of users and{" "}
+          {PUBLIC_STATS.papers} research papers with anonymous, reciprocal feedback.
         </p>
       </header>
 

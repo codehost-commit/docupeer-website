@@ -48,9 +48,8 @@ function Step({
   body: string;
 }) {
   return (
-    <div className="relative pl-14 sm:pl-0 sm:pt-16">
-      <div className="absolute left-[17px] top-1 h-full w-px bg-deep-border sm:left-1/2 sm:top-0 sm:h-11 sm:-translate-x-1/2" />
-      <div className="absolute left-0 top-1 grid h-9 w-9 place-items-center rounded-full border border-deep-accent/50 bg-deep-bg text-sm text-deep-accent shadow-[0_0_0_8px_rgba(248,246,240,0.85)] sm:left-1/2 sm:top-11 sm:-translate-x-1/2">
+    <div className="relative pl-14 sm:pl-0 sm:pt-28 sm:text-center">
+      <div className="absolute left-0 top-1 grid h-9 w-9 place-items-center rounded-full border border-deep-accent/45 bg-deep-panel font-mono text-[11px] font-semibold text-deep-accent shadow-[0_0_0_8px_rgba(248,246,240,0.92)] sm:left-1/2 sm:top-14 sm:-translate-x-1/2">
         {n.toString().padStart(2, "0")}
       </div>
       <h3 className="poiret text-2xl text-deep-text">
@@ -245,13 +244,13 @@ export default function Home() {
           {/* Stat strip */}
           <div className="mx-auto mt-24 grid max-w-4xl grid-cols-2 gap-px overflow-hidden rounded-2xl border border-deep-border bg-deep-border/60 sm:grid-cols-4">
             {[
-              { k: PUBLIC_DISPLAY_STATS.users, v: "users" },
-              { k: PUBLIC_STATS.papers, v: "research papers" },
-              { k: "2 : 1", v: "reviews per submission" },
-              { k: "$0", v: "cost, forever", valueClassName: "text-5xl sm:text-[3.4rem]" },
+              { k: PUBLIC_DISPLAY_STATS.users, v: "users", valueClassName: "display text-3xl sm:text-4xl" },
+              { k: PUBLIC_STATS.papers, v: "research papers", valueClassName: "poiret text-4xl" },
+              { k: "2 : 1", v: "reviews per submission", valueClassName: "poiret text-4xl" },
+              { k: "$0", v: "cost, forever", valueClassName: "display text-4xl sm:text-5xl" },
             ].map((s) => (
               <div key={s.v} className="bg-deep-panel px-4 py-7 text-center">
-                <div className={`poiret font-normal tracking-wide text-deep-text ${s.valueClassName || "text-4xl"}`}>
+                <div className={`${s.valueClassName} font-normal tracking-normal text-deep-text`}>
                   {s.k}
                 </div>
                 <div className="mt-2 text-sm text-deep-dim">{s.v}</div>
@@ -315,7 +314,7 @@ export default function Home() {
         </h2>
         <div className="relative mx-auto max-w-5xl">
           <div className="absolute left-[17px] top-5 h-[calc(100%-2.5rem)] w-px bg-deep-border sm:hidden" />
-          <div className="absolute left-0 right-0 top-11 hidden h-px bg-deep-border sm:block" />
+          <div className="absolute left-0 right-0 top-[4.65rem] hidden h-px bg-deep-border sm:block" />
           <div className="grid gap-12 sm:grid-cols-4 sm:gap-8">
             <Step n={1} title="Review 2" highlight="papers" body="Read anonymous papers matched to your expertise and level. Highlight, suggest, and explain." />
             <Step n={2} title="Unlock a" highlight="submission" body="Every 2 completed reviews earns you 1 submission credit. Fair by design." />

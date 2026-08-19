@@ -25,7 +25,7 @@ export const PUBLIC_STATS = {
 };
 
 export const PUBLIC_DISPLAY_STATS = {
-  users: "thousands",
+  users: "Thousands",
   papers: PUBLIC_STATS.papers,
 };
 
