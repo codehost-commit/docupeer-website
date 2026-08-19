@@ -1,0 +1,1 @@
+ALTER TABLE "SiteLiveState" ADD COLUMN "viewerCount" INTEGER NOT NULL DEFAULT 0;

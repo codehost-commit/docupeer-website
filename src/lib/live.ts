@@ -31,11 +31,18 @@ function cleanRoomName(value: unknown, fallback = defaultRoomName()) {
   return room || fallback;
 }
 
+function cleanViewerCount(value: unknown) {
+  const count = Math.round(Number(value || 0));
+  if (!Number.isFinite(count)) return 0;
+  return Math.max(0, Math.min(999999, count));
+}
+
 function liveToPayload(state: {
   isLive: boolean;
   title: string;
   description: string;
   roomName: string;
+  viewerCount: number;
   startedAt: Date | null;
   endedAt: Date | null;
   updatedAt: Date;
@@ -45,6 +52,7 @@ function liveToPayload(state: {
     title: state.title,
     description: state.description,
     roomName: state.roomName,
+    viewerCount: state.viewerCount,
     startedAt: dateMs(state.startedAt),
     endedAt: dateMs(state.endedAt),
     updatedAt: state.updatedAt.getTime(),
@@ -66,6 +74,7 @@ export async function ensureLiveState() {
           title: DEFAULT_LIVE_TITLE,
           description: DEFAULT_LIVE_DESCRIPTION,
           roomName: defaultRoomName(),
+          viewerCount: 0,
           updatedAt: now,
         },
       });
@@ -94,6 +103,7 @@ export async function saveLiveState(input: {
   title?: unknown;
   description?: unknown;
   roomName?: unknown;
+  viewerCount?: unknown;
 }) {
   const current = liveToPayload(await ensureLiveState());
   const nextIsLive = !!input.isLive;
@@ -108,6 +118,7 @@ export async function saveLiveState(input: {
       title: cleanText(input.title, DEFAULT_LIVE_TITLE, 120),
       description: cleanText(input.description, DEFAULT_LIVE_DESCRIPTION, 800),
       roomName: cleanRoomName(input.roomName, current.roomName),
+      viewerCount: cleanViewerCount(input.viewerCount ?? current.viewerCount),
       startedAt,
       endedAt,
       updatedAt: now,
@@ -117,6 +128,16 @@ export async function saveLiveState(input: {
   if (!nextIsLive) {
     await prisma.siteLivePeer.deleteMany({});
   }
+}
+
+export async function saveLiveViewerCount(input: { viewerCount?: unknown }) {
+  await ensureLiveState();
+  await prisma.siteLiveState.update({
+    where: { id: LIVE_STATE_ID },
+    data: {
+      viewerCount: cleanViewerCount(input.viewerCount),
+    },
+  });
 }
 
 export function hasLiveManageAccess(req: Request) {

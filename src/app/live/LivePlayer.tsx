@@ -113,7 +113,7 @@ export function LivePlayer({ snapshot }: { snapshot: LiveSnapshotPayload }) {
       peerRef.current?.close();
       peerRef.current = null;
     };
-  }, [live.isLive, live.roomName, snapshot.serverTime]);
+  }, [live.isLive, live.roomName]);
 
   return (
     <section className="overflow-hidden rounded-lg border border-[#1d2531] bg-[#090d13] shadow-[0_26px_80px_rgba(8,13,20,0.28)]">

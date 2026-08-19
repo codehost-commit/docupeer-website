@@ -14,18 +14,70 @@ function TheatrePanel({ snapshot }: { snapshot: LiveSnapshotPayload }) {
 
 export function LivePublic({ initialSnapshot }: { initialSnapshot: LiveSnapshotPayload }) {
   const [snapshot, setSnapshot] = useState(initialSnapshot);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [viewerCountDraft, setViewerCountDraft] = useState(String(initialSnapshot.live.viewerCount));
+  const [saveMessage, setSaveMessage] = useState("");
   const { live } = snapshot;
 
+  async function refresh(shouldSyncDraft = !editorOpen) {
+    const response = await fetch("/api/live/public", { cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json();
+    setSnapshot(data);
+    if (shouldSyncDraft) setViewerCountDraft(String(data.live.viewerCount));
+  }
+
   useEffect(() => {
-    async function refresh() {
-      const response = await fetch("/api/live/public", { cache: "no-store" });
-      if (!response.ok) return;
-      setSnapshot(await response.json());
+    const timer = window.setInterval(() => refresh(), 5000);
+    return () => window.clearInterval(timer);
+  }, [editorOpen]);
+
+  useEffect(() => {
+    const pressed = new Set<string>();
+
+    function maybeOpenEditor() {
+      if (
+        (pressed.has("ShiftLeft") || pressed.has("ShiftRight")) &&
+        pressed.has("KeyP") &&
+        pressed.has("Digit3")
+      ) {
+        setEditorOpen(true);
+      }
     }
 
-    const timer = window.setInterval(refresh, 15000);
-    return () => window.clearInterval(timer);
+    function down(event: KeyboardEvent) {
+      pressed.add(event.code);
+      maybeOpenEditor();
+    }
+
+    function up(event: KeyboardEvent) {
+      pressed.delete(event.code);
+    }
+
+    window.addEventListener("keydown", down);
+    window.addEventListener("keyup", up);
+    return () => {
+      window.removeEventListener("keydown", down);
+      window.removeEventListener("keyup", up);
+    };
   }, []);
+
+  async function saveViewerCount() {
+    setSaveMessage("Saving...");
+    const response = await fetch("/api/live/viewer-count", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ viewerCount: viewerCountDraft }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setSaveMessage(payload.error || "Could not save viewer count.");
+      return;
+    }
+    setSnapshot(payload.data);
+    setViewerCountDraft(String(payload.data.live.viewerCount));
+    setSaveMessage("Saved.");
+  }
 
   return (
     <div className="min-h-screen bg-[#f8f7f3] text-[#171b24]">
@@ -67,6 +119,38 @@ export function LivePublic({ initialSnapshot }: { initialSnapshot: LiveSnapshotP
             <aside className="rounded-lg border border-[#ddd7cd] bg-white p-5 shadow-[0_18px_50px_rgba(29,33,42,0.06)]">
               <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#707887]">Session status</div>
               <div className="mt-2 text-2xl font-semibold">{live.isLive ? "On air" : "Standby"}</div>
+              <div className="mt-5 text-xs font-semibold uppercase tracking-[0.14em] text-[#707887]">Viewers</div>
+              <div className="mt-2 text-2xl font-semibold">{live.viewerCount.toLocaleString()}</div>
+              {editorOpen ? (
+                <div className="mt-4 rounded-md border border-[#d6d0c5] bg-[#fbfaf7] p-3">
+                  <label className="block">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#707887]">Testing count</span>
+                    <input
+                      value={viewerCountDraft}
+                      onChange={(event) => setViewerCountDraft(event.target.value)}
+                      className="mt-2 w-full rounded-md border border-[#d6d0c5] bg-white px-3 py-2 text-sm outline-none transition focus:border-[#1f3447] focus:ring-2 focus:ring-[#1f3447]/15"
+                      inputMode="numeric"
+                    />
+                  </label>
+                  <div className="mt-3 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={saveViewerCount}
+                      className="rounded-md bg-[#1f3447] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#162635]"
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditorOpen(false)}
+                      className="rounded-md border border-[#d6d0c5] bg-white px-3 py-2 text-sm font-semibold text-[#2d3342] transition hover:border-[#1f3447]"
+                    >
+                      Hide
+                    </button>
+                  </div>
+                  {saveMessage ? <div className="mt-2 text-xs font-semibold text-[#606978]">{saveMessage}</div> : null}
+                </div>
+              ) : null}
               <div className="mt-5 h-px bg-[#e6e1d8]" />
               <div className="mt-5 text-xs font-semibold uppercase tracking-[0.14em] text-[#707887]">Started</div>
               <div className="mt-2 text-sm font-medium text-[#3d4553]">{formatLiveTime(live.startedAt)}</div>

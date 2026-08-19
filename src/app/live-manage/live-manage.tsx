@@ -24,6 +24,7 @@ function defaultSnapshot(): LiveSnapshotPayload {
       title: DEFAULT_LIVE_TITLE,
       description: DEFAULT_LIVE_DESCRIPTION,
       roomName: createLiveRoomName(),
+      viewerCount: 0,
       startedAt: null,
       endedAt: null,
       updatedAt: now,
@@ -195,16 +196,6 @@ export function LiveManage() {
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#707887]">Public broadcast</p>
                   <h2 className="mt-2 text-3xl font-semibold tracking-normal">{draft.isLive ? "Live is on" : "Live is off"}</h2>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-[#606978]">Go live opens the browser picker so you can choose a tab or screen. Viewers stay on `/live` and receive the feed there.</p>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setLive(!draft.isLive)}
-                    disabled={busy}
-                    className={`rounded-md px-5 py-3 text-sm font-semibold text-white transition disabled:opacity-50 ${draft.isLive ? "bg-[#842839] hover:bg-[#6e1f2e]" : "bg-[#174c33] hover:bg-[#113b27]"}`}
-                  >
-                    {draft.isLive ? "Turn live off" : "Go live"}
-                  </button>
                 </div>
               </div>
 

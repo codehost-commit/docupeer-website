@@ -3,6 +3,7 @@ export type LiveStatePayload = {
   title: string;
   description: string;
   roomName: string;
+  viewerCount: number;
   startedAt: number | null;
   endedAt: number | null;
   updatedAt: number;
