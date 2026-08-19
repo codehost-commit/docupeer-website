@@ -30,3 +30,8 @@ export function createLiveRoomName() {
   const suffix = Math.random().toString(36).slice(2, 10);
   return `DocuPeerLive-${stamp}-${suffix}`;
 }
+
+export function liveRoomUrl(roomName: string) {
+  const safeRoom = roomName.trim().replace(/[^a-zA-Z0-9_-]/g, "");
+  return `https://meet.jit.si/${safeRoom || createLiveRoomName()}`;
+}

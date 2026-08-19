@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { JitsiStage } from "@/app/live/JitsiStage";
 import {
   DEFAULT_LIVE_DESCRIPTION,
   DEFAULT_LIVE_TITLE,
   createLiveRoomName,
   formatLiveTime,
+  liveRoomUrl,
   type LiveSnapshotPayload,
 } from "@/lib/live-shared";
 
@@ -82,7 +82,6 @@ export function LiveManage() {
   const [draft, setDraft] = useState(defaultSnapshot().live);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
-  const [hostRoomActive, setHostRoomActive] = useState(false);
 
   const dirty = useMemo(
     () =>
@@ -102,7 +101,6 @@ export function LiveManage() {
     const data = await response.json();
     setSnapshot(data);
     setDraft(data.live);
-    setHostRoomActive(data.live.isLive);
   }
 
   useEffect(() => {
@@ -132,7 +130,6 @@ export function LiveManage() {
       if (!response.ok) throw new Error(payload.error || "Could not save live settings.");
       setSnapshot(payload.data);
       setDraft(payload.data.live);
-      setHostRoomActive(payload.data.live.isLive);
       setMessage(payload.data.live.isLive ? "Live broadcast is on." : "Live broadcast is off.");
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Could not save live settings.");
@@ -150,7 +147,6 @@ export function LiveManage() {
   function rotateRoom() {
     const nextRoom = createLiveRoomName();
     setDraft((current) => ({ ...current, roomName: nextRoom }));
-    setHostRoomActive(false);
     setMessage("New room created. Save before going live.");
   }
 
@@ -186,8 +182,43 @@ export function LiveManage() {
 
         <main className="grid gap-8 py-8 xl:grid-cols-[minmax(0,1fr)_24rem]">
           <div className="space-y-8">
-            <section>
-              <JitsiStage roomName={draft.roomName} title={draft.title} mode="host" active={hostRoomActive} />
+            <section className="overflow-hidden rounded-lg border border-[#1d2531] bg-[#090d13] shadow-[0_26px_80px_rgba(8,13,20,0.28)]">
+              <div className="relative aspect-video w-full">
+                <div className="absolute inset-0 bg-[linear-gradient(135deg,#0b1017_0%,#1b2936_50%,#0d141d_100%)]" />
+                <div className="absolute inset-0 opacity-[0.14] [background-image:linear-gradient(#ffffff_1px,transparent_1px),linear-gradient(90deg,#ffffff_1px,transparent_1px)] [background-size:46px_46px]" />
+                <div className="relative z-10 grid h-full place-items-center px-5 text-center">
+                  <div className="max-w-2xl">
+                    <div className={`mx-auto inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-semibold ${draft.isLive ? "border-[#5fb47d]/40 bg-[#173321] text-[#dff7e8]" : "border-white/15 bg-white/5 text-[#d4deea]"}`}>
+                      <span className={`h-2.5 w-2.5 rounded-full ${draft.isLive ? "bg-[#5fb47d]" : "bg-[#8b96a5]"}`} />
+                      {draft.isLive ? "Public room is live" : "Public room is offline"}
+                    </div>
+                    <h2 className="mt-6 text-4xl font-semibold tracking-normal text-white sm:text-6xl">
+                      Host in Jitsi
+                    </h2>
+                    <p className="mx-auto mt-5 max-w-xl text-sm leading-6 text-[#bac7d5] sm:text-base">
+                      Open the room in Jitsi, run the four-person call there, and share your Jitsi tab or screen from Jitsi itself.
+                    </p>
+                    <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+                      <a
+                        href={liveRoomUrl(draft.roomName)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-md bg-white px-6 py-3 text-sm font-semibold text-[#10151d] transition hover:bg-[#e9eef4]"
+                      >
+                        Open Jitsi room
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => setLive(!draft.isLive)}
+                        disabled={busy}
+                        className={`rounded-md px-6 py-3 text-sm font-semibold text-white transition disabled:opacity-50 ${draft.isLive ? "bg-[#842839] hover:bg-[#6e1f2e]" : "bg-[#174c33] hover:bg-[#113b27]"}`}
+                      >
+                        {draft.isLive ? "Turn live off" : "Go live"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </section>
 
             <section className="rounded-lg border border-[#dcd6cb] bg-white p-6 shadow-[0_18px_50px_rgba(29,33,42,0.07)]">
@@ -195,16 +226,17 @@ export function LiveManage() {
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#707887]">Public broadcast</p>
                   <h2 className="mt-2 text-3xl font-semibold tracking-normal">{draft.isLive ? "Live is on" : "Live is off"}</h2>
-                  <p className="mt-2 max-w-2xl text-sm leading-6 text-[#606978]">The public page uses this room and metadata. Join the host room, press share, then turn live on when the feed is ready.</p>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-[#606978]">The public page uses this room and metadata. Open Jitsi in a normal tab, start the call there, then turn live on when the room is ready.</p>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setHostRoomActive((value) => !value)}
+                  <a
+                    href={liveRoomUrl(draft.roomName)}
+                    target="_blank"
+                    rel="noreferrer"
                     className="rounded-md border border-[#d6d0c5] bg-white px-4 py-3 text-sm font-semibold text-[#2d3342] transition hover:border-[#1f3447]"
                   >
-                    {hostRoomActive ? "Close host room" : "Open host room"}
-                  </button>
+                    Open Jitsi room
+                  </a>
                   <button
                     type="button"
                     onClick={() => setLive(!draft.isLive)}
@@ -242,10 +274,18 @@ export function LiveManage() {
                 <div className="rounded-lg border border-[#ded8cc] bg-[#fbfaf7] p-4">
                   <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[#707887]">Room</div>
                   <div className="mt-2 break-all font-mono text-sm text-[#2d3342]">{draft.roomName}</div>
+                  <a
+                    href={liveRoomUrl(draft.roomName)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-4 block w-full rounded-md bg-[#1f3447] px-3 py-2 text-center text-sm font-semibold text-white transition hover:bg-[#162635]"
+                  >
+                    Open current room
+                  </a>
                   <button
                     type="button"
                     onClick={rotateRoom}
-                    className="mt-4 w-full rounded-md border border-[#d6d0c5] bg-white px-3 py-2 text-sm font-semibold text-[#2d3342] transition hover:border-[#1f3447]"
+                    className="mt-3 w-full rounded-md border border-[#d6d0c5] bg-white px-3 py-2 text-sm font-semibold text-[#2d3342] transition hover:border-[#1f3447]"
                   >
                     New private room
                   </button>
@@ -292,8 +332,8 @@ export function LiveManage() {
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#b7c7d6]">Broadcast checklist</p>
               <div className="mt-5 space-y-3 text-sm text-[#d7e1eb]">
                 <div className="flex items-center justify-between gap-4">
-                  <span>Host room open</span>
-                  <strong>{hostRoomActive ? "Yes" : "No"}</strong>
+                  <span>Jitsi room</span>
+                  <strong>External</strong>
                 </div>
                 <div className="flex items-center justify-between gap-4">
                   <span>Details saved</span>
