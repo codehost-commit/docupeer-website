@@ -119,17 +119,14 @@ function Login({ onLogin }: { onLogin: () => void }) {
 function MetricCard({
   label,
   value,
-  detail,
 }: {
   label: string;
   value: number;
-  detail: string;
 }) {
   return (
     <section className="rounded-lg border border-[#dcd6cb] bg-white p-5 shadow-[0_18px_50px_rgba(29,33,42,0.07)]">
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#707887]">{label}</p>
       <div className="mt-4 text-4xl font-semibold tracking-normal text-[#171b24] sm:text-5xl">{formatNumber(value)}</div>
-      <p className="mt-3 text-sm leading-6 text-[#606978]">{detail}</p>
     </section>
   );
 }
@@ -327,17 +324,14 @@ export function AdminConsole() {
                 <MetricCard
                   label="Page views"
                   value={metrics?.pageViews ?? 0}
-                  detail="Non-unique total from browser page loads."
                 />
                 <MetricCard
                   label="Signed-up users"
                   value={metrics?.signedUpUsers ?? 0}
-                  detail={`Live database count: ${formatNumber(metrics?.realSignedUpUsers ?? 0)}.`}
                 />
                 <MetricCard
                   label="Papers uploaded"
                   value={metrics?.papersUploaded ?? 0}
-                  detail={`Live database count: ${formatNumber(metrics?.realPapersUploaded ?? 0)}.`}
                 />
               </div>
             </section>
