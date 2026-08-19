@@ -392,23 +392,6 @@ export function AdminConsole() {
               </div>
             </section>
 
-            <section className="rounded-lg border border-[#dcd6cb] bg-[#1f3447] p-5 text-white shadow-[0_18px_50px_rgba(29,33,42,0.10)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#b7c7d6]">Database baseline</p>
-              <div className="mt-5 space-y-3 text-sm text-[#d7e1eb]">
-                <div className="flex items-center justify-between gap-4">
-                  <span>Users</span>
-                  <strong>{formatNumber(metrics?.realSignedUpUsers ?? 0)}</strong>
-                </div>
-                <div className="flex items-center justify-between gap-4">
-                  <span>Papers</span>
-                  <strong>{formatNumber(metrics?.realPapersUploaded ?? 0)}</strong>
-                </div>
-                <div className="flex items-center justify-between gap-4">
-                  <span>Overrides</span>
-                  <strong>{metrics?.overrides.signedUpUsers != null || metrics?.overrides.papersUploaded != null ? "On" : "Off"}</strong>
-                </div>
-              </div>
-            </section>
           </aside>
         </main>
       </div>
