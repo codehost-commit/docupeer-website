@@ -127,6 +127,7 @@ export async function saveLiveState(input: {
 
   if (!nextIsLive) {
     await prisma.siteLivePeer.deleteMany({});
+    await prisma.siteLiveCandidate.deleteMany({});
   }
 }
 
@@ -145,12 +146,12 @@ export function hasLiveManageAccess(req: Request) {
 }
 
 async function pruneLivePeers() {
+  const cutoff = new Date(Date.now() - LIVE_PEER_TTL_MS);
+  await prisma.siteLiveCandidate.deleteMany({
+    where: { createdAt: { lt: cutoff } },
+  });
   await prisma.siteLivePeer.deleteMany({
-    where: {
-      updatedAt: {
-        lt: new Date(Date.now() - LIVE_PEER_TTL_MS),
-      },
-    },
+    where: { updatedAt: { lt: cutoff } },
   });
 }
 
@@ -163,6 +164,10 @@ function cleanViewerId(value: unknown) {
 
 function cleanSdp(value: unknown) {
   return String(value || "").trim().slice(0, 200000);
+}
+
+function cleanCandidate(value: unknown) {
+  return String(value || "").trim().slice(0, 50000);
 }
 
 export async function registerLiveOffer(input: { viewerId?: unknown; offerSdp?: unknown }) {
@@ -195,6 +200,10 @@ export async function registerLiveOffer(input: { viewerId?: unknown; offerSdp?: 
       status: "pending",
     },
   });
+
+  await prisma.siteLiveCandidate.deleteMany({
+    where: { viewerId },
+  });
 }
 
 export async function getLiveAnswer(viewerIdInput: unknown) {
@@ -209,6 +218,49 @@ export async function getLiveAnswer(viewerIdInput: unknown) {
       updatedAt: true,
     },
   });
+}
+
+export async function addLiveCandidate(input: {
+  viewerId?: unknown;
+  candidate?: unknown;
+  side: "viewer" | "host";
+}) {
+  const viewerId = cleanViewerId(input.viewerId);
+  const candidate = cleanCandidate(input.candidate);
+  if (!viewerId || !candidate) return;
+  await pruneLivePeers();
+  await prisma.siteLiveCandidate.create({
+    data: {
+      viewerId,
+      side: input.side,
+      candidate,
+    },
+  });
+}
+
+export async function liveCandidates(input: {
+  viewerId?: unknown;
+  side: "viewer" | "host";
+  after?: unknown;
+}) {
+  const viewerId = cleanViewerId(input.viewerId);
+  if (!viewerId) return [];
+  const after = Math.max(0, Math.floor(Number(input.after || 0)));
+  await pruneLivePeers();
+  const rows = await prisma.siteLiveCandidate.findMany({
+    where: {
+      viewerId,
+      side: input.side,
+      createdAt: after ? { gt: new Date(after) } : undefined,
+    },
+    orderBy: { createdAt: "asc" },
+    take: 100,
+  });
+  return rows.map((row) => ({
+    id: row.id,
+    candidate: row.candidate,
+    createdAt: row.createdAt.getTime(),
+  }));
 }
 
 export async function pendingLivePeers() {
@@ -231,6 +283,9 @@ export async function failLivePeer(viewerIdInput: unknown) {
   await prisma.siteLivePeer.updateMany({
     where: { viewerId },
     data: { status: "failed" },
+  });
+  await prisma.siteLiveCandidate.deleteMany({
+    where: { viewerId },
   });
 }
 

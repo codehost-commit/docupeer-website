@@ -5,25 +5,22 @@ import { useEffect, useRef, useState } from "react";
 const ICE_SERVERS: RTCIceServer[] = [
   { urls: "stun:stun.l.google.com:19302" },
   { urls: "stun:stun1.l.google.com:19302" },
+  { urls: "stun:openrelay.metered.ca:80" },
+  {
+    urls: [
+      "turn:openrelay.metered.ca:80",
+      "turn:openrelay.metered.ca:443",
+      "turn:openrelay.metered.ca:443?transport=tcp",
+    ],
+    username: "openrelayproject",
+    credential: "openrelayproject",
+  },
 ];
 
 type PendingPeer = {
   viewerId: string;
   offerSdp: string;
 };
-
-function waitForIceGathering(peer: RTCPeerConnection) {
-  if (peer.iceGatheringState === "complete") return Promise.resolve();
-  return new Promise<void>((resolve) => {
-    const timeout = window.setTimeout(resolve, 3500);
-    peer.addEventListener("icegatheringstatechange", () => {
-      if (peer.iceGatheringState === "complete") {
-        window.clearTimeout(timeout);
-        resolve();
-      }
-    });
-  });
-}
 
 export function ScreenBroadcaster({
   isLive,
@@ -107,18 +104,48 @@ export function ScreenBroadcaster({
   }
 
   async function answerPeer(peerData: PendingPeer) {
-    if (!streamRef.current || peersRef.current.has(peerData.viewerId)) return;
+    if (!streamRef.current) return;
+    const existingPeer = peersRef.current.get(peerData.viewerId);
+    if (existingPeer) {
+      existingPeer.close();
+      peersRef.current.delete(peerData.viewerId);
+    }
     const peer = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    let lastViewerCandidateAt = 0;
+    let candidateTimer = 0;
     try {
       peersRef.current.set(peerData.viewerId, peer);
       setViewerCount(peersRef.current.size);
+
+      peer.onicecandidate = (event) => {
+        if (!event.candidate) return;
+        fetch("/api/live-manage/webrtc/candidate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-docupeer-live-admin": "browser-managed",
+          },
+          body: JSON.stringify({
+            viewerId: peerData.viewerId,
+            candidate: JSON.stringify(event.candidate.toJSON()),
+          }),
+        }).catch(() => {});
+      };
 
       streamRef.current.getTracks().forEach((track) => {
         if (streamRef.current) peer.addTrack(track, streamRef.current);
       });
 
       peer.onconnectionstatechange = () => {
+        if (peer.connectionState === "connected" && candidateTimer) {
+          window.clearInterval(candidateTimer);
+          candidateTimer = 0;
+        }
         if (["failed", "closed", "disconnected"].includes(peer.connectionState)) {
+          if (candidateTimer) {
+            window.clearInterval(candidateTimer);
+            candidateTimer = 0;
+          }
           peer.close();
           peersRef.current.delete(peerData.viewerId);
           setViewerCount(peersRef.current.size);
@@ -126,9 +153,24 @@ export function ScreenBroadcaster({
       };
 
       await peer.setRemoteDescription({ type: "offer", sdp: peerData.offerSdp });
+      candidateTimer = window.setInterval(async () => {
+        try {
+          const response = await fetch(`/api/live-manage/webrtc/candidates?viewerId=${encodeURIComponent(peerData.viewerId)}&after=${lastViewerCandidateAt}`, {
+            cache: "no-store",
+            headers: { "x-docupeer-live-admin": "browser-managed" },
+          });
+          if (!response.ok) return;
+          const data = await response.json();
+          const candidates: { candidate: string; createdAt: number }[] = Array.isArray(data.candidates) ? data.candidates : [];
+          for (const item of candidates) {
+            lastViewerCandidateAt = Math.max(lastViewerCandidateAt, Number(item.createdAt || 0));
+            await peer.addIceCandidate(JSON.parse(item.candidate));
+          }
+        } catch {}
+      }, 1000);
+
       const answer = await peer.createAnswer();
       await peer.setLocalDescription(answer);
-      await waitForIceGathering(peer);
       if (!peer.localDescription) throw new Error("Missing local description.");
 
       const response = await fetch("/api/live-manage/webrtc/answer", {
@@ -145,6 +187,7 @@ export function ScreenBroadcaster({
 
       if (!response.ok) throw new Error("Could not save answer.");
     } catch {
+      if (candidateTimer) window.clearInterval(candidateTimer);
       peer.close();
       peersRef.current.delete(peerData.viewerId);
       setViewerCount(peersRef.current.size);

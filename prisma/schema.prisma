@@ -144,3 +144,14 @@ model SiteLivePeer {
   @@index([status, updatedAt])
   @@index([updatedAt])
 }
+
+model SiteLiveCandidate {
+  id        String   @id @default(cuid())
+  viewerId String
+  side      String
+  candidate String
+  createdAt DateTime @default(now())
+
+  @@index([viewerId, side, createdAt])
+  @@index([createdAt])
+}

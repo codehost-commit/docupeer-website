@@ -339,7 +339,7 @@ export default function Home() {
               },
               {
                 q: "Who is behind DocuPeer?",
-                a: "DocuPeer is built by Rahul Awasthi, Co-Founder & CEO, Aryan Patel, Co-Founder & COO, Akshaj Reddy Sanikommu, Interim CTO, and Pritam Avuthu, Interim CMO. Together they are building a free peer review platform focused on thoughtful, high-quality feedback.",
+                a: "DocuPeer is built by Rahul Awasthi, Co-Founder & CEO, Aryan Patel, Co-Founder & COO, Akshaj Reddy Sanikommu, Interim CTO, and Pritam Avuthu, CMO. Together they are building a free peer review platform focused on thoughtful, high-quality feedback.",
               },
             ].map((item) => (
               <div key={item.q} className="surface p-6">
@@ -382,7 +382,7 @@ export default function Home() {
           <LeadershipCard
             title="A Word From Our CMO"
             name="Pritam Avuthu"
-            role="Interim CMO"
+            role="CMO"
             imageSrc="/team/pritam-cutout.png"
             imageAlt="Pritam Avuthu"
             imageSide="right"

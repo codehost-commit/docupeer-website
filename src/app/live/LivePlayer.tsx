@@ -6,27 +6,20 @@ import { type LiveSnapshotPayload } from "@/lib/live-shared";
 const ICE_SERVERS: RTCIceServer[] = [
   { urls: "stun:stun.l.google.com:19302" },
   { urls: "stun:stun1.l.google.com:19302" },
+  { urls: "stun:openrelay.metered.ca:80" },
+  {
+    urls: [
+      "turn:openrelay.metered.ca:80",
+      "turn:openrelay.metered.ca:443",
+      "turn:openrelay.metered.ca:443?transport=tcp",
+    ],
+    username: "openrelayproject",
+    credential: "openrelayproject",
+  },
 ];
 
-function viewerId() {
-  const existing = window.sessionStorage.getItem("docupeer-live-viewer-id");
-  if (existing) return existing;
-  const id = `viewer-${crypto.randomUUID()}`;
-  window.sessionStorage.setItem("docupeer-live-viewer-id", id);
-  return id;
-}
-
-function waitForIceGathering(peer: RTCPeerConnection) {
-  if (peer.iceGatheringState === "complete") return Promise.resolve();
-  return new Promise<void>((resolve) => {
-    const timeout = window.setTimeout(resolve, 3500);
-    peer.addEventListener("icegatheringstatechange", () => {
-      if (peer.iceGatheringState === "complete") {
-        window.clearTimeout(timeout);
-        resolve();
-      }
-    });
-  });
+function createViewerId() {
+  return `viewer-${Date.now()}-${crypto.randomUUID()}`;
 }
 
 export function LivePlayer({ snapshot }: { snapshot: LiveSnapshotPayload }) {
@@ -38,6 +31,7 @@ export function LivePlayer({ snapshot }: { snapshot: LiveSnapshotPayload }) {
 
   useEffect(() => {
     let disposed = false;
+    let candidateTimer = 0;
 
     async function connect() {
       setError("");
@@ -51,10 +45,23 @@ export function LivePlayer({ snapshot }: { snapshot: LiveSnapshotPayload }) {
       }
 
       setState("Connecting");
-      const id = viewerId();
+      const id = createViewerId();
       const peer = new RTCPeerConnection({ iceServers: ICE_SERVERS });
       peerRef.current = peer;
       const stream = new MediaStream();
+      let lastHostCandidateAt = 0;
+
+      peer.onicecandidate = (event) => {
+        if (!event.candidate) return;
+        fetch("/api/live/webrtc/candidate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            viewerId: id,
+            candidate: JSON.stringify(event.candidate.toJSON()),
+          }),
+        }).catch(() => {});
+      };
 
       peer.addTransceiver("video", { direction: "recvonly" });
       peer.addTransceiver("audio", { direction: "recvonly" });
@@ -70,10 +77,14 @@ export function LivePlayer({ snapshot }: { snapshot: LiveSnapshotPayload }) {
         if (peer.connectionState === "failed") setError("The live connection could not be established. Refresh and try again.");
         if (peer.connectionState === "connected") setState("Live");
       };
+      peer.oniceconnectionstatechange = () => {
+        if (peer.iceConnectionState === "checking") setState("Opening stream");
+        if (["connected", "completed"].includes(peer.iceConnectionState)) setState("Live");
+        if (peer.iceConnectionState === "failed") setError("The live stream could not cross the network. Refresh and try again.");
+      };
 
       const offer = await peer.createOffer();
       await peer.setLocalDescription(offer);
-      await waitForIceGathering(peer);
       if (disposed || !peer.localDescription) return;
 
       const offerResponse = await fetch("/api/live/webrtc/offer", {
@@ -82,6 +93,22 @@ export function LivePlayer({ snapshot }: { snapshot: LiveSnapshotPayload }) {
         body: JSON.stringify({ viewerId: id, offerSdp: peer.localDescription.sdp }),
       });
       if (!offerResponse.ok) throw new Error("The live room is not accepting viewers yet.");
+      setState("Waiting for host console");
+
+      candidateTimer = window.setInterval(async () => {
+        try {
+          const response = await fetch(`/api/live/webrtc/candidates?viewerId=${encodeURIComponent(id)}&after=${lastHostCandidateAt}`, {
+            cache: "no-store",
+          });
+          if (!response.ok) return;
+          const data = await response.json();
+          const candidates: { candidate: string; createdAt: number }[] = Array.isArray(data.candidates) ? data.candidates : [];
+          for (const item of candidates) {
+            lastHostCandidateAt = Math.max(lastHostCandidateAt, Number(item.createdAt || 0));
+            await peer.addIceCandidate(JSON.parse(item.candidate));
+          }
+        } catch {}
+      }, 1000);
 
       for (let attempt = 0; attempt < 40 && !disposed; attempt += 1) {
         const answerResponse = await fetch(`/api/live/webrtc/answer?viewerId=${encodeURIComponent(id)}`, {
@@ -91,13 +118,14 @@ export function LivePlayer({ snapshot }: { snapshot: LiveSnapshotPayload }) {
           const data = await answerResponse.json();
           if (data.answerSdp) {
             await peer.setRemoteDescription({ type: "answer", sdp: data.answerSdp });
-            setState("Live");
+            setState("Waiting for media");
             return;
           }
         }
         await new Promise((resolve) => window.setTimeout(resolve, 1500));
       }
 
+      window.clearInterval(candidateTimer);
       if (!disposed) throw new Error("The host has not accepted this viewer connection yet.");
     }
 
@@ -110,6 +138,7 @@ export function LivePlayer({ snapshot }: { snapshot: LiveSnapshotPayload }) {
 
     return () => {
       disposed = true;
+      if (candidateTimer) window.clearInterval(candidateTimer);
       peerRef.current?.close();
       peerRef.current = null;
     };

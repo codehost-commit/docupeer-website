@@ -48,7 +48,7 @@ const FOUNDERS: Person[] = [
 
 const TEAM: Person[] = [
   { name: "Akshaj Reddy Sanikommu", role: "Interim CTO", image: "/team/akshaj.jpeg" },
-  { name: "Pritam Avuthu", role: "Interim CMO", image: "/team/pritam.jpeg" },
+  { name: "Pritam Avuthu", role: "CMO", image: "/team/pritam.jpeg" },
 ];
 
 function initials(name: string) {

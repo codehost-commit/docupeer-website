@@ -536,7 +536,7 @@ export default function LegalPage() {
                     <span className="font-semibold text-deep-text">
                       Pritam Avuthu
                     </span>{" "}
-                    &mdash; Interim CMO.
+                    &mdash; CMO.
                   </li>
                 </ul>
                 <p>
