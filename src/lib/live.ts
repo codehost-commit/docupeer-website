@@ -187,6 +187,10 @@ export async function registerLiveOffer(input: { viewerId?: unknown; offerSdp?: 
   }
 
   await pruneLivePeers();
+  await prisma.siteLiveCandidate.deleteMany({
+    where: { viewerId },
+  });
+
   await prisma.siteLivePeer.upsert({
     where: { viewerId },
     update: {
@@ -199,10 +203,6 @@ export async function registerLiveOffer(input: { viewerId?: unknown; offerSdp?: 
       offerSdp,
       status: "pending",
     },
-  });
-
-  await prisma.siteLiveCandidate.deleteMany({
-    where: { viewerId },
   });
 }
 

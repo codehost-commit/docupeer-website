@@ -22,6 +22,13 @@ type PendingPeer = {
   offerSdp: string;
 };
 
+type HostStatus = {
+  label: string;
+  pending: number;
+  answered: number;
+  lastError: string;
+};
+
 export function ScreenBroadcaster({
   isLive,
   busy,
@@ -36,13 +43,21 @@ export function ScreenBroadcaster({
   const previewRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const peersRef = useRef<Map<string, RTCPeerConnection>>(new Map());
+  const answeringRef = useRef<Set<string>>(new Set());
   const [sharing, setSharing] = useState(false);
   const [viewerCount, setViewerCount] = useState(0);
   const [message, setMessage] = useState("Choose a tab or screen before going live.");
+  const [hostStatus, setHostStatus] = useState<HostStatus>({
+    label: "Host loop idle",
+    pending: 0,
+    answered: 0,
+    lastError: "",
+  });
 
   function closePeers() {
     peersRef.current.forEach((peer) => peer.close());
     peersRef.current.clear();
+    answeringRef.current.clear();
     setViewerCount(0);
   }
 
@@ -52,6 +67,11 @@ export function ScreenBroadcaster({
     if (previewRef.current) previewRef.current.srcObject = null;
     setSharing(false);
     closePeers();
+    setHostStatus((current) => ({
+      ...current,
+      label: "Screen share stopped",
+      pending: 0,
+    }));
   }
 
   async function startShare() {
@@ -80,6 +100,11 @@ export function ScreenBroadcaster({
     }
     setSharing(true);
     setMessage("Screen share is ready. Tab audio works when your browser includes audio in the selected share.");
+    setHostStatus((current) => ({
+      ...current,
+      label: isLive ? "Host loop starting" : "Preview ready",
+      lastError: "",
+    }));
 
     stream.getVideoTracks()[0]?.addEventListener("ended", () => {
       stopStream();
@@ -95,16 +120,27 @@ export function ScreenBroadcaster({
     if (!ready) ready = await startShare();
     if (!ready) return;
     await onGoLive();
+    setHostStatus((current) => ({
+      ...current,
+      label: "Host loop starting",
+      lastError: "",
+    }));
   }
 
   async function handleStop() {
     await onStopLive();
     stopStream();
     setMessage("Live broadcast stopped.");
+    setHostStatus({
+      label: "Host loop idle",
+      pending: 0,
+      answered: 0,
+      lastError: "",
+    });
   }
 
   async function answerPeer(peerData: PendingPeer) {
-    if (!streamRef.current) return;
+    if (!streamRef.current) throw new Error("No screen is selected in this admin tab.");
     const existingPeer = peersRef.current.get(peerData.viewerId);
     if (existingPeer) {
       existingPeer.close();
@@ -116,6 +152,11 @@ export function ScreenBroadcaster({
     try {
       peersRef.current.set(peerData.viewerId, peer);
       setViewerCount(peersRef.current.size);
+      setHostStatus((current) => ({
+        ...current,
+        label: `Answering ${peerData.viewerId.slice(0, 18)}...`,
+        lastError: "",
+      }));
 
       peer.onicecandidate = (event) => {
         if (!event.candidate) return;
@@ -186,7 +227,14 @@ export function ScreenBroadcaster({
       });
 
       if (!response.ok) throw new Error("Could not save answer.");
-    } catch {
+      setHostStatus((current) => ({
+        ...current,
+        label: "Viewer answered",
+        answered: current.answered + 1,
+        lastError: "",
+      }));
+      setMessage("Viewer connection answered. The public page should switch from waiting to the live feed.");
+    } catch (err) {
       if (candidateTimer) window.clearInterval(candidateTimer);
       peer.close();
       peersRef.current.delete(peerData.viewerId);
@@ -199,34 +247,77 @@ export function ScreenBroadcaster({
         },
         body: JSON.stringify({ viewerId: peerData.viewerId }),
       }).catch(() => {});
+      throw err;
     }
   }
 
   useEffect(() => {
-    if (!isLive || !streamRef.current) return;
+    if (!isLive) {
+      setHostStatus((current) => ({
+        ...current,
+        label: "Host loop idle",
+        pending: 0,
+      }));
+      return;
+    }
     let cancelled = false;
 
     async function poll() {
       try {
+        if (!streamRef.current) {
+          setHostStatus((current) => ({
+            ...current,
+            label: "Live is on, but no screen is selected",
+            lastError: "Click Pick screen or Stop live. Browsers do not allow screen sharing to start without a click.",
+          }));
+          setMessage("Live is on, but this admin tab is not sharing a screen.");
+        }
+
         const response = await fetch("/api/live-manage/webrtc/peers", {
           cache: "no-store",
           headers: { "x-docupeer-live-admin": "browser-managed" },
         });
-        if (!response.ok) return;
+        if (!response.ok) throw new Error(`Peer poll failed with ${response.status}.`);
         const data = await response.json();
         const peers: PendingPeer[] = Array.isArray(data.peers) ? data.peers : [];
+        setHostStatus((current) => ({
+          ...current,
+          label: streamRef.current ? "Host loop listening" : "Waiting for screen selection",
+          pending: peers.length,
+          lastError: streamRef.current ? "" : current.lastError,
+        }));
+        if (!streamRef.current) return;
         for (const peer of peers) {
-          if (!cancelled) {
-            await answerPeer(peer);
-          }
+          if (cancelled || answeringRef.current.has(peer.viewerId) || peersRef.current.has(peer.viewerId)) continue;
+          answeringRef.current.add(peer.viewerId);
+          answerPeer(peer)
+            .catch((err) => {
+              if (!cancelled) {
+                setHostStatus((current) => ({
+                  ...current,
+                  label: "Answer failed",
+                  lastError: err instanceof Error ? err.message : "Could not answer a viewer.",
+                }));
+                setMessage(err instanceof Error ? err.message : "Could not answer a viewer.");
+              }
+            })
+            .finally(() => {
+              answeringRef.current.delete(peer.viewerId);
+            });
         }
-      } catch {
-        setMessage("Still live, but viewer signaling is having trouble.");
+      } catch (err) {
+        const detail = err instanceof Error ? err.message : "Viewer signaling is having trouble.";
+        setHostStatus((current) => ({
+          ...current,
+          label: "Host loop error",
+          lastError: detail,
+        }));
+        setMessage(`Still live, but viewer signaling is having trouble: ${detail}`);
       }
     }
 
     poll();
-    const timer = window.setInterval(poll, 1800);
+    const timer = window.setInterval(poll, 900);
     return () => {
       cancelled = true;
       window.clearInterval(timer);
@@ -279,6 +370,26 @@ export function ScreenBroadcaster({
           >
             {isLive ? "Stop live" : "Go live"}
           </button>
+        </div>
+      </div>
+      <div className="grid gap-3 border-t border-white/10 bg-[#111923] p-3 text-sm text-[#d4deea] sm:grid-cols-4">
+        <div className="rounded-md border border-white/10 bg-white/[0.03] px-3 py-2">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8f9bab]">Host loop</div>
+          <div className="mt-1 font-semibold text-white">{hostStatus.label}</div>
+        </div>
+        <div className="rounded-md border border-white/10 bg-white/[0.03] px-3 py-2">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8f9bab]">Pending viewers</div>
+          <div className="mt-1 font-semibold text-white">{hostStatus.pending}</div>
+        </div>
+        <div className="rounded-md border border-white/10 bg-white/[0.03] px-3 py-2">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8f9bab]">Answered</div>
+          <div className="mt-1 font-semibold text-white">{hostStatus.answered}</div>
+        </div>
+        <div className="rounded-md border border-white/10 bg-white/[0.03] px-3 py-2">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8f9bab]">Last issue</div>
+          <div className="mt-1 truncate font-semibold text-white" title={hostStatus.lastError}>
+            {hostStatus.lastError || "None"}
+          </div>
         </div>
       </div>
     </section>
