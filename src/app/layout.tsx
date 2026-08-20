@@ -71,11 +71,11 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/favicon-32.png", type: "image/png", sizes: "32x32" },
-      { url: "/favicon-16.png", type: "image/png", sizes: "16x16" },
+      { url: "/docupeer-favicon.ico", sizes: "any" },
+      { url: "/docupeer-icon-32.png", type: "image/png", sizes: "32x32" },
+      { url: "/docupeer-icon-16.png", type: "image/png", sizes: "16x16" },
     ],
-    apple: [{ url: "/app-icon.png", sizes: "512x512" }],
+    apple: [{ url: "/docupeer-icon-512.png", sizes: "512x512" }],
   },
 };
 

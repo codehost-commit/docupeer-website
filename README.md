@@ -70,7 +70,7 @@ prisma/
   schema.prisma        # User, Paper, Review, Annotation
   seed.ts              # demo users and papers
 public/
-  logo.png             # brand mark (also used as favicon source)
+  docupeer-logo.png    # brand mark
   team/                # drop headshots here (see the folder README)
 scripts/
   test-logic.ts        # 24 unit tests for the pure business logic

@@ -19,7 +19,7 @@ export function Logo({
         style={{ width: size, height: size }}
       >
         <Image
-          src="/logo.png"
+          src="/docupeer-logo.png"
           alt="DocuPeer"
           width={size * 3}
           height={size * 3}

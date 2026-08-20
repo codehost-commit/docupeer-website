@@ -11,10 +11,11 @@ function isStaticPath(pathname: string) {
     pathname.startsWith("/_next") ||
     pathname.startsWith("/fonts") ||
     pathname.startsWith("/team") ||
-    pathname === "/favicon.ico" ||
-    pathname === "/favicon-16.png" ||
-    pathname === "/favicon-32.png" ||
-    pathname === "/app-icon.png" ||
+    pathname === "/docupeer-favicon.ico" ||
+    pathname === "/docupeer-icon-16.png" ||
+    pathname === "/docupeer-icon-32.png" ||
+    pathname === "/docupeer-icon-512.png" ||
+    pathname === "/docupeer-logo.png" ||
     pathname === "/opengraph-image" ||
     pathname === "/twitter-image" ||
     pathname === "/manifest.webmanifest" ||

@@ -18,6 +18,7 @@ const COLUMNS: Col[] = [
       { href: "/submit", label: "Submit your paper" },
       { href: "/dashboard", label: "Dashboard" },
       { href: "/history", label: "History" },
+      { href: "/tpt", label: "The People's Talk" },
       { href: "/live", label: "DocuPeer Live" },
     ],
   },
@@ -25,6 +26,7 @@ const COLUMNS: Col[] = [
     heading: "Community",
     links: [
       { href: "/about", label: "About" },
+      { href: "/tpt", label: "Community voices" },
       { href: "/register", label: "Create account" },
       { href: "/login", label: "Sign in" },
     ],

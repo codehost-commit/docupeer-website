@@ -38,7 +38,7 @@ export const organizationJsonLd = {
   "@type": "Organization",
   name: SITE_NAME,
   url: SITE_URL,
-  logo: absoluteUrl("/logo.png"),
+  logo: absoluteUrl("/docupeer-logo.png"),
   description: SITE_DESCRIPTION,
   founder: [
     {
