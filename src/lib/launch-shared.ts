@@ -1,5 +1,5 @@
-export const FEATURE_LAUNCH_TARGET = "2026-08-20T04:50:00.000Z";
-export const FEATURE_LAUNCH_LABEL = "11:50 PM CDT · AUG 19, 2026";
+export const FEATURE_LAUNCH_TARGET = "2026-08-20T05:00:00.000Z";
+export const FEATURE_LAUNCH_LABEL = "12:00 AM CDT · AUG 20, 2026";
 
 export type LaunchSnapshot = {
   isLaunched: boolean;
