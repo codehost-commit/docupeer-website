@@ -175,6 +175,14 @@ model AdminMetrics {
   updatedAt              DateTime @updatedAt
 }
 
+model SiteLaunchState {
+  id         String    @id @default("global")
+  isLaunched Boolean   @default(false)
+  targetAt   DateTime
+  launchedAt DateTime?
+  updatedAt  DateTime  @updatedAt
+}
+
 model TalkSubmission {
   id                String    @id @default(cuid())
   userId            String?

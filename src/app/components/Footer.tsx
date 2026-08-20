@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "./Logo";
+import { useLaunchState } from "./useLaunchState";
 
 // Editorial multi-column footer, Space Grotesk throughout.
 // Small uppercase blue column kickers, stacked link lists,
@@ -51,6 +52,7 @@ const COLUMNS: Col[] = [
 
 export function Footer() {
   const pathname = usePathname();
+  const isLaunched = useLaunchState();
   const year = 2026;
   const domain = "docupeer.org";
   const isStatusSurface =
@@ -84,7 +86,7 @@ export function Footer() {
                 {c.heading}
               </h4>
               <ul className="mt-5 space-y-3">
-                {c.links.map((l) => (
+                {c.links.filter((link) => isLaunched || !["/review", "/submit", "/dashboard", "/history", "/register"].includes(link.href)).map((l) => (
                   <li key={`${c.heading}-${l.label}`}>
                     <Link
                       href={l.href}

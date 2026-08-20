@@ -34,9 +34,31 @@ function statusUrl(req: NextRequest) {
   return configured.replace(/\/$/, "");
 }
 
+function isLaunchProtectedPath(pathname: string) {
+  return (
+    pathname === "/register" ||
+    pathname === "/review" ||
+    pathname === "/submit" ||
+    pathname === "/dashboard" ||
+    pathname === "/history" ||
+    pathname === "/api/auth/register" ||
+    pathname === "/api/dashboard" ||
+    pathname === "/api/papers" ||
+    pathname.startsWith("/api/papers/") ||
+    pathname === "/api/reviews" ||
+    pathname.startsWith("/api/reviews/")
+  );
+}
+
+function isProtectedApi(pathname: string) {
+  return pathname.startsWith("/api/");
+}
+
 export async function middleware(req: NextRequest) {
   const host = hostname(req);
   const { pathname } = req.nextUrl;
+
+  if (pathname.startsWith("/api/launch")) return NextResponse.next();
 
   if (isStatusHost(host)) {
     if (pathname === "/" || pathname === "/status") {
@@ -55,6 +77,7 @@ export async function middleware(req: NextRequest) {
   }
 
   if (
+    (pathname.startsWith("/api/auth") && pathname !== "/api/auth/register") ||
     pathname === "/status" ||
     pathname === "/status-manage" ||
     pathname.startsWith("/api/status") ||
@@ -66,6 +89,38 @@ export async function middleware(req: NextRequest) {
     isStaticPath(pathname)
   ) {
     return NextResponse.next();
+  }
+
+  if (isLaunchProtectedPath(pathname)) {
+    let isLaunched = false;
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 1200);
+      const response = await fetch(new URL("/api/launch/public", req.nextUrl.origin), {
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      if (response.ok) {
+        const data = await response.json();
+        isLaunched = data?.launch?.isLaunched === true;
+      }
+    } catch {
+      // Fail closed: product access should never precede the launch signal.
+    }
+
+    if (!isLaunched) {
+      if (isProtectedApi(pathname)) {
+        return NextResponse.json(
+          { error: "DocuPeer is still in the launch countdown. Registration and product access are locked." },
+          { status: 423 },
+        );
+      }
+      const url = req.nextUrl.clone();
+      url.pathname = "/";
+      url.search = "?launch=locked";
+      return NextResponse.redirect(url);
+    }
   }
 
   try {
@@ -91,5 +146,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api/auth|api/dashboard|api/papers|api/reviews|llms.txt).*)"],
+  matcher: ["/((?!_next/static|_next/image|llms.txt).*)"],
 };

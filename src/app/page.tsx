@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
-import { PaperStack } from "./components/PaperStack";
+import { LaunchHero } from "./components/LaunchHero";
+import { getLaunchSnapshot } from "@/lib/launch";
 import {
   HOME_TAGLINE,
   PUBLIC_DISPLAY_STATS,
@@ -136,7 +136,10 @@ function LeadershipCard({
   );
 }
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const launch = await getLaunchSnapshot();
   const homepageJsonLd = {
     "@context": "https://schema.org",
     "@type": "WebPage",
@@ -201,64 +204,11 @@ export default function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
-      {/* Hero — left copy, right interactive paper stack */}
-      <section className="relative overflow-hidden">
-        <div className="mx-auto max-w-6xl px-4 pb-16 pt-20 sm:px-6 sm:pt-28">
-          <div className="grid items-center gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-16">
-            {/* Left: copy */}
-            <div className="text-left">
-              <p className="mb-5 text-[11px] font-semibold uppercase tracking-[0.28em] text-deep-accent">
-                Free peer review platform
-              </p>
-              <h1 className="poiret text-balance text-5xl leading-[1.05] text-deep-text sm:text-6xl">
-                Free peer review for{" "}
-                <span className="display text-deep-accent">research papers</span>.
-              </h1>
-              <p className="mt-6 max-w-xl text-pretty text-lg leading-relaxed text-deep-text-soft sm:text-xl">
-                DocuPeer is a free peer review platform where you review two
-                papers to unlock one submission of your own. It helps students,
-                researchers, and writers get anonymous, subject-aware feedback
-                that improves clarity, rigor, and confidence before sharing
-                work more broadly.
-              </p>
-
-              <div className="mt-10 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
-                <Link href="/review" className="btn-primary px-7 py-3 text-base">
-                  Start reviewing
-                </Link>
-                <Link
-                  href="/register"
-                  className="btn-secondary px-7 py-3 text-base"
-                >
-                  Create an account
-                </Link>
-              </div>
-            </div>
-
-            {/* Right: interactive paper stack */}
-            <div className="relative">
-              <PaperStack />
-            </div>
-          </div>
-
-          {/* Stat strip */}
-          <div className="mx-auto mt-24 grid max-w-4xl grid-cols-2 gap-px overflow-hidden rounded-2xl border border-deep-border bg-deep-border/60 sm:grid-cols-4">
-            {[
-              { k: PUBLIC_DISPLAY_STATS.users, v: "users", valueClassName: "display text-3xl sm:text-4xl" },
-              { k: PUBLIC_STATS.papers, v: "research papers", valueClassName: "poiret text-4xl" },
-              { k: "2 : 1", v: "reviews per submission", valueClassName: "poiret text-4xl" },
-              { k: "$0", v: "cost, forever", valueClassName: "display text-4xl sm:text-5xl" },
-            ].map((s) => (
-              <div key={s.v} className="bg-deep-panel px-4 py-7 text-center">
-                <div className={`${s.valueClassName} font-normal tracking-normal text-deep-text`}>
-                  {s.k}
-                </div>
-                <div className="mt-2 text-sm text-deep-dim">{s.v}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <LaunchHero
+        initialLaunch={launch}
+        users={PUBLIC_DISPLAY_STATS.users}
+        papers={PUBLIC_STATS.papers}
+      />
 
       <div className="rule mx-auto max-w-6xl" />
 
