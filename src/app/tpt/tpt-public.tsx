@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import {
   TPT_CATEGORIES,
   TPT_CATEGORY_META,
@@ -30,6 +30,17 @@ const initialForm: FormState = {
   isAnonymous: true,
   suggestedCategory: "love",
   consentToPublish: false,
+};
+
+const pageBackground: CSSProperties = {
+  background:
+    "radial-gradient(circle at 14% 6%, rgba(31, 52, 71, 0.12), transparent 30rem), radial-gradient(circle at 86% 18%, rgba(185, 145, 82, 0.16), transparent 28rem), linear-gradient(180deg, #f7f4ee 0%, #f4efe7 52%, #f9f7f1 100%)",
+};
+
+const paperGrain: CSSProperties = {
+  backgroundImage:
+    "linear-gradient(rgba(31, 52, 71, 0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(31, 52, 71, 0.026) 1px, transparent 1px)",
+  backgroundSize: "44px 44px",
 };
 
 function formatDate(value: string | null) {
@@ -169,9 +180,17 @@ export function TptPublic({ initialPayload }: { initialPayload: TptPublicPayload
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f7f3] text-[#171b24]">
-      <section className="relative overflow-hidden border-b border-[#ded8cc]">
-        <div className="absolute inset-x-0 top-0 h-44 bg-[radial-gradient(circle_at_top_left,rgba(31,52,71,0.16),transparent_34%),radial-gradient(circle_at_top_right,rgba(197,168,109,0.20),transparent_30%)]" />
+    <div className="relative isolate min-h-screen overflow-hidden text-[#171b24]" style={pageBackground}>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 opacity-40"
+        style={paperGrain}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-20 -z-10 h-[32rem] w-[52rem] -translate-x-1/2 rounded-full bg-white/50 blur-3xl"
+      />
+      <section className="relative overflow-hidden border-b border-[#ded8cc]/80">
         <div className="relative mx-auto max-w-6xl px-5 py-16 sm:px-6 sm:py-20">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#596272]">
             The People's Talk
@@ -201,7 +220,7 @@ export function TptPublic({ initialPayload }: { initialPayload: TptPublicPayload
                 </Link>
               </div>
             </div>
-            <div className="rounded-lg border border-[#dcd6cb] bg-white/90 p-5 shadow-[0_18px_50px_rgba(29,33,42,0.07)] backdrop-blur">
+            <div className="rounded-lg border border-[#dcd6cb] bg-white/95 p-5 shadow-[0_24px_70px_rgba(29,33,42,0.09)] backdrop-blur">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#707887]">
                 Published signal
               </p>
@@ -220,7 +239,7 @@ export function TptPublic({ initialPayload }: { initialPayload: TptPublicPayload
         </div>
       </section>
 
-      <main className="mx-auto grid max-w-6xl gap-8 px-5 py-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
+      <main className="mx-auto grid max-w-6xl gap-8 px-5 pb-20 pt-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
         <div className="min-w-0 space-y-6">
           <section className="rounded-lg border border-[#dcd6cb] bg-white p-4 shadow-[0_18px_50px_rgba(29,33,42,0.05)]">
             <div className="flex flex-wrap gap-2">

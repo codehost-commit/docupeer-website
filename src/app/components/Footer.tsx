@@ -59,13 +59,14 @@ export function Footer() {
     pathname === "/live" ||
     pathname === "/live-manage" ||
     (typeof window !== "undefined" && window.location.hostname.startsWith("status."));
+  const isTptSurface = pathname === "/tpt";
 
   if (isStatusSurface) return null;
 
   return (
-    <footer className="site-footer relative mt-24 font-sans">
+    <footer className={`site-footer relative font-sans ${isTptSurface ? "mt-0 bg-[#f9f7f1]" : "mt-24"}`}>
       <div className="rule" />
-      <div className="bg-deep-panel/70">
+      <div className={isTptSurface ? "bg-[#f9f7f1]" : "bg-deep-panel/70"}>
         <div className="mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
           {/* Brand column */}
           <div>
