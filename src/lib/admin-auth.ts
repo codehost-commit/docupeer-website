@@ -3,14 +3,11 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
 const ADMIN_COOKIE_NAME = "docupeer_admin_session";
-const ADMIN_DEV_COOKIE_NAME = "docupeer_admin_dev";
 const ADMIN_USERNAME = "ADMIN";
 const ADMIN_PASSWORD = "12345678";
 const ADMIN_SESSION_DAYS = 7;
-const ADMIN_DEV_HOURS = 12;
-const DEV_ACCESS_ADDRESS = "67.6.18.41";
 
-type AdminScope = "admin" | "admin-dev";
+type AdminScope = "admin";
 
 function secretKey(): Uint8Array {
   const secret = process.env.AUTH_SECRET;
@@ -63,7 +60,6 @@ export async function createAdminSession() {
 
 export function destroyAdminSession() {
   cookies().set(ADMIN_COOKIE_NAME, "", cookieBase(0));
-  cookies().set(ADMIN_DEV_COOKIE_NAME, "", cookieBase(0));
 }
 
 export async function hasAdminSession() {
@@ -72,53 +68,6 @@ export async function hasAdminSession() {
 
 export async function requireAdminSession() {
   if (await hasAdminSession()) return;
-  const err = new Error("Unauthorized") as Error & { status?: number };
-  err.status = 401;
-  throw err;
-}
-
-function requestAddress(req: Request) {
-  const forwarded = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  return (
-    forwarded ||
-    req.headers.get("x-real-ip")?.trim() ||
-    req.headers.get("cf-connecting-ip")?.trim() ||
-    ""
-  );
-}
-
-function isLocalAdminRequest(req: Request) {
-  const host = req.headers.get("host")?.split(":")[0]?.toLowerCase() ?? "";
-  return host === "localhost" || host === "127.0.0.1" || host === "::1";
-}
-
-export async function createAdminDevSession(req: Request, addressInput: unknown) {
-  await requireAdminSession();
-  const address = String(addressInput || "").trim();
-  const requestIp = requestAddress(req);
-  if (
-    !isLocalAdminRequest(req) ||
-    (address !== DEV_ACCESS_ADDRESS && requestIp !== DEV_ACCESS_ADDRESS)
-  ) {
-    const err = new Error("Unauthorized") as Error & { status?: number };
-    err.status = 401;
-    throw err;
-  }
-
-  cookies().set(
-    ADMIN_DEV_COOKIE_NAME,
-    await signAdminToken("admin-dev", `${ADMIN_DEV_HOURS}h`),
-    cookieBase(ADMIN_DEV_HOURS * 60 * 60),
-  );
-}
-
-export async function hasAdminDevSession() {
-  return verifyAdminCookie(ADMIN_DEV_COOKIE_NAME, "admin-dev");
-}
-
-export async function requireAdminDevSession() {
-  await requireAdminSession();
-  if (await hasAdminDevSession()) return;
   const err = new Error("Unauthorized") as Error & { status?: number };
   err.status = 401;
   throw err;

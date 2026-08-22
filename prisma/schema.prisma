@@ -168,11 +168,9 @@ model SiteLiveChunk {
 }
 
 model AdminMetrics {
-  id                     String   @id @default("global")
-  pageViews              Int      @default(0)
-  signedUpUsersOverride  Int?
-  papersUploadedOverride Int?
-  updatedAt              DateTime @updatedAt
+  id        String   @id @default("global")
+  pageViews Int      @default(0)
+  updatedAt DateTime @updatedAt
 }
 
 model SiteLaunchState {

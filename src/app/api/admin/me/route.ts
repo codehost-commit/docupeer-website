@@ -1,7 +1,4 @@
-import {
-  hasAdminDevSession,
-  hasAdminSession,
-} from "@/lib/admin-auth";
+import { hasAdminSession } from "@/lib/admin-auth";
 import { error, handleRouteError, json } from "@/lib/http";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +9,6 @@ export async function GET() {
     return json({
       ok: true,
       user: { id: "ADMIN" },
-      devAccess: await hasAdminDevSession(),
     });
   } catch (err) {
     return handleRouteError(err);

@@ -2,26 +2,13 @@ import "server-only";
 import { prisma } from "@/lib/db";
 
 const ADMIN_METRICS_ID = "global";
-const MAX_METRIC_VALUE = 999_999_999;
 
 export type AdminMetricsPayload = {
   pageViews: number;
   signedUpUsers: number;
   papersUploaded: number;
-  realSignedUpUsers: number;
-  realPapersUploaded: number;
-  overrides: {
-    signedUpUsers: number | null;
-    papersUploaded: number | null;
-  };
   updatedAt: number;
 };
-
-function cleanMetricValue(value: unknown) {
-  const parsed = Math.floor(Number(value));
-  if (!Number.isFinite(parsed)) return 0;
-  return Math.max(0, Math.min(MAX_METRIC_VALUE, parsed));
-}
 
 export async function ensureAdminMetrics() {
   const now = new Date();
@@ -69,31 +56,8 @@ export async function getAdminMetrics(): Promise<AdminMetricsPayload> {
 
   return {
     pageViews: metrics.pageViews,
-    signedUpUsers: metrics.signedUpUsersOverride ?? realSignedUpUsers,
-    papersUploaded: metrics.papersUploadedOverride ?? realPapersUploaded,
-    realSignedUpUsers,
-    realPapersUploaded,
-    overrides: {
-      signedUpUsers: metrics.signedUpUsersOverride,
-      papersUploaded: metrics.papersUploadedOverride,
-    },
+    signedUpUsers: realSignedUpUsers,
+    papersUploaded: realPapersUploaded,
     updatedAt: metrics.updatedAt.getTime(),
   };
-}
-
-export async function saveAdminMetrics(input: {
-  pageViews?: unknown;
-  signedUpUsers?: unknown;
-  papersUploaded?: unknown;
-}) {
-  await ensureAdminMetrics();
-  await prisma.adminMetrics.update({
-    where: { id: ADMIN_METRICS_ID },
-    data: {
-      pageViews: cleanMetricValue(input.pageViews),
-      signedUpUsersOverride: cleanMetricValue(input.signedUpUsers),
-      papersUploadedOverride: cleanMetricValue(input.papersUploaded),
-    },
-  });
-  return getAdminMetrics();
 }

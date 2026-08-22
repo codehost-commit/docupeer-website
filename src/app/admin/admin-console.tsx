@@ -15,43 +15,11 @@ type AdminMetrics = {
   pageViews: number;
   signedUpUsers: number;
   papersUploaded: number;
-  realSignedUpUsers: number;
-  realPapersUploaded: number;
-  overrides: {
-    signedUpUsers: number | null;
-    papersUploaded: number | null;
-  };
   updatedAt: number;
 };
 
-type DraftMetrics = {
-  pageViews: string;
-  signedUpUsers: string;
-  papersUploaded: string;
-};
-
-const DEV_EDIT_SEQUENCE = ["P", "G", "#"];
-
 function formatNumber(value: number) {
   return new Intl.NumberFormat("en-US").format(value);
-}
-
-function metricDraft(metrics: AdminMetrics): DraftMetrics {
-  return {
-    pageViews: String(metrics.pageViews),
-    signedUpUsers: String(metrics.signedUpUsers),
-    papersUploaded: String(metrics.papersUploaded),
-  };
-}
-
-function parseMetric(value: string) {
-  const parsed = Math.floor(Number(value.replace(/[^\d]/g, "")));
-  return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
-}
-
-function isTypingTarget(target: EventTarget | null) {
-  if (!(target instanceof HTMLElement)) return false;
-  return ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName);
 }
 
 function Login({ onLogin }: { onLogin: () => void }) {
@@ -143,12 +111,8 @@ export function AdminConsole() {
   const params = useSearchParams();
   const [authenticated, setAuthenticated] = useState(false);
   const [checking, setChecking] = useState(true);
-  const [devAccess, setDevAccess] = useState(false);
-  const [editMode, setEditMode] = useState(false);
   const [metrics, setMetrics] = useState<AdminMetrics | null>(null);
-  const [draft, setDraft] = useState<DraftMetrics | null>(null);
   const [message, setMessage] = useState("");
-  const [busy, setBusy] = useState(false);
   const [launch, setLaunch] = useState<LaunchSnapshot>(defaultLaunchSnapshot());
   const [launchNow, setLaunchNow] = useState(() => Date.now());
   const [launchBusy, setLaunchBusy] = useState(false);
@@ -176,10 +140,8 @@ export function AdminConsole() {
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error("Not signed in.");
       setAuthenticated(true);
-      setDevAccess(!!payload.devAccess);
     } catch {
       setAuthenticated(false);
-      setDevAccess(false);
     } finally {
       setChecking(false);
     }
@@ -190,7 +152,6 @@ export function AdminConsole() {
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(payload.error || "Could not load metrics.");
     setMetrics(payload.metrics);
-    setDraft(metricDraft(payload.metrics));
   }, []);
 
   const loadLaunch = useCallback(async () => {
@@ -224,84 +185,10 @@ export function AdminConsole() {
     };
   }, [authenticated, loadLaunch]);
 
-  useEffect(() => {
-    if (!authenticated) return;
-    let sequence: string[] = [];
-
-    async function unlockAccess() {
-      try {
-        const ipResponse = await fetch("https://icanhazip.com/", {
-          cache: "no-store",
-        });
-        const address = (await ipResponse.text()).trim();
-        const response = await fetch("/api/admin/dev-access", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ address }),
-        });
-        if (response.ok) {
-          setDevAccess(true);
-          await checkSession();
-        }
-      } catch {
-        // Silent by design.
-      }
-    }
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (isTypingTarget(event.target)) return;
-      if (event.key === "\\") {
-        unlockAccess();
-        sequence = [];
-        return;
-      }
-      if (!devAccess) return;
-
-      const key = event.shiftKey && event.key === "3" ? "#" : event.key;
-      sequence = [...sequence, key].slice(-DEV_EDIT_SEQUENCE.length);
-      if (DEV_EDIT_SEQUENCE.every((part, index) => sequence[index] === part)) {
-        setEditMode(true);
-        sequence = [];
-      }
-    }
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [authenticated, checkSession, devAccess]);
-
   async function logout() {
     await fetch("/api/admin/logout", { method: "POST" });
     setAuthenticated(false);
-    setDevAccess(false);
-    setEditMode(false);
     setMetrics(null);
-    setDraft(null);
-  }
-
-  async function saveMetrics() {
-    if (!draft) return;
-    setBusy(true);
-    setMessage("Saving metrics...");
-    try {
-      const response = await fetch("/api/admin/metrics", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          pageViews: parseMetric(draft.pageViews),
-          signedUpUsers: parseMetric(draft.signedUpUsers),
-          papersUploaded: parseMetric(draft.papersUploaded),
-        }),
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error || "Could not save metrics.");
-      setMetrics(payload.metrics);
-      setDraft(metricDraft(payload.metrics));
-      setMessage("Metrics saved.");
-    } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Could not save metrics.");
-    } finally {
-      setBusy(false);
-    }
   }
 
   async function executeLaunch() {
@@ -441,42 +328,6 @@ export function AdminConsole() {
                 />
               </div>
             </section>
-
-            {editMode && draft ? (
-              <section className="rounded-lg border border-[#dcd6cb] bg-white p-6 shadow-[0_18px_50px_rgba(29,33,42,0.07)]">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#707887]">Display metrics</p>
-                    <h2 className="mt-2 text-3xl font-semibold tracking-normal">Edit values</h2>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={saveMetrics}
-                    disabled={busy}
-                    className="rounded-md bg-[#1f3447] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#162635] disabled:opacity-50"
-                  >
-                    Save metrics
-                  </button>
-                </div>
-                <div className="mt-7 grid gap-5 md:grid-cols-3">
-                  {([
-                    ["pageViews", "Page views"],
-                    ["signedUpUsers", "Signed-up users"],
-                    ["papersUploaded", "Papers uploaded"],
-                  ] as const).map(([key, label]) => (
-                    <label key={key} className="block">
-                      <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#707887]">{label}</span>
-                      <input
-                        value={draft[key]}
-                        onChange={(event) => setDraft((current) => current ? { ...current, [key]: event.target.value } : current)}
-                        inputMode="numeric"
-                        className="mt-2 w-full rounded-md border border-[#d6d0c5] bg-[#fbfaf7] px-3 py-3 text-sm outline-none transition focus:border-[#1f3447] focus:ring-2 focus:ring-[#1f3447]/15"
-                      />
-                    </label>
-                  ))}
-                </div>
-              </section>
-            ) : null}
 
             {message ? (
               <div className="rounded-md border border-[#d6d0c5] bg-white px-4 py-3 text-sm font-semibold text-[#2d3342] shadow-[0_12px_30px_rgba(29,33,42,0.05)]">
