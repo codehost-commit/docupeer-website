@@ -25,10 +25,9 @@ export const metadata: Metadata = {
   keywords: SITE_KEYWORDS,
   authors: [
     { name: "Aryan Patel" },
-    { name: "Pritam Avuthu" },
-    { name: "Akshaj Reddy Sanikommu" },
+    { name: "Akshaj Sanikommu" },
   ],
-  creator: SITE_NAME,
+  creator: "Aryan Patel",
   publisher: SITE_NAME,
   category: "education",
   referrer: "origin-when-cross-origin",

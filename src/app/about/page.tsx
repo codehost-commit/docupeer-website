@@ -39,13 +39,7 @@ const TEAM: Person[] = [
     bio: "Operations, community, and the day-to-day work of making DocuPeer trustworthy and useful.",
   },
   {
-    name: "Pritam Avuthu",
-    role: "CEO",
-    image: "/team/pritam.jpeg",
-    bio: "Growth, access, and the leadership needed to keep DocuPeer free and useful across disciplines.",
-  },
-  {
-    name: "Akshaj Reddy Sanikommu",
+    name: "Akshaj Sanikommu",
     role: "CTO",
     image: "/team/akshaj.jpeg",
     bio: "Technology, reliability, and the product systems that make reciprocal review work at scale.",
@@ -132,12 +126,7 @@ export default function AboutPage() {
       },
       {
         "@type": "Person",
-        name: "Pritam Avuthu",
-        jobTitle: "CEO",
-      },
-      {
-        "@type": "Person",
-        name: "Akshaj Reddy Sanikommu",
+        name: "Akshaj Sanikommu",
         jobTitle: "CTO",
       },
       {
@@ -167,16 +156,15 @@ export default function AboutPage() {
           reviewing it are qualified, honest, and treated as equals.
         </p>
         <p className="serif mx-auto mt-4 max-w-3xl text-lg leading-relaxed text-deep-dim">
-          Aryan Patel, Pritam Avuthu, and Akshaj Reddy Sanikommu are building
-          DocuPeer as a free peer review platform for anonymous, reciprocal
-          feedback.
+          DocuPeer is Aryan Patel&apos;s project, built with Akshaj Sanikommu
+          as a free peer review platform for anonymous, reciprocal feedback.
         </p>
       </header>
 
       {/* Team */}
       <section className="mt-20">
         <SectionHeader title="Our team" />
-        <div className="grid gap-14 sm:grid-cols-3 sm:gap-8">
+        <div className="grid gap-14 sm:grid-cols-2 sm:gap-8">
           {TEAM.map((p) => (
             <TeamCard key={p.name} person={p} />
           ))}

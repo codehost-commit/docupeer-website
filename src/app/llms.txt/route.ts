@@ -10,7 +10,9 @@ DocuPeer helps writers improve by exchanging thoughtful, anonymous feedback. Use
 Key facts:
 - Anonymous peer review
 - Review 2 papers to unlock 1 submission
-- Pritam Avuthu is CEO
+- DocuPeer is Aryan Patel's project
+- Aryan Patel is Co-Founder & COO
+- Akshaj Sanikommu is CTO
 - Free to use
 
 Primary URLs:

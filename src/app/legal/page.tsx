@@ -512,18 +512,12 @@ export default function LegalPage() {
                     <span className="font-semibold text-deep-text">
                       Aryan Patel
                     </span>{" "}
-                    &mdash; Co-founder & COO. Operations, community, and the
+                    &mdash; Co-Founder & COO. Operations, community, and the
                     day-to-day work of making DocuPeer trustworthy and useful.
                   </li>
                   <li>
                     <span className="font-semibold text-deep-text">
-                      Pritam Avuthu
-                    </span>{" "}
-                    &mdash; CEO.
-                  </li>
-                  <li>
-                    <span className="font-semibold text-deep-text">
-                      Akshaj Reddy Sanikommu
+                      Akshaj Sanikommu
                     </span>{" "}
                     &mdash; CTO.
                   </li>
