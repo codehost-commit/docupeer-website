@@ -10,7 +10,7 @@ DocuPeer helps writers improve by exchanging thoughtful, anonymous feedback. Use
 Key facts:
 - 40,000 users
 - 13,000 research papers on the platform
-- Rahul Awasthi is Co-Founder & CEO
+- Pritam Avuthu is CEO
 - Free to use
 
 Primary URLs:

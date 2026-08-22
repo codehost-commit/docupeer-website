@@ -1,6 +1,6 @@
 # Third-Party Validation Sprint for Ingram's Trailblazers
 
-DocuPeer needs evidence that someone outside the founding team has touched, evaluated, or endorsed the platform. Ingram's Trailblazers nomination page asks for a brief innovation statement and success metrics where possible, so the goal is to create a small but credible validation packet fast.
+DocuPeer needs evidence that someone outside the team has touched, evaluated, or endorsed the platform. Ingram's Trailblazers nomination page asks for a brief innovation statement and success metrics where possible, so the goal is to create a small but credible validation packet fast.
 
 Sources:
 
@@ -191,7 +191,7 @@ This should be the first attachment in the award packet.
 
 ### 11. LinkedIn Validation Thread
 
-Post from Rahul or DocuPeer:
+Post from DocuPeer:
 
 ```text
 We are preparing DocuPeer for Ingram's Trailblazers. If you are a student, teacher, researcher, or writing mentor, we would value honest feedback on whether reciprocal peer review can improve access to high-quality paper feedback.

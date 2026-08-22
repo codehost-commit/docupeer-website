@@ -83,7 +83,7 @@ export default function OpenGraphImage() {
               {[
                 "40,000 users",
                 "13,000 research papers",
-                "Co-Founder & CEO Rahul Awasthi",
+                "CEO Pritam Avuthu",
               ].map((item) => (
                 <div
                   key={item}

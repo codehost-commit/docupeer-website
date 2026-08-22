@@ -31,7 +31,6 @@ export function Nav() {
 
   const links = !isLaunched
     ? [
-        { href: "/tpt", label: "The People's Talk" },
         { href: "/live", label: "DocuPeer Live" },
         { href: "/about", label: "About" },
       ]
@@ -41,13 +40,11 @@ export function Nav() {
         { href: "/submit", label: "Submit" },
         { href: "/dashboard", label: "Dashboard" },
         { href: "/history", label: "History" },
-        { href: "/tpt", label: "The People's Talk" },
         { href: "/live", label: "DocuPeer Live" },
         { href: "/about", label: "About" },
       ]
     : [
         { href: "/review", label: "Start reviewing" },
-        { href: "/tpt", label: "The People's Talk" },
         { href: "/live", label: "DocuPeer Live" },
         { href: "/about", label: "About" },
       ];

@@ -34,7 +34,7 @@ Reset the database any time with `npm run db:reset`.
 
 ## Team headshots
 
-Drop `rahul.jpeg`, `aryan.jpeg`, `akshaj.jpeg`, `pritam.jpeg` into
+Drop `aryan.jpeg`, `pritam.jpeg`, `akshaj.jpeg` into
 `public/team/`. The About page falls back to initials if a file is missing.
 
 ## How the core rules are enforced (all server-side)
@@ -90,7 +90,7 @@ src/
     submit/            # paper submission (credit-gated, 350-word)
     dashboard/         # progress toward next submission
     history/           # feedback received and reviews completed
-    about/             # founders and team
+    about/             # team page
     login/ register/   # auth pages
 ```
 

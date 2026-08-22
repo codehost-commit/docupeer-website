@@ -19,7 +19,6 @@ const COLUMNS: Col[] = [
       { href: "/submit", label: "Submit your paper" },
       { href: "/dashboard", label: "Dashboard" },
       { href: "/history", label: "History" },
-      { href: "/tpt", label: "The People's Talk" },
       { href: "/live", label: "DocuPeer Live" },
     ],
   },
@@ -27,7 +26,6 @@ const COLUMNS: Col[] = [
     heading: "Community",
     links: [
       { href: "/about", label: "About" },
-      { href: "/tpt", label: "Community voices" },
       { href: "/register", label: "Create account" },
       { href: "/login", label: "Sign in" },
     ],
@@ -61,14 +59,13 @@ export function Footer() {
     pathname === "/live" ||
     pathname === "/live-manage" ||
     (typeof window !== "undefined" && window.location.hostname.startsWith("status."));
-  const isTptSurface = pathname === "/tpt";
 
   if (isStatusSurface) return null;
 
   return (
-    <footer className={`site-footer relative font-sans ${isTptSurface ? "mt-0 bg-[#f9f7f1]" : "mt-24"}`}>
+    <footer className="site-footer relative mt-24 font-sans">
       <div className="rule" />
-      <div className={isTptSurface ? "bg-[#f9f7f1]" : "bg-deep-panel/70"}>
+      <div className="bg-deep-panel/70">
         <div className="mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
           {/* Brand column */}
           <div>

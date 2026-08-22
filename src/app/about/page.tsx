@@ -5,12 +5,12 @@ import { PUBLIC_DISPLAY_STATS, PUBLIC_STATS, SITE_DESCRIPTION, absoluteUrl } fro
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Learn what DocuPeer is, why it exists, and how Rahul Awasthi, Co-Founder & CEO, is building a free peer review platform for research papers.",
+    "Learn what DocuPeer is, why it exists, and how the DocuPeer team is building a free peer review platform for research papers.",
   alternates: {
     canonical: "/about",
   },
   openGraph: {
-    title: "About DocuPeer and Rahul Awasthi",
+    title: "About DocuPeer",
     description: SITE_DESCRIPTION,
     url: "/about",
     images: [
@@ -31,24 +31,25 @@ type Person = {
   bio?: string;
 };
 
-const FOUNDERS: Person[] = [
-  {
-    name: "Rahul Awasthi",
-    role: "Co-Founder & CEO",
-    image: "/team/rahul.jpeg",
-    bio: "Product, engineering, and the vision for a peer-review community that stays free by design.",
-  },
+const TEAM: Person[] = [
   {
     name: "Aryan Patel",
     role: "Co-Founder & COO",
     image: "/team/aryan.jpeg",
     bio: "Operations, community, and the day-to-day work of making DocuPeer trustworthy and useful.",
   },
-];
-
-const TEAM: Person[] = [
-  { name: "Akshaj Reddy Sanikommu", role: "Interim CTO", image: "/team/akshaj.jpeg" },
-  { name: "Pritam Avuthu", role: "CMO", image: "/team/pritam.jpeg" },
+  {
+    name: "Pritam Avuthu",
+    role: "CEO",
+    image: "/team/pritam.jpeg",
+    bio: "Growth, access, and the leadership needed to keep DocuPeer free and useful across disciplines.",
+  },
+  {
+    name: "Akshaj Reddy Sanikommu",
+    role: "CTO",
+    image: "/team/akshaj.jpeg",
+    bio: "Technology, reliability, and the product systems that make reciprocal review work at scale.",
+  },
 ];
 
 function initials(name: string) {
@@ -58,15 +59,10 @@ function initials(name: string) {
 
 function Headshot({
   person,
-  size,
 }: {
   person: Person;
-  size: "founder" | "team";
 }) {
-  const dim =
-    size === "founder"
-      ? "h-64 w-64 sm:h-72 sm:w-72"
-      : "h-44 w-44 sm:h-48 sm:w-48";
+  const dim = "h-52 w-52 sm:h-56 sm:w-56";
   return (
     <div
       className={`relative ${dim} overflow-hidden rounded-full border border-deep-border bg-deep-panel2 shadow-panel`}
@@ -88,10 +84,10 @@ function Headshot({
   );
 }
 
-function FounderCard({ person }: { person: Person }) {
+function TeamCard({ person }: { person: Person }) {
   return (
     <div className="flex flex-col items-center gap-6 text-center animate-fadeUp">
-      <Headshot person={person} size="founder" />
+      <Headshot person={person} />
       <div>
         <div className="poiret text-3xl font-normal tracking-wide text-deep-text sm:text-4xl">
           {person.name}
@@ -104,22 +100,6 @@ function FounderCard({ person }: { person: Person }) {
             {person.bio}
           </p>
         )}
-      </div>
-    </div>
-  );
-}
-
-function TeamCard({ person }: { person: Person }) {
-  return (
-    <div className="flex flex-col items-center gap-4 text-center">
-      <Headshot person={person} size="team" />
-      <div>
-        <div className="poiret text-2xl font-normal tracking-wide text-deep-text">
-          {person.name}
-        </div>
-        <div className="mt-1 text-xs uppercase tracking-[0.16em] text-deep-accent">
-          {person.role}
-        </div>
       </div>
     </div>
   );
@@ -143,12 +123,22 @@ export default function AboutPage() {
     name: "About DocuPeer",
     url: absoluteUrl("/about"),
     description:
-      "About the DocuPeer team, including Rahul Awasthi, Co-Founder & CEO, and the mission behind the free peer review platform.",
+      "About the DocuPeer team and the mission behind the free peer review platform.",
     mainEntity: [
       {
         "@type": "Person",
-        name: "Rahul Awasthi",
-        jobTitle: "Co-Founder & CEO",
+        name: "Aryan Patel",
+        jobTitle: "Co-Founder & COO",
+      },
+      {
+        "@type": "Person",
+        name: "Pritam Avuthu",
+        jobTitle: "CEO",
+      },
+      {
+        "@type": "Person",
+        name: "Akshaj Reddy Sanikommu",
+        jobTitle: "CTO",
       },
       {
         "@type": "Organization",
@@ -173,31 +163,21 @@ export default function AboutPage() {
         <p className="serif mx-auto mt-6 max-w-2xl text-xl leading-relaxed text-deep-text-soft">
           DocuPeer exists because thoughtful feedback should not be gated by
           money, prestige, or the right connections. It is built by a small
-          founding team that believes writing improves when the people
+          team that believes writing improves when the people
           reviewing it are qualified, honest, and treated as equals.
         </p>
         <p className="serif mx-auto mt-4 max-w-3xl text-lg leading-relaxed text-deep-dim">
-          Rahul Awasthi and Aryan Patel are the co-founders of DocuPeer.
-          Together with the founding team, they are building a free peer review
-          platform that now supports {PUBLIC_DISPLAY_STATS.users.toLowerCase()} of users and{" "}
+          Aryan Patel, Pritam Avuthu, and Akshaj Reddy Sanikommu are building
+          DocuPeer as a free peer review platform that now supports{" "}
+          {PUBLIC_DISPLAY_STATS.users.toLowerCase()} of users and{" "}
           {PUBLIC_STATS.papers} research papers with anonymous, reciprocal feedback.
         </p>
       </header>
 
-      {/* Founders */}
-      <section className="mt-20">
-        <SectionHeader title="Meet the founders" />
-        <div className="grid gap-16 sm:grid-cols-2 sm:gap-10">
-          {FOUNDERS.map((p) => (
-            <FounderCard key={p.name} person={p} />
-          ))}
-        </div>
-      </section>
-
       {/* Team */}
-      <section className="mt-24">
+      <section className="mt-20">
         <SectionHeader title="Our team" />
-        <div className="grid gap-14 sm:grid-cols-2 sm:gap-10">
+        <div className="grid gap-14 sm:grid-cols-3 sm:gap-8">
           {TEAM.map((p) => (
             <TeamCard key={p.name} person={p} />
           ))}

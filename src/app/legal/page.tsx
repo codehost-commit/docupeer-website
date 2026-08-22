@@ -112,10 +112,8 @@ export default function LegalPage() {
           <div className="mb-12 border-y border-deep-border py-5">
             <p className="text-sm leading-relaxed text-deep-text-soft">
               <span className="font-semibold text-deep-text">Operator.</span>{" "}
-              DocuPeer is operated by{" "}
-              <span className="text-deep-text">Rahul Awasthi</span> and{" "}
-              <span className="text-deep-text">Aryan Patel</span> as
-              co-founders. Questions about this page can be sent to{" "}
+              DocuPeer is operated by the DocuPeer team. Questions about this
+              page can be sent to{" "}
               <a
                 href="mailto:hello@docupeer.org"
                 className="text-deep-accent transition-colors hover:text-deep-text"
@@ -318,8 +316,8 @@ export default function LegalPage() {
 
               <Clause title="2. Who is providing the service">
                 <p>
-                  DocuPeer is provided by Rahul Awasthi and Aryan Patel as
-                  co-founders. References to &quot;DocuPeer,&quot;
+                  DocuPeer is provided by the DocuPeer team. References to
+                  &quot;DocuPeer,&quot;
                   &quot;we,&quot; &quot;our,&quot; or &quot;us&quot; on this
                   page refer to that operation unless the context requires
                   otherwise.
@@ -358,8 +356,8 @@ export default function LegalPage() {
                 <p>
                   DocuPeer&apos;s software, interface design, visual assets,
                   branding, page content, and product presentation are owned by
-                  Rahul Awasthi and Aryan Patel or licensed to DocuPeer and are
-                  protected by applicable intellectual property laws.
+                  or licensed to DocuPeer and are protected by applicable
+                  intellectual property laws.
                 </p>
               </Clause>
 
@@ -434,8 +432,8 @@ export default function LegalPage() {
 
               <Clause title="11. Limitation of liability">
                 <p>
-                  To the maximum extent permitted by law, Rahul Awasthi, Aryan
-                  Patel, and DocuPeer will not be liable for any indirect,
+                  To the maximum extent permitted by law, DocuPeer and its team
+                  will not be liable for any indirect,
                   incidental, special, consequential, exemplary, or punitive
                   damages, or for any loss of data, profits, goodwill, business
                   opportunity, or use, arising out of or related to the
@@ -443,8 +441,8 @@ export default function LegalPage() {
                 </p>
                 <p>
                   To the maximum extent permitted by law, the total liability
-                  of DocuPeer, Rahul Awasthi, and Aryan Patel for claims
-                  arising out of or related to the service will not exceed the
+                  of DocuPeer for claims arising out of or related to the
+                  service will not exceed the
                   greater of one hundred U.S. dollars (US $100) or the amount
                   you paid directly to DocuPeer for the specific service giving
                   rise to the claim in the prior twelve months. DocuPeer is
@@ -454,13 +452,12 @@ export default function LegalPage() {
 
               <Clause title="12. Indemnity">
                 <p>
-                  You agree to defend, indemnify, and hold harmless Rahul
-                  Awasthi, Aryan Patel, and DocuPeer from claims, liabilities,
-                  damages, losses, and expenses arising out of your misuse of
-                  the service, your violation of these terms, or your
-                  violation of another person&apos;s rights, including any
-                  claim that content you submitted infringes another
-                  person&apos;s intellectual property.
+                  You agree to defend, indemnify, and hold harmless DocuPeer
+                  and its team from claims, liabilities, damages, losses, and
+                  expenses arising out of your misuse of the service, your
+                  violation of these terms, or your violation of another
+                  person&apos;s rights, including any claim that content you
+                  submitted infringes another person&apos;s intellectual property.
                 </p>
               </Clause>
 
@@ -507,18 +504,10 @@ export default function LegalPage() {
             <Section id="attributions" title="Attributions">
               <Clause title="Team">
                 <p>
-                  DocuPeer is built by a small founding team. The current
-                  contributors are:
+                  DocuPeer is built by a small team. The current contributors
+                  are:
                 </p>
                 <ul className="list-disc space-y-2 pl-5">
-                  <li>
-                    <span className="font-semibold text-deep-text">
-                      Rahul Awasthi
-                    </span>{" "}
-                    &mdash; Co-founder & CEO. Product, engineering, and the
-                    vision for a peer-review community that stays free by
-                    design.
-                  </li>
                   <li>
                     <span className="font-semibold text-deep-text">
                       Aryan Patel
@@ -528,15 +517,15 @@ export default function LegalPage() {
                   </li>
                   <li>
                     <span className="font-semibold text-deep-text">
-                      Akshaj Reddy Sanikommu
+                      Pritam Avuthu
                     </span>{" "}
-                    &mdash; Interim CTO.
+                    &mdash; CEO.
                   </li>
                   <li>
                     <span className="font-semibold text-deep-text">
-                      Pritam Avuthu
+                      Akshaj Reddy Sanikommu
                     </span>{" "}
-                    &mdash; CMO.
+                    &mdash; CTO.
                   </li>
                 </ul>
                 <p>

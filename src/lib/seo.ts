@@ -16,7 +16,7 @@ export const SITE_KEYWORDS = [
   "essay review platform",
   "student paper feedback",
   "review research papers online",
-  "Rahul Awasthi",
+  "Pritam Avuthu",
 ];
 
 export const PUBLIC_STATS = {
@@ -40,16 +40,21 @@ export const organizationJsonLd = {
   url: SITE_URL,
   logo: absoluteUrl("/docupeer-logo.png"),
   description: SITE_DESCRIPTION,
-  founder: [
+  founder: {
+    "@type": "Person",
+    name: "Aryan Patel",
+    jobTitle: "Co-Founder & COO",
+  },
+  member: [
     {
       "@type": "Person",
-      name: "Rahul Awasthi",
-      jobTitle: "Co-Founder & CEO",
+      name: "Pritam Avuthu",
+      jobTitle: "CEO",
     },
     {
       "@type": "Person",
-      name: "Aryan Patel",
-      jobTitle: "Co-Founder & COO",
+      name: "Akshaj Reddy Sanikommu",
+      jobTitle: "CTO",
     },
   ],
 };

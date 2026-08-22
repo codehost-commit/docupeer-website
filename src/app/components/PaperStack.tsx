@@ -35,7 +35,7 @@ type Page = {
 const PAGES: Page[] = [
   {
     title: "On Reciprocal Peer Review in Small Writing Communities",
-    authors: "R. Awasthi¹,  A. Patel¹",
+    authors: "A. Patel¹,  P. Avuthu¹",
     affiliation: "¹DocuPeer Working Papers",
     abstract:
       "We describe a peer-review model in which every reviewer is also a writer, and every writer must earn feedback by giving it. In a three-month pilot with n = 184 papers and n′ = 412 reviews we show that reciprocity produces feedback that authors rate 0.7 points higher on a five-point scale than feedback from non-writing reviewers.",
@@ -64,7 +64,7 @@ const PAGES: Page[] = [
   },
   {
     title: "On Reciprocal Peer Review in Small Writing Communities",
-    authors: "R. Awasthi¹,  A. Patel¹",
+    authors: "A. Patel¹,  P. Avuthu¹",
     affiliation: "¹DocuPeer Working Papers",
     sections: [
       {
@@ -90,7 +90,7 @@ const PAGES: Page[] = [
   },
   {
     title: "On Reciprocal Peer Review in Small Writing Communities",
-    authors: "R. Awasthi¹,  A. Patel¹",
+    authors: "A. Patel¹,  P. Avuthu¹",
     affiliation: "¹DocuPeer Working Papers",
     sections: [
       {
@@ -114,7 +114,7 @@ const PAGES: Page[] = [
   },
   {
     title: "On Reciprocal Peer Review in Small Writing Communities",
-    authors: "R. Awasthi¹,  A. Patel¹",
+    authors: "A. Patel¹,  P. Avuthu¹",
     affiliation: "¹DocuPeer Working Papers",
     sections: [
       {
@@ -182,7 +182,7 @@ function PageContent({
         <span>
           {isFirstPage
             ? "DocuPeer Working Papers · Vol. 1"
-            : "Awasthi & Patel · Reciprocal Peer Review"}
+            : "Patel & Avuthu · Reciprocal Peer Review"}
         </span>
         <span className="tabular-nums">2026-08-18</span>
       </div>

@@ -155,10 +155,17 @@ export default async function Home() {
     mainEntity: {
       "@type": "Organization",
       name: "DocuPeer",
-      founder: {
+      founder: [
+        {
+          "@type": "Person",
+          name: "Aryan Patel",
+          jobTitle: "Co-Founder & COO",
+        },
+      ],
+      employee: {
         "@type": "Person",
-        name: "Rahul Awasthi",
-        jobTitle: "Co-Founder & CEO",
+        name: "Pritam Avuthu",
+        jobTitle: "CEO",
       },
     },
   };
@@ -292,26 +299,14 @@ export default async function Home() {
         <div className="space-y-8">
           <LeadershipCard
             title="A Word From Our CEO"
-            name="Rahul Awasthi"
-            role="Co-Founder & CEO"
-            imageSrc="/team/rahul-cutout.png"
-            imageAlt="Rahul Awasthi"
-            imageSide="left"
-            imagePaneClassName="justify-center px-2 sm:px-4 lg:px-3"
-            imageClassName="max-h-[370px] sm:max-h-[430px] lg:max-h-[505px] translate-y-[18px]"
-            body="Hello everyone! It is a pleasure to welcome you to DocuPeer as your CEO. We started this platform because strong feedback should not depend on connections, luck, or how much money someone can spend. My responsibility is to keep us moving with clarity, protect the quality of the community, and fight to keep DocuPeer free for everyone who needs it. I want this to be a place where serious writers help one another generously, and where every thoughtful review makes the whole platform stronger."
-          />
-
-          <LeadershipCard
-            title="A Word From Our CMO"
             name="Pritam Avuthu"
-            role="CMO"
+            role="CEO"
             imageSrc="/team/pritam-cutout.png"
             imageAlt="Pritam Avuthu"
             imageSide="right"
             imagePaneClassName="justify-end px-0 pl-2 sm:pl-4 lg:pl-4"
             imageClassName="max-h-[320px] sm:max-h-[370px] lg:max-h-[400px] translate-x-[16px] translate-y-[34px]"
-            body="Hello, researchers! I am excited to help you get feedback on the research papers you have worked so hard to write as your CMO. As someone who has struggled to find trustworthy feedback on my own work, it matters a lot to me that you do not run into the same problem. We want to grow this platform across disciplines and industries so people from all walks of life and levels of experience can take part in the community. We are committed to keeping DocuPeer 100% free forever, so everyone can use these resources without worrying about cost, and that only happens with your help as a peer reviewer."
+            body="Hello, researchers! I am excited to help you get feedback on the research papers you have worked so hard to write as your CEO. As someone who has struggled to find trustworthy feedback on my own work, it matters a lot to me that you do not run into the same problem. We want to grow this platform across disciplines and industries so people from all walks of life and levels of experience can take part in the community. We are committed to keeping DocuPeer 100% free forever, so everyone can use these resources without worrying about cost, and that only happens with your help as a peer reviewer."
           />
         </div>
       </section>
@@ -383,7 +378,7 @@ export default async function Home() {
             },
             {
               q: "Who is behind DocuPeer?",
-              a: "DocuPeer is built by Rahul Awasthi, Co-Founder & CEO, Aryan Patel, Co-Founder & COO, Akshaj Reddy Sanikommu, Interim CTO, and Pritam Avuthu, CMO. Together they are building a free peer review platform focused on thoughtful, high-quality feedback.",
+              a: "DocuPeer is built by Aryan Patel, Co-Founder & COO, Pritam Avuthu, CEO, and Akshaj Reddy Sanikommu, CTO. Together they are building a free peer review platform focused on thoughtful, high-quality feedback.",
             },
           ].map((item) => (
             <div key={item.q} className="card h-full p-7 sm:p-8">

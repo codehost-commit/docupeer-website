@@ -24,10 +24,11 @@ export const metadata: Metadata = {
   description: SITE_DESCRIPTION,
   keywords: SITE_KEYWORDS,
   authors: [
-    { name: "Rahul Awasthi" },
     { name: "Aryan Patel" },
+    { name: "Pritam Avuthu" },
+    { name: "Akshaj Reddy Sanikommu" },
   ],
-  creator: "Rahul Awasthi",
+  creator: SITE_NAME,
   publisher: SITE_NAME,
   category: "education",
   referrer: "origin-when-cross-origin",
