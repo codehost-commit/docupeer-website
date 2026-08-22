@@ -517,6 +517,12 @@ export default function LegalPage() {
                   </li>
                   <li>
                     <span className="font-semibold text-deep-text">
+                      Pritam Avuthu
+                    </span>{" "}
+                    &mdash; CEO.
+                  </li>
+                  <li>
+                    <span className="font-semibold text-deep-text">
                       Akshaj Sanikommu
                     </span>{" "}
                     &mdash; CTO.

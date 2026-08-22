@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { LaunchHero } from "./components/LaunchHero";
 import { getLaunchSnapshot } from "@/lib/launch";
 import {
@@ -56,6 +57,79 @@ function Step({
       <p className="mt-3 max-w-[15rem] text-base leading-relaxed text-deep-text-soft sm:mx-auto">
         {body}
       </p>
+    </div>
+  );
+}
+
+function LeadershipCard({
+  title,
+  name,
+  role,
+  imageSrc,
+  imageAlt,
+  imageSide,
+  body,
+  imageClassName = "",
+  imagePaneClassName = "",
+}: {
+  title: string;
+  name: string;
+  role: string;
+  imageSrc: string;
+  imageAlt: string;
+  imageSide: "left" | "right";
+  body: string;
+  imageClassName?: string;
+  imagePaneClassName?: string;
+}) {
+  const imageBlock = (
+    <div
+      className={`relative flex min-h-[260px] items-end overflow-hidden pt-8 sm:min-h-[320px] ${imagePaneClassName}`}
+    >
+      <Image
+        src={imageSrc}
+        alt={imageAlt}
+        width={540}
+        height={700}
+        className={`relative z-10 h-auto w-auto object-contain object-bottom ${imageClassName}`}
+      />
+    </div>
+  );
+
+  const textBlock = (
+    <div className="flex h-full flex-col justify-center px-8 py-8 sm:px-10 sm:py-10">
+      <p className="mono text-[10px] font-semibold uppercase tracking-[0.18em] text-deep-accent">
+        Leadership Note
+      </p>
+      <h3 className="poiret mt-3 text-3xl text-deep-text sm:text-4xl">
+        {title}
+      </h3>
+      <div className="mt-3 text-sm uppercase tracking-[0.16em] text-deep-accent">
+        {name} . {role}
+      </div>
+      <p className="serif mt-5 text-lg leading-relaxed text-deep-text-soft">
+        {body}
+      </p>
+    </div>
+  );
+
+  return (
+    <div className="card overflow-hidden lg:grid lg:items-end">
+      {imageSide === "left" ? (
+        <div className="lg:grid lg:grid-cols-[320px_minmax(0,1fr)] lg:items-end">
+          <div className="border-b border-deep-border lg:border-b-0 lg:border-r">
+            {imageBlock}
+          </div>
+          {textBlock}
+        </div>
+      ) : (
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
+          {textBlock}
+          <div className="border-t border-deep-border lg:border-l lg:border-t-0">
+            {imageBlock}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -195,6 +269,36 @@ export default async function Home() {
 
       <div className="rule mx-auto max-w-6xl" />
 
+      <section className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
+        <div className="mb-12 text-center">
+          <h2 className="poiret text-4xl text-deep-text sm:text-5xl">
+            A few words from the{" "}
+            <span className="display text-deep-accent">team</span>.
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-deep-text-soft">
+            The people building DocuPeer care deeply about useful feedback,
+            open access, and keeping the platform grounded in real academic
+            and professional needs.
+          </p>
+        </div>
+
+        <div className="space-y-8">
+          <LeadershipCard
+            title="A Word From Our CEO"
+            name="Pritam Avuthu"
+            role="CEO"
+            imageSrc="/team/pritam-cutout.png"
+            imageAlt="Pritam Avuthu"
+            imageSide="right"
+            imagePaneClassName="justify-end px-0 pl-2 sm:pl-4 lg:pl-4"
+            imageClassName="max-h-[320px] sm:max-h-[370px] lg:max-h-[400px] translate-x-[16px] translate-y-[34px]"
+            body="Hello, researchers! I am excited to help you get feedback on the research papers you have worked so hard to write as your CEO. As someone who has struggled to find trustworthy feedback on my own work, it matters a lot to me that you do not run into the same problem. We want to grow this platform across disciplines and industries so people from all walks of life and levels of experience can take part in the community. We are committed to keeping DocuPeer 100% free forever, so everyone can use these resources without worrying about cost, and that only happens with your help as a peer reviewer."
+          />
+        </div>
+      </section>
+
+      <div className="rule mx-auto max-w-6xl" />
+
       {/* Principles */}
       <section className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
         <div className="card grid gap-10 p-10 sm:grid-cols-2 sm:p-14">
@@ -260,7 +364,7 @@ export default async function Home() {
             },
             {
               q: "Who is behind DocuPeer?",
-              a: "DocuPeer is Aryan Patel's project. The team is Aryan Patel, Co-Founder & COO, and Akshaj Sanikommu, CTO.",
+              a: "DocuPeer is built by Aryan Patel, Co-Founder & COO, Pritam Avuthu, CEO, and Akshaj Sanikommu, CTO.",
             },
           ].map((item) => (
             <div key={item.q} className="card h-full p-7 sm:p-8">
