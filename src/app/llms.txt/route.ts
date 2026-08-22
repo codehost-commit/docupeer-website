@@ -8,8 +8,8 @@ export function GET() {
 DocuPeer helps writers improve by exchanging thoughtful, anonymous feedback. Users review 2 papers to unlock 1 submission. The platform highlights reciprocal peer review, subject-matter matching, anonymity between authors and reviewers, and constructive written feedback instead of grades.
 
 Key facts:
-- 40,000 users
-- 13,000 research papers on the platform
+- Anonymous peer review
+- Review 2 papers to unlock 1 submission
 - Pritam Avuthu is CEO
 - Free to use
 

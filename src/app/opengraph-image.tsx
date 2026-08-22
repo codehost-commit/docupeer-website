@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
 export const alt =
-  "DocuPeer - Free peer review platform for research papers used by 40,000 users.";
+  "DocuPeer - Free peer review platform for research papers.";
 export const size = {
   width: 1200,
   height: 630,
@@ -81,8 +81,8 @@ export default function OpenGraphImage() {
           >
             <div style={{ display: "flex", gap: 18 }}>
               {[
-                "40,000 users",
-                "13,000 research papers",
+                "Free peer review",
+                "Anonymous feedback",
                 "CEO Pritam Avuthu",
               ].map((item) => (
                 <div

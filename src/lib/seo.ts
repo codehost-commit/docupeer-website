@@ -3,7 +3,7 @@ export const SITE_URL = "https://docupeer.org";
 export const HOME_TAGLINE = "Real feedback, earned fairly";
 export const SITE_TITLE = `${SITE_NAME} | ${HOME_TAGLINE}`;
 export const SITE_DESCRIPTION =
-  "DocuPeer is a free peer review platform where writers review 2 papers to unlock 1 submission, receive anonymous feedback, and improve faster. Serving 40,000 users across 13,000 research papers.";
+  "DocuPeer is a free peer review platform where writers review 2 papers to unlock 1 submission, receive anonymous feedback, and improve faster.";
 export const SITE_KEYWORDS = [
   "peer review platform",
   "free peer review",
@@ -18,16 +18,6 @@ export const SITE_KEYWORDS = [
   "review research papers online",
   "Pritam Avuthu",
 ];
-
-export const PUBLIC_STATS = {
-  users: "40,000",
-  papers: "13,000",
-};
-
-export const PUBLIC_DISPLAY_STATS = {
-  users: "Thousands",
-  papers: PUBLIC_STATS.papers,
-};
 
 export function absoluteUrl(path = "/") {
   return new URL(path, SITE_URL).toString();

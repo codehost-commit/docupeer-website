@@ -17,12 +17,8 @@ function CountdownUnit({ value, label }: { value: number; label: string }) {
 
 export function LaunchHero({
   initialLaunch,
-  users,
-  papers,
 }: {
   initialLaunch: LaunchSnapshot;
-  users: string;
-  papers: string;
 }) {
   const [launch, setLaunch] = useState(initialLaunch);
   const [now, setNow] = useState(() => Date.now());
@@ -132,8 +128,8 @@ export function LaunchHero({
 
           <div className="mx-auto mt-16 grid max-w-4xl grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-4">
             {[
-              { k: users, v: "community members", cls: "display text-3xl sm:text-4xl" },
-              { k: papers, v: "research papers", cls: "poiret text-4xl" },
+              { k: "Free", v: "peer review", cls: "display text-3xl sm:text-4xl" },
+              { k: "Anon", v: "review flow", cls: "poiret text-4xl" },
               { k: "2 : 1", v: "reviews per submission", cls: "poiret text-4xl" },
               { k: "$0", v: "cost, forever", cls: "display text-4xl sm:text-5xl" },
             ].map((stat) => (

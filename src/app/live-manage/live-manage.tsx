@@ -20,7 +20,6 @@ function defaultSnapshot(): LiveSnapshotPayload {
       title: DEFAULT_LIVE_TITLE,
       description: DEFAULT_LIVE_DESCRIPTION,
       roomName: createLiveRoomName(),
-      viewerCount: 0,
       startedAt: null,
       endedAt: null,
       updatedAt: now,

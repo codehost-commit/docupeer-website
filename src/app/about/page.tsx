@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PUBLIC_DISPLAY_STATS, PUBLIC_STATS, SITE_DESCRIPTION, absoluteUrl } from "@/lib/seo";
+import { SITE_DESCRIPTION, absoluteUrl } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "About",
@@ -168,9 +168,8 @@ export default function AboutPage() {
         </p>
         <p className="serif mx-auto mt-4 max-w-3xl text-lg leading-relaxed text-deep-dim">
           Aryan Patel, Pritam Avuthu, and Akshaj Reddy Sanikommu are building
-          DocuPeer as a free peer review platform that now supports{" "}
-          {PUBLIC_DISPLAY_STATS.users.toLowerCase()} of users and{" "}
-          {PUBLIC_STATS.papers} research papers with anonymous, reciprocal feedback.
+          DocuPeer as a free peer review platform for anonymous, reciprocal
+          feedback.
         </p>
       </header>
 

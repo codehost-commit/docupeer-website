@@ -127,7 +127,6 @@ model SiteLiveState {
   title       String    @default("DocuPeer Live")
   description String    @default("Live conversations, walkthroughs, and work sessions from the DocuPeer team.")
   roomName    String
-  viewerCount Int       @default(0)
   startedAt   DateTime?
   endedAt     DateTime?
   updatedAt   DateTime  @updatedAt

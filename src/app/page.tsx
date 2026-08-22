@@ -4,8 +4,6 @@ import { LaunchHero } from "./components/LaunchHero";
 import { getLaunchSnapshot } from "@/lib/launch";
 import {
   HOME_TAGLINE,
-  PUBLIC_DISPLAY_STATS,
-  PUBLIC_STATS,
   SITE_DESCRIPTION,
   SITE_KEYWORDS,
   SITE_TITLE,
@@ -190,14 +188,6 @@ export default async function Home() {
           text: "DocuPeer helps writers get free feedback, receive subject-matter matched reviews, stay anonymous, and improve papers through constructive comments and highlighted suggestions.",
         },
       },
-      {
-        "@type": "Question",
-        name: "How big is DocuPeer?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "DocuPeer serves 40,000 users and hosts 13,000 research papers on the platform.",
-        },
-      },
     ],
   };
 
@@ -211,11 +201,7 @@ export default async function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
-      <LaunchHero
-        initialLaunch={launch}
-        users={PUBLIC_DISPLAY_STATS.users}
-        papers={PUBLIC_STATS.papers}
-      />
+      <LaunchHero initialLaunch={launch} />
 
       <div className="rule mx-auto max-w-6xl" />
 
