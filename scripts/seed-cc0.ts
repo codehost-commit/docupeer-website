@@ -15,8 +15,12 @@
 //
 // Optional env:
 //   TARGET_PAPERS=1000    how many papers to try to insert (default 1000)
+//   TARGET_TOTAL=1        treat TARGET_PAPERS as the final seeded-paper count
 //   MIN_WORDS=350         floor for a paper to be usable (default 350)
 //   OPENALEX_MAILTO=you@example.com   OpenAlex "polite pool" identifier
+//   OPENALEX_PER_PAGE=200 page size for OpenAlex requests (default 200)
+//   OPENALEX_RETRIES=6    retry count for OpenAlex 429/5xx/network failures
+//   OPENALEX_SLEEP_MS=300 pause between successful OpenAlex pages
 //   WIPE_PAPERS=1         wipe existing papers/reviews before inserting
 
 import { PrismaClient } from "@prisma/client";
@@ -27,9 +31,17 @@ import path from "node:path";
 const prisma = new PrismaClient();
 
 const TARGET = Number(process.env.TARGET_PAPERS ?? 1000);
+const TARGET_TOTAL = process.env.TARGET_TOTAL === "1";
 const MIN_WORDS = Number(process.env.MIN_WORDS ?? 350);
 const MAILTO = process.env.OPENALEX_MAILTO ?? "hello@docupeer.org";
 const WIPE = process.env.WIPE_PAPERS === "1";
+const OPENALEX_PER_PAGE = Number(process.env.OPENALEX_PER_PAGE ?? 200);
+const OPENALEX_RETRIES = Number(process.env.OPENALEX_RETRIES ?? 6);
+const OPENALEX_RETRY_BASE_MS = Number(
+  process.env.OPENALEX_RETRY_BASE_MS ?? 1500
+);
+const OPENALEX_SLEEP_MS = Number(process.env.OPENALEX_SLEEP_MS ?? 300);
+const RETRYABLE_STATUS = new Set([408, 429, 500, 502, 503, 504]);
 // Pipe-separated OpenAlex license values. Defaults to CC0 + public-domain +
 // CC-BY: all freely redistributable, giving a big enough pool to hit 1000.
 // Override with LICENSES=cc0 for strict CC0 only.
@@ -92,6 +104,20 @@ function guessPaperType(topicName: string): string {
 
 function words(t: string): number {
   return t.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function retryDelayMs(retryAfter: string | null, attempt: number): number {
+  const retryAfterSeconds = retryAfter ? Number(retryAfter) : NaN;
+  if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0) {
+    return Math.min(120_000, retryAfterSeconds * 1000);
+  }
+  const exponential = OPENALEX_RETRY_BASE_MS * 2 ** attempt;
+  const jitter = Math.floor(Math.random() * 750);
+  return Math.min(120_000, exponential + jitter);
 }
 
 // Reconstruct plain text from OpenAlex's abstract_inverted_index.
@@ -169,7 +195,7 @@ async function fetchPage(cursor: string): Promise<OpenAlexPage> {
       "has_abstract:true",
       "language:en",
     ].join(","),
-    per_page: "200",
+    per_page: String(Math.min(200, Math.max(25, OPENALEX_PER_PAGE))),
     cursor,
     mailto: MAILTO,
     select:
@@ -177,21 +203,48 @@ async function fetchPage(cursor: string): Promise<OpenAlexPage> {
   });
   const url = `https://api.openalex.org/works?${params.toString()}`;
   if (cursor === "*") console.log("Query URL:", url);
-  const r = await fetch(url, {
-    headers: { "User-Agent": `DocuPeer-Seeder (mailto:${MAILTO})` },
-  });
-  if (!r.ok) {
-    throw new Error(
-      `OpenAlex responded ${r.status} ${r.statusText}: ${await r.text()}`
+
+  for (let attempt = 0; attempt <= OPENALEX_RETRIES; attempt++) {
+    const response = await fetch(url, {
+      headers: { "User-Agent": `DocuPeer-Seeder (mailto:${MAILTO})` },
+    }).catch((err) => err as Error);
+
+    if (response instanceof Error) {
+      if (attempt === OPENALEX_RETRIES) throw response;
+      const waitMs = retryDelayMs(null, attempt);
+      console.warn(
+        `OpenAlex request failed (${response.message}); retrying in ${Math.round(
+          waitMs / 1000
+        )}s...`
+      );
+      await sleep(waitMs);
+      continue;
+    }
+
+    if (response.ok) {
+      const page = (await response.json()) as OpenAlexPage;
+      if (cursor === "*") {
+        console.log(
+          `OpenAlex reports ${page.meta.count.toLocaleString()} works matching this filter.`
+        );
+      }
+      return page;
+    }
+
+    const body = await response.text();
+    const message = `OpenAlex responded ${response.status} ${response.statusText}: ${body}`;
+    if (!RETRYABLE_STATUS.has(response.status) || attempt === OPENALEX_RETRIES) {
+      throw new Error(message);
+    }
+
+    const waitMs = retryDelayMs(response.headers.get("retry-after"), attempt);
+    console.warn(
+      `${message}\nRetrying in ${Math.round(waitMs / 1000)}s...`
     );
+    await sleep(waitMs);
   }
-  const page = (await r.json()) as OpenAlexPage;
-  if (cursor === "*") {
-    console.log(
-      `OpenAlex reports ${page.meta.count.toLocaleString()} works matching this filter.`
-    );
-  }
-  return page;
+
+  throw new Error("OpenAlex request failed after retries.");
 }
 
 async function ensureAnonymousAuthor(): Promise<string> {
@@ -219,7 +272,7 @@ async function ensureAnonymousAuthor(): Promise<string> {
 
 async function main() {
   console.log(
-    `Seeding up to ${TARGET} CC0 papers (min ${MIN_WORDS} words) from OpenAlex...`
+    `Seeding from OpenAlex with licenses "${LICENSES}" and min ${MIN_WORDS} words...`
   );
 
   if (WIPE) {
@@ -233,6 +286,19 @@ async function main() {
 
   const already = await prisma.paper.count({ where: { authorId } });
   console.log(`Anonymous author currently owns ${already} papers.`);
+  const targetToInsert = TARGET_TOTAL ? Math.max(0, TARGET - already) : TARGET;
+  if (TARGET_TOTAL) {
+    console.log(
+      `Target total mode: inserting up to ${targetToInsert} more papers to reach ${TARGET}.`
+    );
+  } else {
+    console.log(`Insert-run mode: inserting up to ${targetToInsert} papers.`);
+  }
+  if (targetToInsert === 0) {
+    console.log("Target already reached; nothing to insert.");
+    await prisma.$disconnect();
+    return;
+  }
 
   const existingTitles = new Set<string>();
   const existing = await prisma.paper.findMany({
@@ -249,7 +315,7 @@ async function main() {
   let skipped = 0;
   let pages = 0;
 
-  while (inserted < TARGET) {
+  while (inserted < targetToInsert) {
     pages++;
     const page = await fetchPage(cursor);
     if (!page.results.length) {
@@ -269,7 +335,7 @@ async function main() {
     }[] = [];
 
     for (const w of page.results) {
-      if (inserted + batch.length >= TARGET) break;
+      if (inserted + batch.length >= targetToInsert) break;
 
       const rawTitle = w.title ?? "";
       const rawAbstract = abstractFromInvertedIndex(w.abstract_inverted_index);
@@ -335,7 +401,7 @@ async function main() {
       );
       inserted += batch.length;
       console.log(
-        `Page ${pages}: +${batch.length}, total ${inserted}/${TARGET} (${skipped} skipped so far).`
+        `Page ${pages}: +${batch.length}, total ${inserted}/${targetToInsert} (${skipped} skipped so far).`
       );
     } else {
       console.log(`Page ${pages}: 0 usable, ${skipped} skipped so far.`);
@@ -349,11 +415,11 @@ async function main() {
     await saveCheckpoint({ cursor, inserted, skipped, pages });
 
     // Be polite: brief pause between pages.
-    await new Promise((r) => setTimeout(r, 300));
+    await sleep(OPENALEX_SLEEP_MS);
   }
 
   console.log(
-    `Done. Inserted ${inserted} CC0 papers, skipped ${skipped} candidates across ${pages} pages.`
+    `Done. Inserted ${inserted} papers, skipped ${skipped} candidates across ${pages} pages.`
   );
   await prisma.$disconnect();
 }
