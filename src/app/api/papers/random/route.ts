@@ -46,14 +46,19 @@ export async function GET(req: NextRequest) {
           educationLevel: true,
           paperType: true,
           feedbackWanted: true,
-          text: true,
           wordCount: true,
           createdAt: true,
         },
       });
       if (recent.length > 0) {
         const pick = recent[Math.floor(Math.random() * recent.length)];
-        paper = { ...pick, matchScore: null };
+        const fullPaper = await prisma.paper.findUnique({
+          where: { id: pick.id },
+          select: { text: true },
+        });
+        if (fullPaper) {
+          paper = { ...pick, text: fullPaper.text, matchScore: null };
+        }
       }
     }
 

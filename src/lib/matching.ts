@@ -7,6 +7,7 @@
 import { EDUCATION_RANK } from "./constants";
 import { prisma } from "./db";
 import type { SessionUser } from "./auth";
+import type { Prisma } from "@prisma/client";
 
 export type MatchedPaper = {
   id: string;
@@ -21,6 +22,30 @@ export type MatchedPaper = {
   createdAt: Date;
   matchScore: number;
 };
+
+type MatchedPaperPreview = Omit<MatchedPaper, "text"> & {
+  reviewCount: number;
+};
+
+const PAPER_META_SELECT = {
+  id: true,
+  title: true,
+  category: true,
+  specialty: true,
+  educationLevel: true,
+  paperType: true,
+  feedbackWanted: true,
+  wordCount: true,
+  createdAt: true,
+  _count: { select: { reviews: true } },
+} satisfies Prisma.PaperSelect;
+
+type PaperMetaRow = Prisma.PaperGetPayload<{
+  select: typeof PAPER_META_SELECT;
+}>;
+
+const MIN_CANDIDATE_WINDOW = 120;
+const CANDIDATE_MULTIPLIER = 10;
 
 // Compute a fit score between a reviewer and a paper. Higher = better fit.
 export function scoreMatch(
@@ -68,47 +93,48 @@ export function scoreMatch(
   return score;
 }
 
-// Find candidate papers this reviewer may review, ranked by fit.
-// Excludes the reviewer's own papers and any paper they've already reviewed.
-export async function findMatchesForReviewer(
-  reviewer: SessionUser,
-  opts: { limit?: number } = {}
-): Promise<MatchedPaper[]> {
-  const limit = opts.limit ?? 20;
-
-  // Papers already reviewed by this user.
+async function getReviewedPaperIds(reviewerId: string): Promise<string[]> {
   const reviewed = await prisma.review.findMany({
-    where: { reviewerId: reviewer.id },
+    where: { reviewerId },
     select: { paperId: true },
   });
-  const reviewedIds = new Set(
-    reviewed.map((r: { paperId: string }) => r.paperId)
-  );
+  return reviewed.map((r: { paperId: string }) => r.paperId);
+}
 
-  type PaperRow = {
-    id: string;
-    title: string;
-    category: string;
-    specialty: string;
-    educationLevel: string;
-    paperType: string;
-    feedbackWanted: string | null;
-    text: string;
-    wordCount: number;
-    createdAt: Date;
-  };
+async function fetchCandidateWindow(
+  where: Prisma.PaperWhereInput,
+  take: number
+): Promise<PaperMetaRow[]> {
+  const count = await prisma.paper.count({ where });
+  if (count === 0) return [];
 
-  const candidates: PaperRow[] = await prisma.paper.findMany({
-    where: {
-      authorId: { not: reviewer.id }, // never review your own paper
-      id: { notIn: Array.from(reviewedIds) },
-    },
+  const windowSize = Math.min(take, count);
+  const skip =
+    count > windowSize ? Math.floor(Math.random() * (count - windowSize + 1)) : 0;
+
+  return prisma.paper.findMany({
+    where,
     orderBy: { createdAt: "desc" },
-    take: 200, // cap the working set; rank in-app
+    skip,
+    take: windowSize,
+    select: PAPER_META_SELECT,
+  });
+}
+
+function rankCandidateMetas(
+  reviewer: SessionUser,
+  candidates: PaperMetaRow[],
+  limit: number
+): MatchedPaperPreview[] {
+  const seen = new Set<string>();
+  const unique = candidates.filter((p) => {
+    if (seen.has(p.id)) return false;
+    seen.add(p.id);
+    return true;
   });
 
-  const ranked: MatchedPaper[] = candidates
-    .map((p: PaperRow) => ({
+  return unique
+    .map((p) => ({
       id: p.id,
       title: p.title,
       category: p.category,
@@ -116,15 +142,92 @@ export async function findMatchesForReviewer(
       educationLevel: p.educationLevel,
       paperType: p.paperType,
       feedbackWanted: p.feedbackWanted,
-      text: p.text,
       wordCount: p.wordCount,
       createdAt: p.createdAt,
       matchScore: scoreMatch(reviewer, p),
+      reviewCount: p._count.reviews,
     }))
-    // Favor better matches; sort by score descending.
-    .sort((a: MatchedPaper, b: MatchedPaper) => b.matchScore - a.matchScore);
+    .sort(
+      (a, b) =>
+        b.matchScore - a.matchScore ||
+        a.reviewCount - b.reviewCount ||
+        b.createdAt.getTime() - a.createdAt.getTime()
+    )
+    .slice(0, limit);
+}
 
-  return ranked.slice(0, limit);
+function withText(
+  match: MatchedPaperPreview,
+  text: string
+): MatchedPaper {
+  const { reviewCount, ...paper } = match;
+  void reviewCount;
+  return { ...paper, text };
+}
+
+async function fetchFullMatch(
+  match: MatchedPaperPreview
+): Promise<MatchedPaper | null> {
+  const row = await prisma.paper.findUnique({
+    where: { id: match.id },
+    select: { text: true },
+  });
+  if (!row) return null;
+  return withText(match, row.text);
+}
+
+async function findMatchPreviewsForReviewer(
+  reviewer: SessionUser,
+  opts: { limit?: number; excludeId?: string } = {}
+): Promise<MatchedPaperPreview[]> {
+  const limit = opts.limit ?? 20;
+  const reviewedIds = await getReviewedPaperIds(reviewer.id);
+  const excludedIds = [...reviewedIds, opts.excludeId].filter(
+    (id): id is string => Boolean(id)
+  );
+  const idFilter =
+    excludedIds.length > 0 ? { id: { notIn: excludedIds } } : {};
+  const baseWhere: Prisma.PaperWhereInput = {
+    authorId: { not: reviewer.id },
+    ...idFilter,
+  };
+  const candidateWindow = Math.max(
+    MIN_CANDIDATE_WINDOW,
+    limit * CANDIDATE_MULTIPLIER
+  );
+
+  const focused = await fetchCandidateWindow(
+    { ...baseWhere, category: reviewer.expertiseCategory },
+    candidateWindow
+  );
+  const remaining = candidateWindow - focused.length;
+  const fallback =
+    remaining > 0
+      ? await fetchCandidateWindow(baseWhere, remaining)
+      : [];
+
+  return rankCandidateMetas(reviewer, [...focused, ...fallback], limit);
+}
+
+// Find candidate papers this reviewer may review, ranked by fit.
+// Excludes the reviewer's own papers and any paper they've already reviewed.
+export async function findMatchesForReviewer(
+  reviewer: SessionUser,
+  opts: { limit?: number } = {}
+): Promise<MatchedPaper[]> {
+  const previews = await findMatchPreviewsForReviewer(reviewer, opts);
+  if (previews.length === 0) return [];
+
+  const textRows = await prisma.paper.findMany({
+    where: { id: { in: previews.map((p) => p.id) } },
+    select: { id: true, text: true },
+  });
+  const textById = new Map(textRows.map((p) => [p.id, p.text]));
+
+  return previews.flatMap((preview) => {
+    const text = textById.get(preview.id);
+    return text ? [withText(preview, text)] : [];
+  });
 }
 
 // Pick the single best available paper for the reviewer, with light
@@ -135,16 +238,25 @@ export async function pickRandomMatch(
   reviewer: SessionUser,
   opts: { excludeId?: string } = {}
 ): Promise<MatchedPaper | null> {
-  const matches = await findMatchesForReviewer(reviewer, { limit: 30 });
-  const pool = matches.filter((m) => m.id !== opts.excludeId);
-  if (pool.length === 0) {
+  let pool = await findMatchPreviewsForReviewer(reviewer, {
+    limit: 30,
+    excludeId: opts.excludeId,
+  });
+
+  if (pool.length === 0 && opts.excludeId) {
     // Fall back to including the excluded paper if it's the only option.
-    if (matches.length > 0) return matches[0];
-    return null;
+    pool = await findMatchPreviewsForReviewer(reviewer, { limit: 30 });
   }
+  if (pool.length === 0) return null;
 
   // Take the top tier (best-fitting papers) and pick randomly among them.
   const topTier = pool.slice(0, Math.min(6, pool.length));
-  const chosen = topTier[Math.floor(Math.random() * topTier.length)];
-  return chosen;
+  const shuffled = [...topTier].sort(() => Math.random() - 0.5);
+
+  for (const candidate of shuffled) {
+    const match = await fetchFullMatch(candidate);
+    if (match) return match;
+  }
+
+  return null;
 }
