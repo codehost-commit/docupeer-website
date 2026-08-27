@@ -68,9 +68,43 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
+      {
+        url: "/docupeer-favicon-light-512.png",
+        type: "image/png",
+        sizes: "512x512",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/docupeer-favicon-light-32.png",
+        type: "image/png",
+        sizes: "32x32",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/docupeer-favicon-light-16.png",
+        type: "image/png",
+        sizes: "16x16",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/docupeer-favicon-dark-512.png",
+        type: "image/png",
+        sizes: "512x512",
+        media: "(prefers-color-scheme: dark)",
+      },
+      {
+        url: "/docupeer-favicon-dark-32.png",
+        type: "image/png",
+        sizes: "32x32",
+        media: "(prefers-color-scheme: dark)",
+      },
+      {
+        url: "/docupeer-favicon-dark-16.png",
+        type: "image/png",
+        sizes: "16x16",
+        media: "(prefers-color-scheme: dark)",
+      },
       { url: "/docupeer-favicon.ico", sizes: "any" },
-      { url: "/docupeer-icon-32.png", type: "image/png", sizes: "32x32" },
-      { url: "/docupeer-icon-16.png", type: "image/png", sizes: "16x16" },
     ],
     apple: [{ url: "/docupeer-icon-512.png", sizes: "512x512" }],
   },
