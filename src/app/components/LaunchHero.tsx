@@ -4,9 +4,7 @@ import { PaperStack } from "./PaperStack";
 
 export function LaunchHero() {
   return (
-    <section className="relative isolate overflow-hidden border-b border-deep-border/70 bg-[#f6f5f2]">
-      <div aria-hidden="true" className="absolute inset-x-0 top-0 h-56 bg-[#eeece6]" />
-
+    <section className="relative isolate overflow-hidden border-b border-deep-border/70 bg-[linear-gradient(180deg,#efede7_0%,#f6f5f2_34%,#f6f5f2_100%)]">
       <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-20 sm:px-6 sm:pt-28">
         <div className="grid items-center gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-16">
           <div className="text-left">

@@ -87,7 +87,7 @@ function LeadershipCard({
       <Image
         src={imageSrc}
         alt={imageAlt}
-        width={540}
+        width={700}
         height={700}
         className={`relative z-10 h-auto w-auto object-contain object-bottom ${imageClassName}`}
       />
@@ -279,7 +279,7 @@ export default function Home() {
             imageAlt="Rahul Awasthi"
             imageSide="right"
             imagePaneClassName="justify-center px-2 sm:px-4 lg:px-3"
-            imageClassName="max-h-[350px] sm:max-h-[410px] lg:max-h-[470px] translate-y-[18px]"
+            imageClassName="max-h-[330px] sm:max-h-[390px] lg:max-h-[430px] translate-y-[22px]"
             body="Hello everyone! It is a pleasure to welcome you to DocuPeer as your CEO. I started this platform because strong feedback should not depend on connections, luck, or how much money someone can spend. My responsibility is to keep us moving with clarity, protect the quality of the community, and fight to keep DocuPeer free for everyone who needs it. I want this to be a place where serious writers help one another generously, and where every thoughtful review makes the whole platform stronger."
           />
         </div>
