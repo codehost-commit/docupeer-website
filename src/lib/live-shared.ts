@@ -15,7 +15,7 @@ export type LiveSnapshotPayload = {
 
 export const DEFAULT_LIVE_TITLE = "DocuPeer Live";
 export const DEFAULT_LIVE_DESCRIPTION =
-  "Live conversations, walkthroughs, and work sessions from the DocuPeer team.";
+  "Live conversations, walkthroughs, and work sessions from DocuPeer.";
 
 export function formatLiveTime(value: number | null) {
   if (!value) return "Not started";

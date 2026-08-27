@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   },
 };
 
-const UPDATED = "August 18, 2026";
+const UPDATED = "August 27, 2026";
 const CONTENT_LINKS = [
   ["Privacy", "#privacy"],
   ["Terms", "#terms"],
@@ -112,8 +112,8 @@ export default function LegalPage() {
           <div className="mb-12 border-y border-deep-border py-5">
             <p className="text-sm leading-relaxed text-deep-text-soft">
               <span className="font-semibold text-deep-text">Operator.</span>{" "}
-              DocuPeer is operated by the DocuPeer team. Questions about this
-              page can be sent to{" "}
+              DocuPeer is operated by Rahul Awasthi, Founder & CEO. Questions
+              about this page can be sent to{" "}
               <a
                 href="mailto:hello@docupeer.org"
                 className="text-deep-accent transition-colors hover:text-deep-text"
@@ -316,7 +316,8 @@ export default function LegalPage() {
 
               <Clause title="2. Who is providing the service">
                 <p>
-                  DocuPeer is provided by the DocuPeer team. References to
+                  DocuPeer is provided by Rahul Awasthi through DocuPeer.
+                  References to
                   &quot;DocuPeer,&quot;
                   &quot;we,&quot; &quot;our,&quot; or &quot;us&quot; on this
                   page refer to that operation unless the context requires
@@ -432,8 +433,8 @@ export default function LegalPage() {
 
               <Clause title="11. Limitation of liability">
                 <p>
-                  To the maximum extent permitted by law, DocuPeer and its team
-                  will not be liable for any indirect,
+                  To the maximum extent permitted by law, DocuPeer and its
+                  operator will not be liable for any indirect,
                   incidental, special, consequential, exemplary, or punitive
                   damages, or for any loss of data, profits, goodwill, business
                   opportunity, or use, arising out of or related to the
@@ -453,7 +454,7 @@ export default function LegalPage() {
               <Clause title="12. Indemnity">
                 <p>
                   You agree to defend, indemnify, and hold harmless DocuPeer
-                  and its team from claims, liabilities, damages, losses, and
+                  and its operator from claims, liabilities, damages, losses, and
                   expenses arising out of your misuse of the service, your
                   violation of these terms, or your violation of another
                   person&apos;s rights, including any claim that content you
@@ -502,37 +503,24 @@ export default function LegalPage() {
             </Section>
 
             <Section id="attributions" title="Attributions">
-              <Clause title="Team">
+              <Clause title="Founder">
                 <p>
-                  DocuPeer is built by a small team. The current contributors
-                  are:
+                  DocuPeer is built and operated by Rahul Awasthi as the sole
+                  Founder & CEO.
                 </p>
                 <ul className="list-disc space-y-2 pl-5">
                   <li>
                     <span className="font-semibold text-deep-text">
-                      Aryan Patel
+                      Rahul Awasthi
                     </span>{" "}
-                    &mdash; Co-Founder & COO. Operations, community, and the
-                    day-to-day work of making DocuPeer trustworthy and useful.
-                  </li>
-                  <li>
-                    <span className="font-semibold text-deep-text">
-                      Pritam Avuthu
-                    </span>{" "}
-                    &mdash; CEO.
-                  </li>
-                  <li>
-                    <span className="font-semibold text-deep-text">
-                      Akshaj Sanikommu
-                    </span>{" "}
-                    &mdash; CTO.
+                    &mdash; Founder & CEO.
                   </li>
                 </ul>
                 <p>
                   Nothing on this page constitutes an endorsement of any
                   individual by any third party, and any views expressed
                   through the DocuPeer product are those of DocuPeer&apos;s
-                  operators, not of any employer, university, or affiliated
+                  operator, not of any employer, university, or affiliated
                   organisation.
                 </p>
               </Clause>

@@ -5,7 +5,7 @@ import { SITE_DESCRIPTION, absoluteUrl } from "@/lib/seo";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Learn what DocuPeer is, why it exists, and how the DocuPeer team is building a free peer review platform for research papers.",
+    "Learn what DocuPeer is, why it exists, and how Rahul Awasthi is building a free peer review platform for research papers.",
   alternates: {
     canonical: "/about",
   },
@@ -31,24 +31,12 @@ type Person = {
   bio?: string;
 };
 
-const TEAM: Person[] = [
+const FOUNDER: Person[] = [
   {
-    name: "Aryan Patel",
-    role: "Co-Founder & COO",
-    image: "/team/aryan.jpeg",
-    bio: "Operations, community, and the day-to-day work of making DocuPeer trustworthy and useful.",
-  },
-  {
-    name: "Pritam Avuthu",
-    role: "CEO",
-    image: "/team/pritam.jpeg",
-    bio: "Growth, access, and the leadership needed to keep DocuPeer free and useful across disciplines.",
-  },
-  {
-    name: "Akshaj Sanikommu",
-    role: "CTO",
-    image: "/team/akshaj.jpeg",
-    bio: "Technology, reliability, and the product systems that make reciprocal review work at scale.",
+    name: "Rahul Awasthi",
+    role: "Founder & CEO",
+    image: "/team/rahul.jpeg",
+    bio: "Building and operating DocuPeer as a free, reciprocal peer review platform for serious writers.",
   },
 ];
 
@@ -84,7 +72,7 @@ function Headshot({
   );
 }
 
-function TeamCard({ person }: { person: Person }) {
+function FounderCard({ person }: { person: Person }) {
   return (
     <div className="flex flex-col items-center gap-6 text-center animate-fadeUp">
       <Headshot person={person} />
@@ -123,22 +111,22 @@ export default function AboutPage() {
     name: "About DocuPeer",
     url: absoluteUrl("/about"),
     description:
-      "About the DocuPeer team and the mission behind the free peer review platform.",
+      "About Rahul Awasthi and the mission behind the free DocuPeer peer review platform.",
     mainEntity: [
       {
         "@type": "Person",
-        name: "Aryan Patel",
-        jobTitle: "Co-Founder & COO",
-      },
-      {
-        "@type": "Person",
-        name: "Akshaj Sanikommu",
-        jobTitle: "CTO",
+        name: "Rahul Awasthi",
+        jobTitle: "Founder & CEO",
       },
       {
         "@type": "Organization",
         name: "DocuPeer",
         description: SITE_DESCRIPTION,
+        founder: {
+          "@type": "Person",
+          name: "Rahul Awasthi",
+          jobTitle: "Founder & CEO",
+        },
       },
     ],
   };
@@ -152,28 +140,27 @@ export default function AboutPage() {
       {/* Intro */}
       <header className="text-center">
         <h1 className="poiret text-4xl text-deep-text sm:text-6xl">
-          The team behind the{" "}
+          The founder behind the{" "}
           <span className="display text-deep-accent">review</span>.
         </h1>
         <p className="serif mx-auto mt-6 max-w-2xl text-xl leading-relaxed text-deep-text-soft">
           DocuPeer exists because thoughtful feedback should not be gated by
-          money, prestige, or the right connections. It is built by a small
-          team that believes writing improves when the people
-          reviewing it are qualified, honest, and treated as equals.
+          money, prestige, or the right connections. It is built by Rahul
+          Awasthi, who believes writing improves when the people reviewing it
+          are qualified, honest, and treated as equals.
         </p>
         <p className="serif mx-auto mt-4 max-w-3xl text-lg leading-relaxed text-deep-dim">
-          Aryan Patel, Pritam Avuthu, and Akshaj Sanikommu are building
-          DocuPeer as a free peer review platform for anonymous, reciprocal
-          feedback.
+          Rahul Awasthi is the sole Founder & CEO of DocuPeer, a free peer
+          review platform for anonymous, reciprocal feedback.
         </p>
       </header>
 
-      {/* Team */}
+      {/* Founder */}
       <section className="mt-20">
-        <SectionHeader title="Our team" />
-        <div className="grid gap-14 sm:grid-cols-3 sm:gap-8">
-          {TEAM.map((p) => (
-            <TeamCard key={p.name} person={p} />
+        <SectionHeader title="Founder" />
+        <div className="mx-auto max-w-sm">
+          {FOUNDER.map((p) => (
+            <FounderCard key={p.name} person={p} />
           ))}
         </div>
       </section>

@@ -3,7 +3,7 @@ export const SITE_URL = "https://docupeer.org";
 export const HOME_TAGLINE = "Real feedback, earned fairly";
 export const SITE_TITLE = `${SITE_NAME} | ${HOME_TAGLINE}`;
 export const SITE_DESCRIPTION =
-  "DocuPeer is Aryan Patel's free peer review platform where writers review 2 papers to unlock 1 submission, receive anonymous feedback, and improve faster.";
+  "DocuPeer is a free peer review platform founded by Rahul Awasthi, its sole Founder & CEO, where writers review 2 papers to unlock 1 submission, receive anonymous feedback, and improve faster.";
 export const SITE_KEYWORDS = [
   "peer review platform",
   "free peer review",
@@ -16,8 +16,7 @@ export const SITE_KEYWORDS = [
   "essay review platform",
   "student paper feedback",
   "review research papers online",
-  "Aryan Patel",
-  "Akshaj Sanikommu",
+  "Rahul Awasthi",
 ];
 
 export function absoluteUrl(path = "/") {
@@ -33,16 +32,9 @@ export const organizationJsonLd = {
   description: SITE_DESCRIPTION,
   founder: {
     "@type": "Person",
-    name: "Aryan Patel",
-    jobTitle: "Co-Founder & COO",
+    name: "Rahul Awasthi",
+    jobTitle: "Founder & CEO",
   },
-  member: [
-    {
-      "@type": "Person",
-      name: "Akshaj Sanikommu",
-      jobTitle: "CTO",
-    },
-  ],
 };
 
 export const websiteJsonLd = {

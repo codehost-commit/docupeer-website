@@ -32,10 +32,10 @@ papers. Demo login: `maya@example.com` / `password123` (also `leo@`, `ana@`,
 
 Reset the database any time with `npm run db:reset`.
 
-## Team headshots
+## Founder headshot
 
-Drop `aryan.jpeg`, `pritam.jpeg`, `akshaj.jpeg` into
-`public/team/`. The About page falls back to initials if a file is missing.
+Add `rahul.jpeg` to `public/team/`. The About page falls back to initials if
+the file is missing.
 
 ## How the core rules are enforced (all server-side)
 
@@ -71,7 +71,7 @@ prisma/
   seed.ts              # demo users and papers
 public/
   docupeer-logo.png    # brand mark
-  team/                # drop headshots here (see the folder README)
+  team/                # founder headshot assets
 scripts/
   test-logic.ts        # 24 unit tests for the pure business logic
 src/
@@ -90,7 +90,7 @@ src/
     submit/            # paper submission (credit-gated, 350-word)
     dashboard/         # progress toward next submission
     history/           # feedback received and reviews completed
-    about/             # team page
+    about/             # founder/about page
     login/ register/   # auth pages
 ```
 

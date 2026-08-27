@@ -10,9 +10,8 @@ DocuPeer helps writers improve by exchanging thoughtful, anonymous feedback. Use
 Key facts:
 - Anonymous peer review
 - Review 2 papers to unlock 1 submission
-- DocuPeer is Aryan Patel's project
-- Aryan Patel is Co-Founder & COO
-- Akshaj Sanikommu is CTO
+- DocuPeer is Rahul Awasthi's project
+- Rahul Awasthi is the sole Founder & CEO
 - Free to use
 
 Primary URLs:
