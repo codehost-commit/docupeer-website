@@ -45,6 +45,8 @@ function isLaunchProtectedPath(pathname: string) {
     pathname === "/api/dashboard" ||
     pathname === "/api/papers" ||
     pathname.startsWith("/api/papers/") ||
+    pathname === "/secretariat" ||
+    pathname.startsWith("/api/secretariat") ||
     pathname === "/api/reviews" ||
     pathname.startsWith("/api/reviews/")
   );

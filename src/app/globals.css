@@ -246,3 +246,121 @@ h1, h2, h3, h4, h5, h6 {
     animation: none !important;
   }
 }
+
+/* --- Secretariat (AI assistant) ---------------------------------------- */
+
+/* A clean top-to-bottom reveal for AI replies: the text is masked and the
+   mask edge sweeps downward, so the answer materializes top-first without a
+   forced typewriter effect. Registered custom property makes the mask edge
+   animatable; browsers without @property support just show the content. */
+@property --sec-reveal {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 0%;
+}
+
+@keyframes secReveal {
+  from {
+    --sec-reveal: 0%;
+    opacity: 0.35;
+    filter: blur(0.4px);
+  }
+  to {
+    --sec-reveal: 128%;
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+.sec-reveal {
+  animation: secReveal 900ms cubic-bezier(0.22, 0.68, 0.28, 1) both;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 var(--sec-reveal),
+    rgba(0, 0, 0, 0) calc(var(--sec-reveal) + 14%)
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 var(--sec-reveal),
+    rgba(0, 0, 0, 0) calc(var(--sec-reveal) + 14%)
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sec-reveal {
+    animation: none;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}
+
+/* Bubbles for the conversation. */
+.sec-bubble {
+  @apply rounded-2xl border px-4 py-3 text-sm leading-relaxed;
+}
+.sec-bubble-user {
+  @apply sec-bubble border-deep-accent/30 bg-deep-accent-soft/60 text-deep-text;
+}
+.sec-bubble-ai {
+  @apply sec-bubble border-deep-border bg-deep-panel shadow-panel text-deep-text;
+}
+
+/* Markdown + KaTeX typography inside an AI reply. */
+.sec-prose {
+  @apply text-[0.95rem] leading-7 text-deep-text;
+}
+.sec-prose > :first-child { margin-top: 0; }
+.sec-prose > :last-child { margin-bottom: 0; }
+.sec-prose h1, .sec-prose h2, .sec-prose h3, .sec-prose h4 {
+  @apply mt-5 mb-2 font-semibold tracking-tight text-deep-text;
+  font-family: var(--font-sans);
+}
+.sec-prose h1 { @apply text-lg; }
+.sec-prose h2 { @apply text-base; }
+.sec-prose h3 { @apply text-sm uppercase tracking-wide text-deep-dim; }
+.sec-prose p { @apply my-2.5; }
+.sec-prose ul { @apply my-2.5 list-disc pl-5; }
+.sec-prose ol { @apply my-2.5 list-decimal pl-5; }
+.sec-prose li { @apply my-1; }
+.sec-prose li::marker { color: theme("colors.deep.accent"); }
+.sec-prose a { @apply text-deep-accent underline underline-offset-2; }
+.sec-prose strong { @apply font-semibold text-deep-text; }
+.sec-prose blockquote {
+  @apply my-3 border-l-2 border-deep-accent/40 pl-3 italic text-deep-text-soft;
+}
+.sec-prose code {
+  @apply rounded bg-deep-panel2 px-1.5 py-0.5 text-[0.85em];
+  font-family: var(--font-mono);
+}
+.sec-prose pre {
+  @apply my-3 overflow-x-auto rounded-xl border border-deep-border bg-deep-panel2 p-3.5 text-[0.82rem];
+}
+.sec-prose pre code { @apply bg-transparent p-0; }
+.sec-prose table {
+  @apply my-3 w-full border-collapse text-[0.85rem];
+}
+.sec-prose th, .sec-prose td {
+  @apply border border-deep-border px-2.5 py-1.5 text-left;
+}
+.sec-prose th { @apply bg-deep-panel2 font-semibold; }
+.sec-prose hr { @apply my-4 border-deep-border; }
+.sec-prose .katex-display {
+  @apply my-3 overflow-x-auto overflow-y-hidden py-1;
+}
+.sec-prose .katex { font-size: 1.02em; }
+
+/* Pulsing indicator while Secretariat is thinking. */
+.sec-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: theme("colors.deep.accent");
+  animation: secPulse 1s ease-in-out infinite;
+}
+@keyframes secPulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.1); }
+}

@@ -39,6 +39,7 @@ export function Nav() {
         { href: "/review", label: "Review" },
         { href: "/submit", label: "Submit" },
         { href: "/dashboard", label: "Dashboard" },
+        { href: "/secretariat", label: "Secretariat" },
         { href: "/history", label: "History" },
         { href: "/live", label: "DocuPeer Live" },
         { href: "/about", label: "About" },

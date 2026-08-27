@@ -35,3 +35,6 @@ tsconfig.tsbuildinfo
 
 # session scratch
 _to_delete/
+
+# private planning docs
+THIRD_PARTY_VALIDATION.md

@@ -30,6 +30,11 @@ model User {
   papers  Paper[]  @relation("AuthoredPapers")
   reviews Review[] @relation("AuthoredReviews")
 
+  // Secretariat (AI assistant) usage.
+  aiPromptsUsed Int     @default(0) // prompts consumed from the earned/starter pool
+  aiDailyDate   String? // America/Chicago date (YYYY-MM-DD) the daily free prompt was last used
+  chats         AiChat[] @relation("UserChats")
+
   @@index([expertiseCategory, specialty])
 }
 
@@ -178,4 +183,36 @@ model SiteLaunchState {
   targetAt   DateTime
   launchedAt DateTime?
   updatedAt  DateTime  @updatedAt
+}
+
+model AiChat {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation("UserChats", fields: [userId], references: [id], onDelete: Cascade)
+
+  title     String  @default("New chat")
+  titled    Boolean @default(false) // whether the small model has named it from the first prompt
+  paperName String
+  paperText String // extracted plain text of the uploaded paper (PDF/DOCX)
+  wordCount Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages AiMessage[] @relation("ChatMessages")
+
+  @@index([userId, updatedAt])
+}
+
+model AiMessage {
+  id     String @id @default(cuid())
+  chatId String
+  chat   AiChat @relation("ChatMessages", fields: [chatId], references: [id], onDelete: Cascade)
+
+  role    String // "user" | "assistant"
+  content String
+
+  createdAt DateTime @default(now())
+
+  @@index([chatId, createdAt])
 }
