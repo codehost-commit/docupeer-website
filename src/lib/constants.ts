@@ -94,7 +94,7 @@ export const MAX_PROMPT_WORDS = 250; // maximum prompt length (words)
 
 // Uploaded papers have no length limit for the user, but we cap what we feed
 // the model so a single request never exceeds the context window.
-export const MAX_PAPER_CONTEXT_CHARS = 350_000;
+export const MAX_PAPER_CONTEXT_CHARS = 14_000; // fits Groq free tier (~8K tokens/request); raise via env after upgrade
 export const ACCEPTED_PAPER_TYPES = [".pdf", ".docx"] as const;
 
 export const AI_MODEL_MAIN = "openai/gpt-oss-120b"; // reads the paper + converses

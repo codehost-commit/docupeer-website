@@ -173,12 +173,19 @@ async function groqComplete(opts: {
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
     console.error("Groq error", res.status, detail.slice(0, 500));
-    const err = new Error(
-      res.status === 429
-        ? "Secretariat is busy right now. Try again in a moment."
-        : "Secretariat could not complete that request."
-    ) as Error & { status?: number };
-    err.status = res.status === 429 ? 429 : 502;
+    let message = "Secretariat could not complete that request.";
+    let status = 502;
+    if (res.status === 429) {
+      message =
+        "Secretariat is busy right now (rate limit reached). Wait a moment and try again.";
+      status = 429;
+    } else if (res.status === 413) {
+      message =
+        "That request is too large for the current Groq plan (free tier allows ~8K tokens per request). Ask about a shorter section, or upgrade the Groq API tier for full-length papers.";
+      status = 413;
+    }
+    const err = new Error(message) as Error & { status?: number };
+    err.status = status;
     throw err;
   }
   const data = await res.json();
@@ -250,14 +257,27 @@ const MAIN_SYSTEM = [
   "Be thorough and detailed, but stay focused on what the user actually asked.",
 ].join("\n");
 
+// Free-tier Groq caps each request at ~8K tokens/min, so we budget the paper,
+// history, and answer length aggressively. All are overridable via env once the
+// Groq tier is upgraded (just set them in Vercel and redeploy — no code change).
+const PAPER_CHARS =
+  Number(process.env.SECRETARIAT_MAX_PAPER_CHARS) || MAX_PAPER_CONTEXT_CHARS;
+const OUTPUT_TOKENS = Number(process.env.SECRETARIAT_MAX_OUTPUT_TOKENS) || 1600;
+const HISTORY_MSGS = Number(process.env.SECRETARIAT_HISTORY_MSGS) || 2;
+const HISTORY_CHARS = 1000; // per prior message kept for continuity
+
 export async function answerAboutPaper(input: {
   paperName: string;
   paperText: string;
   history: { role: "user" | "assistant"; content: string }[];
   question: string;
 }): Promise<string> {
-  const paper = input.paperText.slice(0, MAX_PAPER_CONTEXT_CHARS);
-  const truncated = input.paperText.length > MAX_PAPER_CONTEXT_CHARS;
+  const paper = input.paperText.slice(0, PAPER_CHARS);
+  const truncated = input.paperText.length > PAPER_CHARS;
+  const history = input.history.slice(-HISTORY_MSGS).map((m) => ({
+    role: m.role,
+    content: m.content.slice(0, HISTORY_CHARS),
+  }));
   const messages: ChatMsg[] = [
     { role: "system", content: MAIN_SYSTEM },
     {
@@ -265,17 +285,18 @@ export async function answerAboutPaper(input: {
       content:
         `The user's paper is titled "${input.paperName}".\n` +
         `--- BEGIN PAPER ---\n${paper}\n--- END PAPER ---` +
-        (truncated ? "\n[Note: the paper was truncated for length.]" : ""),
+        (truncated
+          ? "\n[Only the first part of the paper is shown due to the current AI plan's size limit.]"
+          : ""),
     },
-    // Keep recent turns for continuity without blowing the context window.
-    ...input.history.slice(-12),
+    ...history,
     { role: "user", content: input.question },
   ];
   const out = await groqComplete({
     model: AI_MODEL_MAIN,
     temperature: 0.4,
-    maxTokens: 6000,
-    reasoningEffort: "medium",
+    maxTokens: OUTPUT_TOKENS,
+    reasoningEffort: "low",
     messages,
   });
   return out || "I wasn't able to generate a response. Please try again.";
