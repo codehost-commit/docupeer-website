@@ -5,7 +5,7 @@ const ADMIN_METRICS_ID = "global";
 
 export type AdminMetricsPayload = {
   pageViews: number;
-  signedUpUsers: number;
+  users: number;
   papersUploaded: number;
   updatedAt: number;
 };
@@ -37,8 +37,21 @@ export async function ensureAdminMetrics() {
   return metrics;
 }
 
-export async function incrementPageView() {
+// Count a unique page view. `visitorId` should be a stable per-visitor id
+// (a long-lived, http-only cookie) so refreshes and re-navigations by the
+// same browser are counted at most once.
+export async function recordUniquePageView(visitorId: string) {
+  if (!visitorId) return;
   await ensureAdminMetrics();
+  try {
+    await prisma.pageViewVisitor.create({
+      data: { visitorId },
+    });
+  } catch (err) {
+    // Unique constraint violation — this visitor is already counted.
+    if ((err as { code?: string }).code === "P2002") return;
+    throw err;
+  }
   await prisma.adminMetrics.update({
     where: { id: ADMIN_METRICS_ID },
     data: {
@@ -48,7 +61,7 @@ export async function incrementPageView() {
 }
 
 export async function getAdminMetrics(): Promise<AdminMetricsPayload> {
-  const [metrics, realSignedUpUsers, realPapersUploaded] = await Promise.all([
+  const [metrics, users, papersUploaded] = await Promise.all([
     ensureAdminMetrics(),
     prisma.user.count(),
     prisma.paper.count(),
@@ -56,8 +69,8 @@ export async function getAdminMetrics(): Promise<AdminMetricsPayload> {
 
   return {
     pageViews: metrics.pageViews,
-    signedUpUsers: realSignedUpUsers,
-    papersUploaded: realPapersUploaded,
+    users,
+    papersUploaded,
     updatedAt: metrics.updatedAt.getTime(),
   };
 }

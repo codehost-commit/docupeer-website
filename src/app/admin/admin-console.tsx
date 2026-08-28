@@ -3,17 +3,10 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { LaunchCelebration } from "@/app/components/LaunchCelebration";
-import {
-  FEATURE_LAUNCH_LABEL,
-  defaultLaunchSnapshot,
-  launchTimeParts,
-  type LaunchSnapshot,
-} from "@/lib/launch-shared";
 
 type AdminMetrics = {
   pageViews: number;
-  signedUpUsers: number;
+  users: number;
   papersUploaded: number;
   updatedAt: number;
 };
@@ -56,7 +49,7 @@ function Login({ onLogin }: { onLogin: () => void }) {
           <span className="font-semibold">DocuPeer Admin</span>
         </Link>
         <h1 className="mt-8 text-3xl font-semibold tracking-normal">Admin sign in</h1>
-        <p className="mt-2 text-sm leading-6 text-[#606978]">Use the temporary admin credentials to view site metrics and operations controls.</p>
+        <p className="mt-2 text-sm leading-6 text-[#606978]">View site metrics.</p>
         <div className="mt-7 space-y-4">
           <label className="block">
             <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#707887]">User ID</span>
@@ -113,13 +106,6 @@ export function AdminConsole() {
   const [checking, setChecking] = useState(true);
   const [metrics, setMetrics] = useState<AdminMetrics | null>(null);
   const [message, setMessage] = useState("");
-  const [launch, setLaunch] = useState<LaunchSnapshot>(defaultLaunchSnapshot());
-  const [launchNow, setLaunchNow] = useState(() => Date.now());
-  const [launchBusy, setLaunchBusy] = useState(false);
-  const [launchArmed, setLaunchArmed] = useState(false);
-  const [launchCelebrating, setLaunchCelebrating] = useState(false);
-  const [launchMessage, setLaunchMessage] = useState("");
-  const launchCountdown = launchTimeParts(launch.targetAt, launchNow);
 
   const latestUpdate = useMemo(
     () => (metrics ? new Date(metrics.updatedAt).toLocaleString() : "Loading"),
@@ -137,7 +123,7 @@ export function AdminConsole() {
   const checkSession = useCallback(async () => {
     try {
       const response = await fetch("/api/admin/me", { cache: "no-store" });
-      const payload = await response.json().catch(() => ({}));
+      await response.json().catch(() => ({}));
       if (!response.ok) throw new Error("Not signed in.");
       setAuthenticated(true);
     } catch {
@@ -154,13 +140,6 @@ export function AdminConsole() {
     setMetrics(payload.metrics);
   }, []);
 
-  const loadLaunch = useCallback(async () => {
-    const response = await fetch("/api/admin/launch", { cache: "no-store" });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(payload.error || "Could not load launch state.");
-    setLaunch(payload.launch);
-  }, []);
-
   useEffect(() => {
     checkSession();
   }, [checkSession]);
@@ -174,39 +153,10 @@ export function AdminConsole() {
     return () => window.clearInterval(id);
   }, [authenticated, loadMetrics]);
 
-  useEffect(() => {
-    if (!authenticated) return;
-    loadLaunch().catch((err) => setLaunchMessage(err.message || "Could not load launch state."));
-    const poll = window.setInterval(() => loadLaunch().catch(() => {}), 5000);
-    const clock = window.setInterval(() => setLaunchNow(Date.now()), 250);
-    return () => {
-      window.clearInterval(poll);
-      window.clearInterval(clock);
-    };
-  }, [authenticated, loadLaunch]);
-
   async function logout() {
     await fetch("/api/admin/logout", { method: "POST" });
     setAuthenticated(false);
     setMetrics(null);
-  }
-
-  async function executeLaunch() {
-    setLaunchBusy(true);
-    setLaunchMessage("Sending the global launch signal...");
-    try {
-      const response = await fetch("/api/admin/launch", { method: "POST" });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error || "The launch signal failed.");
-      setLaunch(payload.launch);
-      setLaunchArmed(false);
-      setLaunchCelebrating(true);
-      setLaunchMessage("Launch signal confirmed. DocuPeer is live.");
-    } catch (error) {
-      setLaunchMessage(error instanceof Error ? error.message : "The launch signal failed.");
-    } finally {
-      setLaunchBusy(false);
-    }
   }
 
   if (checking) {
@@ -217,29 +167,6 @@ export function AdminConsole() {
 
   return (
     <div className="min-h-screen bg-[#f8f7f3] text-[#171b24]">
-      <LaunchCelebration active={launchCelebrating} onComplete={() => setLaunchCelebrating(false)} />
-      {launchArmed && !launch.isLaunched ? (
-        <div className="fixed inset-0 z-[90] grid place-items-center bg-[#030810]/95 px-5 py-10 text-white backdrop-blur-xl">
-          <div className="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-[#ffd166]/35 bg-[#091522] p-7 text-center shadow-[0_0_120px_rgba(255,209,102,0.16)] sm:p-12">
-            <div className="launch-aurora absolute inset-0 opacity-40" />
-            <div className="relative">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-[#ffd166]/40 bg-[#ffd166]/10 text-2xl shadow-[0_0_45px_rgba(255,209,102,0.2)]">✦</div>
-              <p className="mt-7 text-[10px] font-bold uppercase tracking-[0.45em] text-[#ffd166]">Final authorization</p>
-              <h2 className="mt-4 text-4xl font-semibold tracking-normal text-white sm:text-6xl">Ready to make history?</h2>
-              <p className="mx-auto mt-5 max-w-lg text-base leading-7 text-white/60">This opens registration and every product surface immediately. Everyone on the countdown page will receive the live reveal.</p>
-              <button
-                type="button"
-                onClick={executeLaunch}
-                disabled={launchBusy}
-                className="launch-admin-button mt-9 w-full rounded-2xl border border-[#ffe39b] bg-gradient-to-b from-[#ffe39b] to-[#e5aa31] px-6 py-5 text-base font-black uppercase tracking-[0.22em] text-[#151007] shadow-[0_0_50px_rgba(255,209,102,0.26)] transition hover:scale-[1.015] hover:shadow-[0_0_80px_rgba(255,209,102,0.42)] disabled:opacity-60"
-              >
-                {launchBusy ? "Transmitting signal..." : "Launch DocuPeer"}
-              </button>
-              <button type="button" onClick={() => setLaunchArmed(false)} disabled={launchBusy} className="mt-5 text-xs font-bold uppercase tracking-[0.2em] text-white/45 transition hover:text-white">Return to console</button>
-            </div>
-          </div>
-        </div>
-      ) : null}
       <div className="mx-auto w-full max-w-7xl px-5 py-6 sm:px-8 lg:px-10">
         <header className="flex flex-col gap-4 border-b border-[#ded8cc] pb-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
@@ -253,12 +180,6 @@ export function AdminConsole() {
             <Link href="/" className="rounded-md border border-[#d6d0c5] bg-white px-4 py-2 text-sm font-semibold text-[#2d3342] transition hover:border-[#1f3447]">
               Public page
             </Link>
-            <Link href="/live-manage" className="rounded-md border border-[#d6d0c5] bg-white px-4 py-2 text-sm font-semibold text-[#2d3342] transition hover:border-[#1f3447]">
-              Live console
-            </Link>
-            <Link href="/status-manage" className="rounded-md border border-[#d6d0c5] bg-white px-4 py-2 text-sm font-semibold text-[#2d3342] transition hover:border-[#1f3447]">
-              Status console
-            </Link>
             <button
               onClick={logout}
               className="rounded-md bg-[#1f3447] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#162635]"
@@ -269,87 +190,40 @@ export function AdminConsole() {
           </div>
         </header>
 
-        <main className="grid gap-8 py-8 xl:grid-cols-[minmax(0,1fr)_23rem]">
-          <div className="space-y-8">
-            <section className="relative isolate overflow-hidden rounded-2xl border border-[#1d3449] bg-[#07111c] p-6 text-white shadow-[0_24px_70px_rgba(7,17,28,0.24)] sm:p-8">
-              <div className="launch-aurora absolute inset-0 opacity-50" />
-              <div className="relative grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-                <div>
-                  <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.3em] text-[#ffd166]">
-                    <span className={`h-2 w-2 rounded-full ${launch.isLaunched ? "bg-emerald-400 shadow-[0_0_14px_#34d399]" : "animate-pulse bg-red-500 shadow-[0_0_14px_#ef4444]"}`} />
-                    Feature launch control
-                  </div>
-                  <h2 className="mt-4 text-4xl font-semibold tracking-normal text-white sm:text-5xl">{launch.isLaunched ? "DocuPeer is live." : "The final signal."}</h2>
-                  <p className="mt-3 max-w-2xl text-sm leading-6 text-white/55">
-                    {launch.isLaunched
-                      ? `Global launch confirmed${launch.launchedAt ? ` at ${new Date(launch.launchedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" })}` : ""}. Registration and product routes are open.`
-                      : "This is the master release control. It unlocks registration and the complete DocuPeer experience for everyone watching."}
-                  </p>
-                  {!launch.isLaunched ? (
-                    <div className="mono mt-6 flex flex-wrap gap-x-5 gap-y-2 text-2xl tabular-nums text-white sm:text-3xl">
-                      <span>{String(launchCountdown.days).padStart(2, "0")}<small className="ml-1 text-[9px] uppercase tracking-widest text-white/35">d</small></span>
-                      <span>{String(launchCountdown.hours).padStart(2, "0")}<small className="ml-1 text-[9px] uppercase tracking-widest text-white/35">h</small></span>
-                      <span>{String(launchCountdown.minutes).padStart(2, "0")}<small className="ml-1 text-[9px] uppercase tracking-widest text-white/35">m</small></span>
-                      <span>{String(launchCountdown.seconds).padStart(2, "0")}<small className="ml-1 text-[9px] uppercase tracking-widest text-white/35">s</small></span>
-                    </div>
-                  ) : null}
-                  <div className="mt-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/35">{FEATURE_LAUNCH_LABEL}</div>
-                  {launchMessage ? <div className="mt-5 text-sm font-semibold text-[#ffd166]">{launchMessage}</div> : null}
-                </div>
-                {launch.isLaunched ? (
-                  <Link href="/" className="inline-flex rounded-xl border border-emerald-300/30 bg-emerald-300/10 px-6 py-4 text-sm font-bold text-emerald-200 transition hover:bg-emerald-300/20">View the live site →</Link>
-                ) : (
-                  <button type="button" onClick={() => setLaunchArmed(true)} className="launch-admin-button rounded-xl border border-[#ffe39b] bg-gradient-to-b from-[#ffe39b] to-[#dfa328] px-8 py-5 text-sm font-black uppercase tracking-[0.2em] text-[#151007] shadow-[0_0_40px_rgba(255,209,102,0.2)] transition hover:-translate-y-0.5 hover:shadow-[0_0_60px_rgba(255,209,102,0.36)]">Arm launch sequence</button>
-                )}
+        <main className="grid gap-8 py-8">
+          <section className="rounded-lg border border-[#dcd6cb] bg-white p-6 shadow-[0_18px_50px_rgba(29,33,42,0.07)]">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#707887]">Overview</p>
+                <h2 className="mt-2 text-3xl font-semibold tracking-normal">Site metrics</h2>
+                <p className="mt-2 text-sm text-[#606978]">
+                  Real numbers only. Page views are counted uniquely per visitor.
+                </p>
               </div>
-            </section>
+              <span className="text-sm font-medium text-[#606978]">Updated {latestUpdate}</span>
+            </div>
 
-            <section className="rounded-lg border border-[#dcd6cb] bg-white p-6 shadow-[0_18px_50px_rgba(29,33,42,0.07)]">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#707887]">Overview</p>
-                  <h2 className="mt-2 text-3xl font-semibold tracking-normal">Site metrics</h2>
-                </div>
-                <span className="text-sm font-medium text-[#606978]">Updated {latestUpdate}</span>
-              </div>
+            <div className="mt-7 grid gap-4 md:grid-cols-3">
+              <MetricCard
+                label="Page views"
+                value={metrics?.pageViews ?? 0}
+              />
+              <MetricCard
+                label="Users"
+                value={metrics?.users ?? 0}
+              />
+              <MetricCard
+                label="Papers uploaded"
+                value={metrics?.papersUploaded ?? 0}
+              />
+            </div>
+          </section>
 
-              <div className="mt-7 grid gap-4 md:grid-cols-3">
-                <MetricCard
-                  label="Page views"
-                  value={metrics?.pageViews ?? 0}
-                />
-                <MetricCard
-                  label="Signed-up users"
-                  value={metrics?.signedUpUsers ?? 0}
-                />
-                <MetricCard
-                  label="Papers uploaded"
-                  value={metrics?.papersUploaded ?? 0}
-                />
-              </div>
-            </section>
-
-            {message ? (
-              <div className="rounded-md border border-[#d6d0c5] bg-white px-4 py-3 text-sm font-semibold text-[#2d3342] shadow-[0_12px_30px_rgba(29,33,42,0.05)]">
-                {message}
-              </div>
-            ) : null}
-          </div>
-
-          <aside className="space-y-4">
-            <section className="rounded-lg border border-[#dcd6cb] bg-white p-5 shadow-[0_18px_50px_rgba(29,33,42,0.07)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#707887]">Operations</p>
-              <div className="mt-5 grid gap-3">
-                <Link href="/live-manage" className="rounded-md border border-[#d6d0c5] bg-[#fbfaf7] px-4 py-4 text-sm font-semibold text-[#2d3342] transition hover:border-[#1f3447]">
-                  Open Live console
-                </Link>
-                <Link href="/status-manage" className="rounded-md border border-[#d6d0c5] bg-[#fbfaf7] px-4 py-4 text-sm font-semibold text-[#2d3342] transition hover:border-[#1f3447]">
-                  Open Status console
-                </Link>
-              </div>
-            </section>
-
-          </aside>
+          {message ? (
+            <div className="rounded-md border border-[#d6d0c5] bg-white px-4 py-3 text-sm font-semibold text-[#2d3342] shadow-[0_12px_30px_rgba(29,33,42,0.05)]">
+              {message}
+            </div>
+          ) : null}
         </main>
       </div>
     </div>

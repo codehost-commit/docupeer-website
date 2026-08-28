@@ -10,7 +10,7 @@ helping people write better.
 ## Tech stack
 
 - **Next.js 14** (App Router, TypeScript) — one full-stack codebase
-- **Prisma + SQLite** — zero-config local database (swap `DATABASE_URL` for Postgres in production)
+- **Prisma + PostgreSQL** — swap `DATABASE_URL` locally for SQLite if you want zero-config
 - **Custom auth** — bcrypt password hashing + signed JWT session cookies (`jose`)
 - **Tailwind CSS** with a dark, panelled design system (Space Grotesk + Inter + JetBrains Mono)
 
@@ -22,20 +22,16 @@ cd docupeer
 cp .env.example .env
 # open .env and replace AUTH_SECRET with a long random string
 npm install
-npm run setup      # creates the SQLite DB and seeds demo data
+npm run setup      # applies the schema and seeds demo data
 npm run dev        # http://localhost:3000
 ```
 
-`npm run setup` runs `prisma db push` then seeds four demo users and four
-papers. Demo login: `maya@example.com` / `password123` (also `leo@`, `ana@`,
-`sam@`).
-
 Reset the database any time with `npm run db:reset`.
 
-## Founder headshot
+## Team
 
-Add `rahul.jpeg` to `public/team/`. The About page falls back to initials if
-the file is missing.
+- **Pritam Avuthu** — Lead Developer
+- **Akshaj** — Lead Product Designer
 
 ## How the core rules are enforced (all server-side)
 
@@ -62,37 +58,6 @@ only on the `AiDetector` interface and the `screenReview()` helper in
   `PROVIDERS` map, and set `AI_DETECTOR_PROVIDER`. A dependency-free
   `heuristic` provider ships by default so the flow works end to end. It is
   a placeholder, not a production-grade detector.
-
-## Project structure
-
-```
-prisma/
-  schema.prisma        # User, Paper, Review, Annotation
-  seed.ts              # demo users and papers
-public/
-  docupeer-logo.png    # brand mark
-  team/                # founder headshot assets
-scripts/
-  test-logic.ts        # 24 unit tests for the pure business logic
-src/
-  lib/
-    auth.ts            # sessions, password hashing
-    credits.ts         # submission-credit and daily-limit logic
-    matching.ts        # education/expertise/specialty/strength matching
-    validation.ts      # server-side field and word-count validation
-    sanitize.ts        # UGC sanitization
-    rate-limit.ts      # in-memory rate limiting
-    highlight.ts       # selection to offsets, segment rendering
-    ai-detection/      # pluggable AI-content screening
-  app/
-    api/               # auth, papers, reviews, dashboard route handlers
-    review/            # the reviewing surface (highlight / add / remove / randomize)
-    submit/            # paper submission (credit-gated, 350-word)
-    dashboard/         # progress toward next submission
-    history/           # feedback received and reviews completed
-    about/             # founder/about page
-    login/ register/   # auth pages
-```
 
 ## Scripts
 
@@ -121,5 +86,3 @@ npx tsx scripts/test-logic.ts   # run business-logic tests
 ## License
 
 MIT. See [LICENSE](./LICENSE).
-# docupeer-website
-# docupeer-website

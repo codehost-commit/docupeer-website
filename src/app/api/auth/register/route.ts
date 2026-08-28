@@ -6,18 +6,9 @@ import { sanitizeLine } from "@/lib/sanitize";
 import { json, error, handleRouteError } from "@/lib/http";
 import { rateLimit } from "@/lib/rate-limit";
 import { educationNeedsGrade } from "@/lib/constants";
-import { getLaunchSnapshot } from "@/lib/launch";
 
 export async function POST(req: NextRequest) {
   try {
-    const launch = await getLaunchSnapshot();
-    if (!launch.isLaunched) {
-      return error(
-        "DocuPeer registration is locked until the live launch signal.",
-        423,
-      );
-    }
-
     const ip = req.headers.get("x-forwarded-for") ?? "local";
     const rl = rateLimit(`register:${ip}`, 10, 60 * 60 * 1000);
     if (!rl.ok) return error("Too many attempts. Try again later.", 429);

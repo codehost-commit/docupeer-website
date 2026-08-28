@@ -23,8 +23,6 @@ export const metadata: Metadata = {
   },
   description: SITE_DESCRIPTION,
   keywords: SITE_KEYWORDS,
-  authors: [{ name: "Rahul Awasthi" }],
-  creator: "Rahul Awasthi",
   publisher: SITE_NAME,
   category: "education",
   referrer: "origin-when-cross-origin",
