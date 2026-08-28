@@ -254,10 +254,10 @@ export default function SecretariatPage() {
             <IconSpark className="h-6 w-6" />
           </div>
           <h1 className="text-3xl">Secretariat</h1>
-          <p className="poiret mt-1 text-lg text-deep-dim">Your AI reading companion for papers</p>
+          <p className="poiret mt-1 text-lg text-deep-dim">Your reading companion for papers</p>
           <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-deep-text-soft">
-            Upload a paper and Secretariat — powered by GPT-OSS-120B — reads it and gives detailed,
-            constructive feedback. Sign in to get <strong>2 free prompts</strong>, a{" "}
+            Upload a paper and Secretariat reads it to give detailed, constructive feedback.
+            Sign in to get <strong>2 free prompts</strong>, a{" "}
             <strong>free prompt every day</strong>, and <strong>2 more for every peer review</strong> you complete.
           </p>
           <div className="mt-6 flex items-center justify-center gap-3">
@@ -272,7 +272,7 @@ export default function SecretariatPage() {
   // ---- main app ----
   return (
     <main className="mx-auto max-w-6xl px-3 py-6 sm:px-4">
-      <div className="grid gap-4 md:grid-cols-[16rem_1fr]">
+      <div className="grid min-h-0 gap-4 md:grid-cols-[16rem_1fr]">
         {/* Sidebar */}
         <aside className="flex flex-col gap-3">
           <button onClick={startNew} className="btn-primary w-full">
@@ -328,7 +328,7 @@ export default function SecretariatPage() {
         </aside>
 
         {/* Main panel */}
-        <section className="card flex min-h-[70vh] flex-col overflow-hidden">
+        <section className="card flex h-[calc(100vh-7rem)] min-h-[34rem] max-h-[52rem] min-w-0 flex-col overflow-hidden">
           {!chat ? (
             // Upload / start state
             <div className="flex flex-1 flex-col items-center justify-center p-6">
@@ -378,11 +378,11 @@ export default function SecretariatPage() {
                     {chat.paperName} · {chat.wordCount.toLocaleString()} words
                   </p>
                 </div>
-                <span className="chip-accent shrink-0">GPT-OSS-120B</span>
+                <span className="chip-accent shrink-0">Paper companion</span>
               </header>
 
               {/* Messages */}
-              <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto px-4 py-5">
+              <div ref={scrollRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-5">
                 {chat.messages.length === 0 && (
                   <div className="mx-auto max-w-md rounded-xl border border-deep-border bg-deep-panel2/60 p-4 text-center text-sm text-deep-text-soft">
                     Ask Secretariat anything about <strong>{chat.paperName}</strong> — a critique, a

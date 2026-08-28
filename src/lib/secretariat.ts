@@ -1,6 +1,6 @@
-// Secretariat — the AI paper assistant. Consolidated server module:
+// Secretariat paper assistant. Consolidated server module:
 //   1. Token-pool logic (server-authoritative; no client-writable balance)
-//   2. Groq model calls (main GPT-OSS-120B + small openai/gpt-oss-20b helper)
+//   2. Model calls
 //   3. Paper text extraction (PDF via unpdf, DOCX via mammoth)
 import {
   STARTER_AI_MESSAGES,
@@ -133,14 +133,14 @@ export async function consumeToken(userId: string): Promise<TokenStatus> {
 }
 
 // ---------------------------------------------------------------------------
-// 2. Groq model calls
+// 2. Model calls
 // ---------------------------------------------------------------------------
 
-const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+const MODEL_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 type ChatMsg = { role: "system" | "user" | "assistant"; content: string };
 
-async function groqComplete(opts: {
+async function modelComplete(opts: {
   model: string;
   messages: ChatMsg[];
   temperature?: number;
@@ -150,12 +150,12 @@ async function groqComplete(opts: {
   const key = process.env.GROQ_API_KEY;
   if (!key) {
     const err = new Error(
-      "Secretariat is not configured yet (missing GROQ_API_KEY)."
+      "Secretariat is not configured yet."
     ) as Error & { status?: number };
     err.status = 503;
     throw err;
   }
-  const res = await fetch(GROQ_URL, {
+  const res = await fetch(MODEL_API_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -172,7 +172,7 @@ async function groqComplete(opts: {
   });
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
-    console.error("Groq error", res.status, detail.slice(0, 500));
+    console.error("Secretariat model error", res.status, detail.slice(0, 500));
     let message = "Secretariat could not complete that request.";
     let status = 502;
     if (res.status === 429) {
@@ -181,7 +181,7 @@ async function groqComplete(opts: {
       status = 429;
     } else if (res.status === 413) {
       message =
-        "That request is too large for the current Groq plan (free tier allows ~8K tokens per request). Ask about a shorter section, or upgrade the Groq API tier for full-length papers.";
+        "That request is too large right now. Ask about a shorter section and try again.";
       status = 413;
     }
     const err = new Error(message) as Error & { status?: number };
@@ -191,7 +191,7 @@ async function groqComplete(opts: {
   const data = await res.json();
   const choice = data?.choices?.[0]?.message ?? {};
   const content = (choice.content ?? "").trim();
-  // gpt-oss models sometimes leave content empty and put text in `reasoning`.
+  // Some reasoning models leave content empty and put text in `reasoning`.
   return content || (choice.reasoning ?? "").trim();
 }
 
@@ -199,7 +199,7 @@ async function groqComplete(opts: {
 // every specific. Falls back to the original prompt on any failure.
 export async function optimizePrompt(userPrompt: string): Promise<string> {
   try {
-    const out = await groqComplete({
+    const out = await modelComplete({
       model: AI_MODEL_SMALL,
       temperature: 0,
       maxTokens: 400,
@@ -223,7 +223,7 @@ export async function optimizePrompt(userPrompt: string): Promise<string> {
 // Small model: derive a short chat title from the first prompt.
 export async function nameChat(firstPrompt: string): Promise<string> {
   try {
-    const out = await groqComplete({
+    const out = await modelComplete({
       model: AI_MODEL_SMALL,
       temperature: 0.2,
       maxTokens: 30,
@@ -257,9 +257,8 @@ const MAIN_SYSTEM = [
   "Be thorough and detailed, but stay focused on what the user actually asked.",
 ].join("\n");
 
-// Free-tier Groq caps each request at ~8K tokens/min, so we budget the paper,
-// history, and answer length aggressively. All are overridable via env once the
-// Groq tier is upgraded (just set them in Vercel and redeploy — no code change).
+// Request budgets stay conservative so long papers, chat history, and answer
+// length can be handled reliably. All are overridable via env.
 const PAPER_CHARS =
   Number(process.env.SECRETARIAT_MAX_PAPER_CHARS) || MAX_PAPER_CONTEXT_CHARS;
 const OUTPUT_TOKENS = Number(process.env.SECRETARIAT_MAX_OUTPUT_TOKENS) || 1600;
@@ -286,13 +285,13 @@ export async function answerAboutPaper(input: {
         `The user's paper is titled "${input.paperName}".\n` +
         `--- BEGIN PAPER ---\n${paper}\n--- END PAPER ---` +
         (truncated
-          ? "\n[Only the first part of the paper is shown due to the current AI plan's size limit.]"
+          ? "\n[Only the first part of the paper is shown due to the current size limit.]"
           : ""),
     },
     ...history,
     { role: "user", content: input.question },
   ];
-  const out = await groqComplete({
+  const out = await modelComplete({
     model: AI_MODEL_MAIN,
     temperature: 0.4,
     maxTokens: OUTPUT_TOKENS,

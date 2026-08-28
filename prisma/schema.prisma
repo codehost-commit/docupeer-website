@@ -30,7 +30,7 @@ model User {
   papers  Paper[]  @relation("AuthoredPapers")
   reviews Review[] @relation("AuthoredReviews")
 
-  // Secretariat (AI assistant) usage.
+  // Secretariat usage.
   aiPromptsUsed Int     @default(0) // prompts consumed from the earned/starter pool
   aiDailyDate   String? // America/Chicago date (YYYY-MM-DD) the daily free prompt was last used
   chats         AiChat[] @relation("UserChats")

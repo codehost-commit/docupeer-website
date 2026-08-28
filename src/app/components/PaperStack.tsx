@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 // A LaTeX-typeset sample paper, one page at a time. Left / right arrows step
 // through pages; the pages behind are just a decorative fanned stack, they
@@ -255,6 +255,13 @@ export function PaperStack() {
   const [i, setI] = useState(0);
   const n = PAGES.length;
   const go = (delta: number) => setI((v) => (v + delta + n) % n);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setI((v) => (v + 1) % n);
+    }, 5000);
+    return () => window.clearTimeout(timer);
+  }, [i, n]);
 
   return (
     <div className="relative mx-auto w-full max-w-[560px] select-none">

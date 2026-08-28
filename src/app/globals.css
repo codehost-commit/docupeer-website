@@ -247,9 +247,9 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
-/* --- Secretariat (AI assistant) ---------------------------------------- */
+/* --- Secretariat -------------------------------------------------------- */
 
-/* A clean top-to-bottom reveal for AI replies: the text is masked and the
+/* A clean top-to-bottom reveal for replies: the text is masked and the
    mask edge sweeps downward, so the answer materializes top-first without a
    forced typewriter effect. Registered custom property makes the mask edge
    animatable; browsers without @property support just show the content. */
@@ -307,7 +307,7 @@ h1, h2, h3, h4, h5, h6 {
   @apply sec-bubble border-deep-border bg-deep-panel shadow-panel text-deep-text;
 }
 
-/* Markdown + KaTeX typography inside an AI reply. */
+/* Markdown + KaTeX typography inside a reply. */
 .sec-prose {
   @apply text-[0.95rem] leading-7 text-deep-text;
 }

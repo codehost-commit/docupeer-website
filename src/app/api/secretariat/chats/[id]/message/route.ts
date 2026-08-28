@@ -18,8 +18,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 // POST /api/secretariat/chats/:id/message  { content }
-// Flow: validate -> gate on tokens -> small model optimizes the prompt ->
-// main model (GPT-OSS-120B) answers -> persist user+assistant turns, name the
+// Flow: validate -> gate on tokens -> optimize the prompt ->
+// answer -> persist user+assistant turns, name the
 // chat on the first message, and charge exactly one token on success.
 export async function POST(
   req: NextRequest,
@@ -68,7 +68,7 @@ export async function POST(
         { code: "NO_CREDITS", tokens: pre }
       );
 
-    // Small model compresses the question to save tokens on the main model.
+    // Compress the question to save context for the answer.
     const optimized = await optimizePrompt(content);
 
     const answer = await answerAboutPaper({

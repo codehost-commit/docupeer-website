@@ -79,8 +79,8 @@ export const PAPER_TYPES = [
 export const ANNOTATION_KINDS = ["comment", "add", "remove"] as const;
 export type AnnotationKind = (typeof ANNOTATION_KINDS)[number];
 
-// --- Secretariat (AI paper assistant) -------------------------------------
-// A "token" is one prompt to the main AI. The pool is derived server-side:
+// --- Secretariat paper assistant ------------------------------------------
+// A "token" is one prompt to Secretariat. The pool is derived server-side:
 //   earned pool = STARTER_AI_MESSAGES + reviewsCompleted * TOKENS_PER_REVIEW
 //   plus DAILY_FREE_MESSAGES per America/Chicago day (used first, resets at
 //   local midnight). No client-writable balance exists.
@@ -92,13 +92,13 @@ export const SECRETARIAT_TZ = "America/Chicago"; // daily reset boundary
 export const MIN_PROMPT_CHARS = 20; // minimum prompt length
 export const MAX_PROMPT_WORDS = 250; // maximum prompt length (words)
 
-// Uploaded papers have no length limit for the user, but we cap what we feed
-// the model so a single request never exceeds the context window.
-export const MAX_PAPER_CONTEXT_CHARS = 14_000; // fits Groq free tier (~8K tokens/request); raise via env after upgrade
+// Uploaded papers have no length limit for the user, but we cap request context
+// so a single response stays reliable.
+export const MAX_PAPER_CONTEXT_CHARS = 14_000;
 export const ACCEPTED_PAPER_TYPES = [".pdf", ".docx"] as const;
 
-export const AI_MODEL_MAIN = "openai/gpt-oss-120b"; // reads the paper + converses
-export const AI_MODEL_SMALL = "openai/gpt-oss-20b"; // optimizes prompts + names chats
+export const AI_MODEL_MAIN = "openai/gpt-oss-120b";
+export const AI_MODEL_SMALL = "openai/gpt-oss-20b";
 
 export function countWords(text: string): number {
   const t = text.trim();

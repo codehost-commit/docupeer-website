@@ -285,54 +285,6 @@ export default function Home() {
         </div>
       </section>
 
-      <div className="rule mx-auto max-w-6xl" />
-
-      {/* Principles */}
-      <section className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
-        <div className="card grid gap-10 p-10 sm:grid-cols-2 sm:p-14">
-          <div>
-            <h2 className="poiret text-4xl text-deep-text sm:text-5xl">
-              Built to{" "}
-              <span className="display text-deep-accent">help</span>, not to
-              hook.
-            </h2>
-            <p className="mt-5 text-lg leading-relaxed text-deep-text-soft">
-              DocuPeer is not a social network and never will be. No paid
-              tiers, no leaderboards, no reviewers competing against each
-              other. Just people helping people write better, and earning the
-              same in return.
-            </p>
-          </div>
-          <ul className="grid gap-5">
-            {[
-              "Papers are fully anonymous to reviewers.",
-              "Feedback comes from people at an appropriate level and specialty.",
-              "You review to earn reviews. A balanced, reciprocal community.",
-              "Your identity and email are never shown to reviewers.",
-            ].map((t) => (
-              <li key={t} className="flex items-start gap-3">
-                <svg
-                  className="mt-1.5 h-5 w-5 flex-none text-deep-accent"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                >
-                  <path
-                    d="m5 13 4 4L19 7"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                <span className="text-lg leading-snug text-deep-text">
-                  {t}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
       <section className="mx-auto max-w-6xl px-4 pb-24 pt-8 sm:px-6">
         <div className="mb-12 text-center">
           <h2 className="poiret text-4xl text-deep-text sm:text-5xl">
