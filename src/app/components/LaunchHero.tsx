@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { PaperStack } from "./PaperStack";
 
-export function Hero() {
+export function LaunchHero() {
   return (
     <section className="relative isolate overflow-hidden border-b border-deep-border/70 bg-[linear-gradient(180deg,#efede7_0%,#f6f5f2_34%,#f6f5f2_100%)]">
       <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-20 sm:px-6 sm:pt-28">

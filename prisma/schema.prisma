@@ -177,6 +177,14 @@ model AdminMetrics {
   updatedAt DateTime @updatedAt
 }
 
+model SiteLaunchState {
+  id         String    @id @default("global")
+  isLaunched Boolean   @default(false)
+  targetAt   DateTime
+  launchedAt DateTime?
+  updatedAt  DateTime  @updatedAt
+}
+
 model AiChat {
   id     String @id @default(cuid())
   userId String
@@ -207,9 +215,4 @@ model AiMessage {
   createdAt DateTime @default(now())
 
   @@index([chatId, createdAt])
-}
-
-model PageViewVisitor {
-  visitorId String   @id
-  createdAt DateTime @default(now())
 }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Hero } from "./components/Hero";
+import Image from "next/image";
+import { LaunchHero } from "./components/LaunchHero";
 import {
   SITE_DESCRIPTION,
   SITE_KEYWORDS,
@@ -58,6 +59,79 @@ function Step({
   );
 }
 
+function LeadershipCard({
+  title,
+  name,
+  role,
+  imageSrc,
+  imageAlt,
+  imageSide,
+  body,
+  imageClassName = "",
+  imagePaneClassName = "",
+}: {
+  title: string;
+  name: string;
+  role: string;
+  imageSrc: string;
+  imageAlt: string;
+  imageSide: "left" | "right";
+  body: string;
+  imageClassName?: string;
+  imagePaneClassName?: string;
+}) {
+  const imageBlock = (
+    <div
+      className={`relative flex min-h-[260px] items-end overflow-hidden pt-8 sm:min-h-[320px] ${imagePaneClassName}`}
+    >
+      <Image
+        src={imageSrc}
+        alt={imageAlt}
+        width={700}
+        height={700}
+        className={`relative z-10 h-auto w-auto object-contain object-bottom ${imageClassName}`}
+      />
+    </div>
+  );
+
+  const textBlock = (
+    <div className="flex h-full flex-col justify-center px-8 py-8 sm:px-10 sm:py-10">
+      <p className="mono text-[10px] font-semibold uppercase tracking-[0.18em] text-deep-accent">
+        Leadership Note
+      </p>
+      <h3 className="poiret mt-3 text-3xl text-deep-text sm:text-4xl">
+        {title}
+      </h3>
+      <div className="mt-3 text-sm uppercase tracking-[0.16em] text-deep-accent">
+        {name} . {role}
+      </div>
+      <p className="serif mt-5 text-lg leading-relaxed text-deep-text-soft">
+        {body}
+      </p>
+    </div>
+  );
+
+  return (
+    <div className="card overflow-hidden lg:grid lg:items-end">
+      {imageSide === "left" ? (
+        <div className="lg:grid lg:grid-cols-[320px_minmax(0,1fr)] lg:items-end">
+          <div className="border-b border-deep-border lg:border-b-0 lg:border-r">
+            {imageBlock}
+          </div>
+          {textBlock}
+        </div>
+      ) : (
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
+          {textBlock}
+          <div className="border-t border-deep-border lg:border-l lg:border-t-0">
+            {imageBlock}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Home() {
   const homepageJsonLd = {
     "@context": "https://schema.org",
@@ -74,6 +148,11 @@ export default function Home() {
     mainEntity: {
       "@type": "Organization",
       name: "DocuPeer",
+      founder: {
+        "@type": "Person",
+        name: "Rahul Awasthi",
+        jobTitle: "Founder & CEO",
+      },
     },
   };
 
@@ -110,7 +189,7 @@ export default function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
-      <Hero />
+      <LaunchHero />
 
       <div className="rule mx-auto max-w-6xl" />
 
@@ -173,6 +252,36 @@ export default function Home() {
             <Step n={3} title="Submit your" highlight="paper" body="Post a paper of 350 or more words. One submission per day keeps quality high." />
             <Step n={4} title="Receive real" highlight="feedback" body="Constructive, subject-matter feedback from qualified peers. No numeric grades." />
           </div>
+        </div>
+      </section>
+
+      <div className="rule mx-auto max-w-6xl" />
+
+      <section className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
+        <div className="mb-12 text-center">
+          <h2 className="poiret text-4xl text-deep-text sm:text-5xl">
+            A few words from the{" "}
+            <span className="display text-deep-accent">founder</span>.
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-deep-text-soft">
+            Rahul Awasthi, DocuPeer&apos;s sole Founder & CEO, is building the
+            platform around useful feedback, open access, and real academic
+            and professional needs.
+          </p>
+        </div>
+
+        <div className="space-y-8">
+          <LeadershipCard
+            title="A Word From Our CEO"
+            name="Rahul Awasthi"
+            role="Founder & CEO"
+            imageSrc="/team/rahul-cutout.png"
+            imageAlt="Rahul Awasthi"
+            imageSide="right"
+            imagePaneClassName="justify-center px-2 sm:px-4 lg:px-3"
+            imageClassName="max-h-[330px] sm:max-h-[390px] lg:max-h-[430px] translate-y-[22px]"
+            body="Hello everyone! It is a pleasure to welcome you to DocuPeer as your CEO. I started this platform because strong feedback should not depend on connections, luck, or how much money someone can spend. My responsibility is to keep us moving with clarity, protect the quality of the community, and fight to keep DocuPeer free for everyone who needs it. I want this to be a place where serious writers help one another generously, and where every thoughtful review makes the whole platform stronger."
+          />
         </div>
       </section>
 
@@ -242,8 +351,8 @@ export default function Home() {
               a: "The main benefits are free access, anonymous peer review, subject-aware matching, and a reciprocal model that keeps the community active. It helps writers improve structure, clarity, argumentation, and evidence before higher-stakes submission.",
             },
             {
-              q: "Is DocuPeer really free?",
-              a: "Yes. There are no paid tiers, no subscriptions, and no ads. The reciprocal loop — review two papers to earn one submission — is the only currency on the platform.",
+              q: "Who is behind DocuPeer?",
+              a: "DocuPeer is built by Rahul Awasthi, its sole Founder & CEO.",
             },
           ].map((item) => (
             <div key={item.q} className="card h-full p-7 sm:p-8">

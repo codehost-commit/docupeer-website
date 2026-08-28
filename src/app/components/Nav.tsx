@@ -5,12 +5,14 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Logo } from "./Logo";
 import { apiPost, useMe } from "@/lib/client";
+import { useLaunchState } from "./useLaunchState";
 
 export function Nav() {
   const { me, loading, refresh } = useMe();
   const pathname = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const isLaunched = useLaunchState();
 
   const isStatusSurface =
     pathname === "/status" ||
@@ -27,7 +29,12 @@ export function Nav() {
     router.push("/");
   }
 
-  const links = me
+  const links = !isLaunched
+    ? [
+        { href: "/live", label: "DocuPeer Live" },
+        { href: "/about", label: "About" },
+      ]
+    : me
     ? [
         { href: "/review", label: "Review" },
         { href: "/submit", label: "Submit" },
@@ -83,8 +90,8 @@ export function Nav() {
               <Link href="/login" className="btn-ghost">
                 Sign in
               </Link>
-              <Link href="/register" className="btn-primary">
-                Get started
+              <Link href={isLaunched ? "/register" : "/"} className={isLaunched ? "btn-primary" : "btn-secondary"}>
+                {isLaunched ? "Get started" : "Launch countdown"}
               </Link>
             </>
           )}

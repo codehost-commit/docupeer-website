@@ -83,7 +83,7 @@ export default function OpenGraphImage() {
               {[
                 "Free peer review",
                 "Anonymous feedback",
-                "Reciprocal by design",
+                "Rahul Awasthi",
               ].map((item) => (
                 <div
                   key={item}

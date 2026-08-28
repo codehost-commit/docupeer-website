@@ -112,7 +112,7 @@ export default function LegalPage() {
           <div className="mb-12 border-y border-deep-border py-5">
             <p className="text-sm leading-relaxed text-deep-text-soft">
               <span className="font-semibold text-deep-text">Operator.</span>{" "}
-              DocuPeer is an independent project. Questions
+              DocuPeer is operated by Rahul Awasthi, Founder & CEO. Questions
               about this page can be sent to{" "}
               <a
                 href="mailto:hello@docupeer.org"
@@ -316,7 +316,7 @@ export default function LegalPage() {
 
               <Clause title="2. Who is providing the service">
                 <p>
-                  DocuPeer is provided as an independent, non-commercial project.
+                  DocuPeer is provided by Rahul Awasthi through DocuPeer.
                   References to
                   &quot;DocuPeer,&quot;
                   &quot;we,&quot; &quot;our,&quot; or &quot;us&quot; on this
@@ -472,7 +472,18 @@ export default function LegalPage() {
 
               <Clause title="14. Contact">
                 <p>
-                  If you want to explore the product, you can{" "}
+                  Questions about these terms or the privacy policy can be
+                  sent to{" "}
+                  <a
+                    href="mailto:hello@docupeer.org"
+                    className="text-deep-accent transition-colors hover:text-deep-text"
+                  >
+                    hello@docupeer.org
+                  </a>
+                  .
+                </p>
+                <p>
+                  If you want to continue exploring the product, you can{" "}
                   <Link
                     href="/review"
                     className="text-deep-accent transition-colors hover:text-deep-text"
@@ -494,13 +505,22 @@ export default function LegalPage() {
             <Section id="attributions" title="Attributions">
               <Clause title="Founder">
                 <p>
-                  DocuPeer is built and operated as an independent project.
+                  DocuPeer is built and operated by Rahul Awasthi as the sole
+                  Founder & CEO.
                 </p>
+                <ul className="list-disc space-y-2 pl-5">
+                  <li>
+                    <span className="font-semibold text-deep-text">
+                      Rahul Awasthi
+                    </span>{" "}
+                    &mdash; Founder & CEO.
+                  </li>
+                </ul>
                 <p>
                   Nothing on this page constitutes an endorsement of any
                   individual by any third party, and any views expressed
-                  through the DocuPeer product are those of the DocuPeer
-                  project, not of any employer, university, or affiliated
+                  through the DocuPeer product are those of DocuPeer&apos;s
+                  operator, not of any employer, university, or affiliated
                   organisation.
                 </p>
               </Clause>
