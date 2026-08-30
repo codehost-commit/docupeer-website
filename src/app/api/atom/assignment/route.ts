@@ -330,7 +330,10 @@ export async function POST(req: NextRequest) {
           { role: "user", content: buildPrompt(request) },
         ],
         temperature: 0.35,
-        max_completion_tokens: 14000,
+        // Groq validates prompt tokens plus the requested ceiling against the
+        // account TPM limit before it starts generating. Keep the ceiling below
+        // the current 8,000-token on-demand limit.
+        max_completion_tokens: 7000,
         reasoning_effort: "high",
         response_format: { type: "json_object" },
         stream: false,
@@ -341,9 +344,11 @@ export async function POST(req: NextRequest) {
       const detail = await response.text().catch(() => "");
       console.error("Atom Groq error", response.status, detail.slice(0, 800));
       const message =
-        response.status === 429
-          ? "Atom is busy right now. Wait a moment and try again."
-          : "Atom could not generate that assignment yet.";
+          response.status === 429
+            ? "Atom is busy right now. Wait a moment and try again."
+            : response.status === 413
+              ? "That assignment is too large for the current AI quota. Try fewer questions or a less detailed assignment."
+            : "Atom could not generate that assignment yet.";
       return json({ error: message }, response.status === 429 ? 429 : 502);
     }
 
