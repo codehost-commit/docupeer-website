@@ -11,17 +11,35 @@ function clean(value: unknown, maxLength: number) {
   return String(value ?? "").trim().slice(0, maxLength);
 }
 
+function titleCase(value: string) {
+  return value.split(" ").map((word) => {
+    if (/^[A-Z0-9][A-Z0-9-]*$/.test(word)) return word;
+    return word ? word[0].toUpperCase() + word.slice(1).toLowerCase() : word;
+  }).join(" ");
+}
+
 function fallback(kind: NormalizeKind, value: string) {
   const compact = value.replace(/\s+/g, " ").replace(/[.!?]+$/g, "").trim();
+  const firstClause = compact.split(/[,:;]/, 1)[0].trim();
   if (kind === "title") {
-    const words = compact.split(" ").slice(0, 9);
-    return words.map((word) => word ? word[0].toUpperCase() + word.slice(1) : word).join(" ");
+    return titleCase(firstClause.split(" ").slice(0, 8).join(" "));
   }
   if (kind === "period") {
     const match = compact.match(/\b(period|section|block)\s*[:#-]?\s*([a-z0-9-]+)\b/i);
     return match ? `${match[1][0].toUpperCase()}${match[1].slice(1).toLowerCase()} ${match[2]}` : compact;
   }
-  return compact.split(" ").slice(0, 10).join(" ");
+  return titleCase(firstClause.split(" ").slice(0, 8).join(" "));
+}
+
+function modelValue(content: string) {
+  const stripped = content.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+  try {
+    const parsed = JSON.parse(stripped);
+    if (typeof parsed === "string") return parsed;
+    return parsed?.value ?? parsed?.topic ?? parsed?.title ?? parsed?.period ?? "";
+  } catch {
+    return stripped.replace(/^['"]|['"]$/g, "");
+  }
 }
 
 function promptFor(kind: NormalizeKind, value: string) {
@@ -69,8 +87,9 @@ export async function POST(req: NextRequest) {
         if (!response.ok) continue;
         const data = await response.json();
         const content = String(data?.choices?.[0]?.message?.content ?? "").trim();
-        const parsed = JSON.parse(content.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, ""));
-        const normalized = clean(parsed?.value, kind === "topic" ? 90 : kind === "title" ? 120 : 60);
+        const normalized = clean(modelValue(content), kind === "topic" ? 90 : kind === "title" ? 120 : 60)
+          .replace(/[.!?]+$/g, "")
+          .replace(/\s+/g, " ");
         if (normalized) return NextResponse.json({ value: normalized, model });
       } catch {
         // Try the backup model before using the deterministic fallback.
