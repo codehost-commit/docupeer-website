@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const STATUS_HOST = "status.docupeer.org";
+const ATOM_HOST = "atom.docupeer.org";
 
 function hostname(req: NextRequest) {
   return req.headers.get("host")?.split(":")[0].toLowerCase() ?? "";
@@ -9,7 +10,9 @@ function hostname(req: NextRequest) {
 function isStaticPath(pathname: string) {
   return (
     pathname.startsWith("/_next") ||
+    pathname.startsWith("/atom/atom-for-docupeer-logo.png") ||
     pathname.startsWith("/fonts") ||
+    pathname.startsWith("/partners") ||
     pathname.startsWith("/team") ||
     pathname === "/docupeer-favicon.ico" ||
     pathname === "/docupeer-icon-16.png" ||
@@ -26,6 +29,10 @@ function isStaticPath(pathname: string) {
 
 function isStatusHost(host: string) {
   return host === STATUS_HOST || host.startsWith("status.localhost");
+}
+
+function isAtomHost(host: string) {
+  return host === ATOM_HOST || host.startsWith("atom.localhost");
 }
 
 function statusUrl(req: NextRequest) {
@@ -61,6 +68,7 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   if (pathname.startsWith("/api/launch")) return NextResponse.next();
+  if (pathname.startsWith("/api/atom")) return NextResponse.next();
 
   if (isStatusHost(host)) {
     if (pathname === "/" || pathname === "/status") {
@@ -76,6 +84,21 @@ export async function middleware(req: NextRequest) {
     }
 
     return NextResponse.next();
+  }
+
+  if (isAtomHost(host)) {
+    if (isStaticPath(pathname)) return NextResponse.next();
+
+    if (pathname === "/" || pathname === "/atom") {
+      const url = req.nextUrl.clone();
+      url.pathname = "/atom";
+      return NextResponse.rewrite(url);
+    }
+
+    const url = req.nextUrl.clone();
+    url.pathname = "/";
+    url.search = "";
+    return NextResponse.redirect(url);
   }
 
   if (
