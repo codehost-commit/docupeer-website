@@ -4,6 +4,7 @@ import {
   ATOM_COMPLEXITIES,
   ATOM_DETAIL_LEVELS,
   ATOM_DIAGRAM_PURPOSES,
+  ATOM_OPTIONAL_ITEMS,
   ATOM_QUESTION_TYPES,
   type AtomAssignmentDocument,
   type AtomAssignmentRequest,
@@ -11,6 +12,7 @@ import {
   type AtomDetailLevel,
   type AtomDiagramPurpose,
   type AtomQuestionType,
+  type AtomOptionalItem,
 } from "@/lib/atom-types";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +40,9 @@ function normalizeRequest(payload: unknown): AtomAssignmentRequest {
       )
     : [];
   const diagrams = input.diagrams === true;
+  const optionalItems = Array.isArray(input.optionalItems)
+    ? input.optionalItems.filter((value): value is AtomOptionalItem => isInList(value, ATOM_OPTIONAL_ITEMS))
+    : ["studentInstructions", "teacherAnswerKey"] as AtomOptionalItem[];
 
   const request: AtomAssignmentRequest = {
     className: stringValue(input.className, 100),
@@ -60,6 +65,8 @@ function normalizeRequest(payload: unknown): AtomAssignmentRequest {
       : "standard",
     standards: stringValue(input.standards, 800),
     extraNotes: stringValue(input.extraNotes, 1000),
+    optionalItems,
+    topicSummary: stringValue(input.topicSummary, 100),
   };
 
   if (request.className.length < 2) {
@@ -80,29 +87,37 @@ function labelFor<T extends string>(value: T, list: readonly { value: T; label: 
 }
 
 function buildPrompt(request: AtomAssignmentRequest) {
-  const title = request.assignmentTitle || `${request.topic} Assignment`;
+  const title = request.assignmentTitle || `${request.topicSummary || request.topic} Assignment`;
   const diagramText = request.diagrams
-    ? `${request.diagramCount} diagram(s), used as ${labelFor(request.diagramPurpose, ATOM_DIAGRAM_PURPOSES).toLowerCase()}.`
+    ? `${request.diagramCount} actual visual diagram(s), used as ${labelFor(request.diagramPurpose, ATOM_DIAGRAM_PURPOSES).toLowerCase()}. Every diagram must have a structured diagram object and a clear visual specification.`
     : "No diagrams.";
+  const optionalText = request.optionalItems
+    .map((item) => labelFor(item, ATOM_OPTIONAL_ITEMS))
+    .join(", ");
 
   return [
     "Create a classroom-ready assignment for a teacher/professor using the exact JSON shape below.",
     "The assignment should be free of fluff, age-appropriate, academically useful, and ready to export to PDF.",
-    "Include a student-facing assignment and a teacher answer key.",
-    "For diagrams, write clear diagram descriptions or diagram-based question prompts. Do not generate image URLs.",
+    "Create the student-facing assignment. Generate answer data for every question, but include visible answer-key pages only when Teacher Answer Key is selected.",
+    "Return exactly the requested number of questions across the sections. Never add extra questions. Number them in order through the sections.",
+    "For diagrams, create actual visual specifications, not just a sentence saying a diagram exists. Every requested diagram must be attached to a question with diagramPrompt and diagram: {kind, title, caption, labels}. Use kinds such as free_body, coordinate_plane, process, timeline, molecular, or generic.",
+    "Use LaTeX for every mathematical, chemical, scientific, or symbolic expression: inline as \\( ... \\) and displayed equations as \\[ ... \\]. Do not use raw ASCII equations when LaTeX is appropriate.",
+    "The answer key must contain one answer for every question and should be concise, accurate, and formatted with LaTeX wherever math, chemistry, biology, or symbolic notation appears.",
+    "Use the full requested detail level. Spend substantial effort on quality, realistic distractors, worked reasoning, and useful diagram specifications. Do not pad with duplicate questions.",
     "Return only valid JSON. No Markdown fences. No prose outside JSON.",
     "",
     "Teacher request:",
     `Class: ${request.className}`,
     `Period/section: ${request.period || "blank line"}`,
     `Title: ${title}`,
-    `Topic: ${request.topic}`,
+    `Topic: ${request.topicSummary || request.topic}`,
     `Student level: ${request.studentLevel}`,
     `Complexity: ${labelFor(request.complexity, ATOM_COMPLEXITIES)}`,
     `Question types: ${request.questionTypes.map((type) => labelFor(type, ATOM_QUESTION_TYPES)).join(", ")}`,
-    `Question count: ${request.questionCount}`,
+    `Question count: EXACTLY ${request.questionCount} (this is a hard constraint; output no more and no fewer)`,
     `Diagrams: ${diagramText}`,
     `Detail level: ${labelFor(request.detailLevel, ATOM_DETAIL_LEVELS)}`,
+    `Optional page items (include only these): ${optionalText}`,
     `Standards or curriculum notes: ${request.standards || "None provided."}`,
     `Extra teacher notes: ${request.extraNotes || "None provided."}`,
     "",
@@ -112,13 +127,14 @@ function buildPrompt(request: AtomAssignmentRequest) {
         className: request.className,
         period: request.period,
         title,
-        topic: request.topic,
+        topic: request.topicSummary || request.topic,
         studentLevel: request.studentLevel,
         complexity: labelFor(request.complexity, ATOM_COMPLEXITIES),
         estimatedTime: "45-60 minutes",
         objectives: ["Objective 1", "Objective 2", "Objective 3"],
         materials: ["Pencil", "Paper"],
         studentInstructions: "Clear student-facing directions.",
+        optionalItems: request.optionalItems,
         sections: [
           {
             heading: "Section title",
@@ -130,6 +146,8 @@ function buildPrompt(request: AtomAssignmentRequest) {
                 choices: ["Choice A", "Choice B", "Choice C", "Choice D"],
                 answer: "Correct answer with short explanation",
                 points: 1,
+                diagramPrompt: "Only when a diagram is requested.",
+                diagram: { kind: "generic", title: "Diagram title", caption: "What the student should inspect.", labels: ["Label"] },
               },
               {
                 type: "Short FRQ",
@@ -189,6 +207,15 @@ function normalizeAssignment(value: unknown, request: AtomAssignmentRequest): At
             answer: stringValue(item.answer, 1200),
             points: Number.isFinite(Number(item.points)) ? Math.max(0, Math.min(25, Number(item.points))) : undefined,
             diagramPrompt: stringValue(item.diagramPrompt, 900) || undefined,
+            diagram:
+              item.diagram && typeof item.diagram === "object"
+                ? {
+                    kind: stringValue(item.diagram.kind, 40) || "generic",
+                    title: stringValue(item.diagram.title, 140),
+                    caption: stringValue(item.diagram.caption, 500),
+                    labels: stringArray(item.diagram.labels, 8),
+                  }
+                : undefined,
             lines: Number.isFinite(Number(item.lines)) ? Math.max(1, Math.min(12, Number(item.lines))) : undefined,
           };
         })
@@ -207,33 +234,65 @@ function normalizeAssignment(value: unknown, request: AtomAssignmentRequest): At
     throw new Error("Model returned an assignment without questions.");
   }
 
+  const flatQuestions = sections.flatMap((section) => section.questions).slice(0, request.questionCount);
+  if (flatQuestions.length < request.questionCount) {
+    throw new Error(`The model returned ${flatQuestions.length} questions; Atom needs exactly ${request.questionCount}. Please try again.`);
+  }
+  const exactSections = sections
+    .map((section) => ({ ...section, questions: flatQuestions.filter((question) => section.questions.includes(question)) }))
+    .filter((section) => section.questions.length);
+
+  if (request.diagrams) {
+    let diagramIndex = 0;
+    for (const question of flatQuestions) {
+      if (question.diagramPrompt || question.diagram) {
+        if (diagramIndex < request.diagramCount) {
+          diagramIndex += 1;
+        } else {
+          delete question.diagramPrompt;
+          delete question.diagram;
+        }
+      }
+    }
+    for (const question of flatQuestions) {
+      if (diagramIndex >= request.diagramCount) break;
+      if (!question.diagramPrompt && !question.diagram) {
+        question.diagramPrompt = `Use the visual reference to answer this question about ${request.topicSummary || request.topic}.`;
+        question.diagram = {
+          kind: "generic",
+          title: `Reference diagram ${diagramIndex + 1}`,
+          caption: "Inspect the labeled relationships, direction, or sequence shown in the diagram.",
+          labels: [],
+        };
+        diagramIndex += 1;
+      }
+    }
+  }
+
+  const answerKey = flatQuestions.map((question, index) => ({
+    number: String(index + 1),
+    answer: question.answer || "See the teacher solution for this question.",
+  }));
+
   return {
     className: stringValue(input.className, 100) || request.className,
     period: stringValue(input.period, 60) || request.period,
-    title: stringValue(input.title, 140) || request.assignmentTitle || `${request.topic} Assignment`,
-    topic: stringValue(input.topic, 220) || request.topic,
+    title: stringValue(input.title, 140) || request.assignmentTitle || `${request.topicSummary || request.topic} Assignment`,
+    topic: stringValue(input.topic, 220) || request.topicSummary || request.topic,
     studentLevel: stringValue(input.studentLevel, 100) || request.studentLevel,
     complexity: stringValue(input.complexity, 80) || labelFor(request.complexity, ATOM_COMPLEXITIES),
     estimatedTime: stringValue(input.estimatedTime, 80) || "45-60 minutes",
-    objectives: stringArray(input.objectives, 6),
-    materials: stringArray(input.materials, 8),
+    objectives: request.optionalItems.includes("objectives") ? stringArray(input.objectives, 6) : [],
+    materials: request.optionalItems.includes("materials") ? stringArray(input.materials, 8) : [],
     studentInstructions:
-      stringValue(input.studentInstructions, 1000) ||
-      "Complete each question carefully. Show your work or reasoning when asked.",
-    sections,
-    answerKey: Array.isArray(input.answerKey)
-      ? input.answerKey
-          .map((item, index) => {
-            const entry = item as AtomAssignmentDocument["answerKey"][number];
-            return {
-              number: stringValue(entry.number, 20) || String(index + 1),
-              answer: stringValue(entry.answer, 1500),
-            };
-          })
-          .filter((item) => item.answer)
-          .slice(0, 60)
-      : [],
-    teacherNotes: stringArray(input.teacherNotes, 8),
+      request.optionalItems.includes("studentInstructions")
+        ? stringValue(input.studentInstructions, 1000) ||
+          "Complete each question carefully. Show your work or reasoning when asked."
+        : "",
+    sections: exactSections,
+    answerKey: request.optionalItems.includes("teacherAnswerKey") ? answerKey : [],
+    teacherNotes: request.optionalItems.includes("teacherNotes") ? stringArray(input.teacherNotes, 8) : [],
+    optionalItems: request.optionalItems,
   };
 }
 
@@ -271,8 +330,8 @@ export async function POST(req: NextRequest) {
           { role: "user", content: buildPrompt(request) },
         ],
         temperature: 0.35,
-        max_completion_tokens: 6500,
-        reasoning_effort: "medium",
+        max_completion_tokens: 14000,
+        reasoning_effort: "high",
         response_format: { type: "json_object" },
         stream: false,
       }),

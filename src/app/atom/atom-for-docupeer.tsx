@@ -8,11 +8,13 @@ import {
   ATOM_COMPLEXITIES,
   ATOM_DETAIL_LEVELS,
   ATOM_DIAGRAM_PURPOSES,
+  ATOM_OPTIONAL_ITEMS,
   ATOM_QUESTION_TYPES,
   DEFAULT_ATOM_REQUEST,
   type AtomAssignmentDocument,
   type AtomAssignmentRequest,
   type AtomDiagramPurpose,
+  type AtomOptionalItem,
   type AtomQuestionType,
 } from "@/lib/atom-types";
 
@@ -29,6 +31,7 @@ type WizardStep =
   | "diagramPurpose"
   | "diagramCount"
   | "detailLevel"
+  | "optionalItems"
   | "standards"
   | "extraNotes";
 
@@ -93,6 +96,11 @@ const STEP_COPY: Record<WizardStep, { kicker: string; title: string; helper: str
     title: "How detailed should the assignment be?",
     helper: "This affects directions, answer key depth, and teacher notes.",
   },
+  optionalItems: {
+    kicker: "Optional pages",
+    title: "What optional items should appear in the PDF?",
+    helper: "Student Instructions and the Teacher Answer Key start on. Choose any other sections you want included.",
+  },
   standards: {
     kicker: "Standards",
     title: "Any standards or curriculum notes?",
@@ -143,6 +151,8 @@ export function AtomForDocuPeer() {
   const [assignment, setAssignment] = useState<AtomAssignmentDocument | null>(null);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [normalizing, setNormalizing] = useState(false);
+  const [topicSummary, setTopicSummary] = useState("");
 
   const steps = useMemo<WizardStep[]>(() => {
     const base: WizardStep[] = [
@@ -157,7 +167,7 @@ export function AtomForDocuPeer() {
       "diagrams",
     ];
     if (form.diagrams) base.push("diagramPurpose", "diagramCount");
-    return [...base, "detailLevel", "standards", "extraNotes"];
+    return [...base, "detailLevel", "optionalItems", "standards", "extraNotes"];
   }, [form.diagrams]);
 
   const activeIndex = Math.min(stepIndex, steps.length - 1);
@@ -167,6 +177,67 @@ export function AtomForDocuPeer() {
 
   function update(partial: Partial<AtomAssignmentRequest>) {
     setForm((current) => ({ ...current, ...partial }));
+  }
+
+  async function normalizeField(kind: "topic" | "title" | "period", value: string) {
+    const response = await fetch("/api/atom/normalize", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kind, value }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || "Atom could not refine that label.");
+    return String(payload.value || value).trim();
+  }
+
+  function compactFallback(value: string, maxWords: number) {
+    return value
+      .replace(/\s+/g, " ")
+      .replace(/[.!?]+$/g, "")
+      .trim()
+      .split(" ")
+      .slice(0, maxWords)
+      .join(" ");
+  }
+
+  async function leaveStep(direction: "next" | "back") {
+    const currentStep = step;
+    const value = currentStep === "topic" ? form.topic : currentStep === "assignmentTitle" ? (form.assignmentTitle || topicSummary || form.topic) : form.period;
+    const shouldNormalize = currentStep === "topic" || currentStep === "assignmentTitle" || currentStep === "period";
+    const move = () => setStepIndex((current) => direction === "next" ? Math.min(current + 1, steps.length - 1) : Math.max(0, current - 1));
+
+    if (!shouldNormalize || !value.trim() || (currentStep === "period" && !form.period.trim())) {
+      move();
+      return;
+    }
+
+    setNormalizing(true);
+    setMessage(currentStep === "topic" ? "Atom is refining the topic label..." : currentStep === "assignmentTitle" ? "Atom is naming the assignment..." : "Atom is cleaning the period label...");
+    try {
+      const kind = currentStep === "topic" ? "topic" : currentStep === "assignmentTitle" ? "title" : "period";
+      const normalized = await normalizeField(kind, value);
+      if (currentStep === "topic") {
+        const nextTopic = normalized || compactFallback(value, 10);
+        setTopicSummary(nextTopic);
+        update({ topicSummary: nextTopic });
+      } else if (currentStep === "assignmentTitle") {
+        update({ assignmentTitle: normalized || `${topicSummary || form.topic} Assignment` });
+      } else {
+        update({ period: normalized });
+      }
+    } catch {
+      if (currentStep === "topic") {
+        const nextTopic = compactFallback(value, 10);
+        setTopicSummary(nextTopic);
+        update({ topicSummary: nextTopic });
+      } else if (currentStep === "assignmentTitle") {
+        update({ assignmentTitle: `${topicSummary || form.topic} Assignment` });
+      }
+    } finally {
+      setNormalizing(false);
+      setMessage("");
+      move();
+    }
   }
 
   function canContinue() {
@@ -198,7 +269,7 @@ export function AtomForDocuPeer() {
       const response = await fetch("/api/atom/assignment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, topicSummary: topicSummary || form.topicSummary }),
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "Atom could not generate the assignment.");
@@ -218,7 +289,7 @@ export function AtomForDocuPeer() {
       generate();
       return;
     }
-    setStepIndex((current) => Math.min(current + 1, steps.length - 1));
+    leaveStep("next");
   }
 
   function renderStep() {
@@ -391,6 +462,34 @@ export function AtomForDocuPeer() {
       );
     }
 
+    if (step === "optionalItems") {
+      return (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {ATOM_OPTIONAL_ITEMS.map((item) => {
+            const active = form.optionalItems.includes(item.value);
+            return (
+              <OptionButton
+                key={item.value}
+                active={active}
+                onClick={() => {
+                  const optionalItems = active
+                    ? form.optionalItems.filter((value) => value !== item.value)
+                    : [...form.optionalItems, item.value as AtomOptionalItem];
+                  update({ optionalItems });
+                }}
+              >
+                <span className="flex items-center gap-3 font-semibold text-[#171b24]">
+                  <span className={`grid h-5 w-5 place-items-center rounded border text-xs ${active ? "border-[#1f3447] bg-[#1f3447] text-white" : "border-[#c7c0b4] bg-white text-transparent"}`}>✓</span>
+                  {item.label}
+                </span>
+                <span className="mt-1 block text-sm leading-6 text-[#606978]">{item.description}</span>
+              </OptionButton>
+            );
+          })}
+        </div>
+      );
+    }
+
     if (step === "standards") {
       return (
         <textarea
@@ -427,7 +526,7 @@ export function AtomForDocuPeer() {
                 alt=""
                 fill
                 sizes="48px"
-                className="scale-[1.7] object-cover"
+                className="object-contain"
               />
             </span>
             <span>
@@ -475,7 +574,7 @@ export function AtomForDocuPeer() {
                   alt="Atom logo"
                   fill
                   sizes="96px"
-                  className="scale-[1.35] object-cover"
+                  className="object-contain"
                   priority
                 />
               </div>
@@ -499,18 +598,18 @@ export function AtomForDocuPeer() {
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <button
                 type="button"
-                onClick={() => setStepIndex((current) => Math.max(0, current - 1))}
-                disabled={activeIndex === 0 || busy}
+                onClick={() => leaveStep("back")}
+                disabled={activeIndex === 0 || busy || normalizing}
                 className="rounded-md border border-[#d6d0c5] bg-white px-5 py-3 text-sm font-semibold text-[#2d3342] transition hover:border-[#1f3447] disabled:cursor-not-allowed disabled:opacity-45"
               >
                 Back
               </button>
               <button
                 type="submit"
-                disabled={!canContinue() || busy}
+                disabled={!canContinue() || busy || normalizing}
                 className="rounded-md bg-[#1f3447] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#162635] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {busy ? "Generating..." : activeIndex >= steps.length - 1 ? "Generate PDF" : "Next"}
+                {busy ? "Generating..." : normalizing ? "Refining..." : activeIndex >= steps.length - 1 ? "Generate PDF" : "Next"}
               </button>
             </div>
           </form>
@@ -528,7 +627,7 @@ export function AtomForDocuPeer() {
                 <div className="h-px bg-white/15" />
                 <div>
                   <div className="text-sm text-[#c8d3df]">Topic</div>
-                  <div className="mt-1 text-xl font-semibold">{form.topic || "Not set"}</div>
+                  <div className="mt-1 text-xl font-semibold">{topicSummary || "Not set"}</div>
                 </div>
                 <div className="h-px bg-white/15" />
                 <div className="grid grid-cols-2 gap-4">

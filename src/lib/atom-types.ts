@@ -23,10 +23,19 @@ export const ATOM_DETAIL_LEVELS = [
   { value: "detailed", label: "Detailed" },
 ] as const;
 
+export const ATOM_OPTIONAL_ITEMS = [
+  { value: "objectives", label: "Objectives", description: "Learning goals at the top." },
+  { value: "materials", label: "Materials", description: "What students should have ready." },
+  { value: "studentInstructions", label: "Student Instructions", description: "Clear directions before the questions." },
+  { value: "teacherAnswerKey", label: "Teacher Answer Key", description: "A filled-in version for the teacher." },
+  { value: "teacherNotes", label: "Teacher Notes", description: "Implementation or grading notes." },
+] as const;
+
 export type AtomComplexity = (typeof ATOM_COMPLEXITIES)[number]["value"];
 export type AtomQuestionType = (typeof ATOM_QUESTION_TYPES)[number]["value"];
 export type AtomDiagramPurpose = (typeof ATOM_DIAGRAM_PURPOSES)[number]["value"];
 export type AtomDetailLevel = (typeof ATOM_DETAIL_LEVELS)[number]["value"];
+export type AtomOptionalItem = (typeof ATOM_OPTIONAL_ITEMS)[number]["value"];
 
 export type AtomAssignmentRequest = {
   className: string;
@@ -43,6 +52,15 @@ export type AtomAssignmentRequest = {
   detailLevel: AtomDetailLevel;
   standards: string;
   extraNotes: string;
+  optionalItems: AtomOptionalItem[];
+  topicSummary: string;
+};
+
+export type AtomDiagram = {
+  kind?: string;
+  title?: string;
+  caption?: string;
+  labels?: string[];
 };
 
 export type AtomGeneratedQuestion = {
@@ -52,6 +70,7 @@ export type AtomGeneratedQuestion = {
   answer?: string;
   points?: number;
   diagramPrompt?: string;
+  diagram?: AtomDiagram;
   lines?: number;
 };
 
@@ -80,6 +99,7 @@ export type AtomAssignmentDocument = {
   sections: AtomAssignmentSection[];
   answerKey: AtomAnswerKeyItem[];
   teacherNotes: string[];
+  optionalItems: AtomOptionalItem[];
 };
 
 export const DEFAULT_ATOM_REQUEST: AtomAssignmentRequest = {
@@ -97,4 +117,6 @@ export const DEFAULT_ATOM_REQUEST: AtomAssignmentRequest = {
   detailLevel: "standard",
   standards: "",
   extraNotes: "",
+  optionalItems: ["studentInstructions", "teacherAnswerKey"],
+  topicSummary: "",
 };
