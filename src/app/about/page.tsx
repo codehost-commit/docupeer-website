@@ -5,7 +5,7 @@ import { SITE_DESCRIPTION, absoluteUrl } from "@/lib/seo";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Learn what DocuPeer is, why it exists, and how Rahul Awasthi is building a free peer review platform for research papers.",
+    "Learn what DocuPeer is, why it exists, and how Rahul Awasthi is building a free peer review platform for research papers, including its wholly owned subsidiary Atom Edu.",
   alternates: {
     canonical: "/about",
   },
@@ -127,6 +127,13 @@ export default function AboutPage() {
           name: "Rahul Awasthi",
           jobTitle: "Founder & CEO",
         },
+        subOrganization: {
+          "@type": "Organization",
+          name: "Atom Edu",
+          url: "https://atom-edu.org",
+          description:
+            "A wholly owned DocuPeer subsidiary building edtech tools that save teachers time and make student management easier.",
+        },
       },
     ],
   };
@@ -162,6 +169,48 @@ export default function AboutPage() {
           {FOUNDER.map((p) => (
             <FounderCard key={p.name} person={p} />
           ))}
+        </div>
+      </section>
+
+      {/* Subsidiary */}
+      <section className="mt-24">
+        <SectionHeader title="Our subsidiary" />
+        <div className="card overflow-hidden">
+          <div className="grid gap-0 lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch">
+            <div className="flex flex-col justify-center border-b border-deep-border p-8 sm:p-10 lg:border-b-0 lg:border-r">
+              <p className="mono text-[10px] font-semibold uppercase tracking-[0.18em] text-deep-accent">
+                100% owned by DocuPeer
+              </p>
+              <h2 className="poiret mt-3 text-4xl text-deep-text sm:text-5xl">
+                Atom Edu
+              </h2>
+              <p className="serif mt-5 text-lg leading-relaxed text-deep-text-soft">
+                DocuPeer owns Atom Edu as a wholly owned subsidiary. Atom Edu is
+                an edtech company committed to saving teachers time and making
+                it easier to manage students, create assignments, and keep
+                classroom work moving with less friction.
+              </p>
+              <div className="mt-7">
+                <Link
+                  href="https://atom-edu.org"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn-secondary px-6 py-3 text-base"
+                >
+                  Visit Atom Edu
+                </Link>
+              </div>
+            </div>
+            <div className="flex items-center justify-center bg-deep-panel2/60 p-6 sm:p-8">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/partners/atom-edu-logo.png"
+                alt="Atom Edu logo"
+                loading="lazy"
+                className="aspect-square w-full max-w-sm rounded-lg border border-deep-border-strong/70 object-cover shadow-panel"
+              />
+            </div>
+          </div>
         </div>
       </section>
 

@@ -153,6 +153,13 @@ export default function Home() {
         name: "Rahul Awasthi",
         jobTitle: "Founder & CEO",
       },
+      subOrganization: {
+        "@type": "Organization",
+        name: "Atom Edu",
+        url: "https://atom-edu.org",
+        description:
+          "A wholly owned DocuPeer subsidiary building edtech tools that help teachers save time and manage student work more easily.",
+      },
     },
   };
 
@@ -285,7 +292,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 pb-24 pt-8 sm:px-6">
+      <section className="mx-auto max-w-6xl px-4 pt-8 sm:px-6">
         <div className="mb-12 text-center">
           <h2 className="poiret text-4xl text-deep-text sm:text-5xl">
             Common questions about{" "}
@@ -314,6 +321,60 @@ export default function Home() {
               </p>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 pb-24 pt-20 sm:px-6">
+        <div className="rule mb-14" />
+        <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+          <div>
+            <p className="mono text-[10px] font-semibold uppercase tracking-[0.18em] text-deep-accent">
+              Corporate Partners
+            </p>
+            <h2 className="poiret mt-3 text-4xl text-deep-text sm:text-5xl">
+              Education tools with a{" "}
+              <span className="display text-deep-accent">shared purpose</span>.
+            </h2>
+            <p className="mt-4 max-w-2xl text-lg leading-relaxed text-deep-text-soft">
+              Atom Edu is DocuPeer&apos;s wholly owned edtech subsidiary,
+              committed to saving teachers time and making classroom management
+              easier through tools for assignments, student workflows, and
+              day-to-day instruction.
+            </p>
+          </div>
+
+          <a
+            href="https://atom-edu.org"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Visit Atom Edu"
+            className="group rounded-lg border border-deep-border bg-deep-panel/95 p-4 shadow-panel transition hover:-translate-y-0.5 hover:border-deep-accent/55 hover:shadow-glow focus:outline-none focus-visible:ring-2 focus-visible:ring-deep-accent focus-visible:ring-offset-2 focus-visible:ring-offset-deep-bg sm:p-5"
+          >
+            <div className="relative h-64 overflow-hidden rounded-md border border-deep-border-strong/70 bg-[#efede5] sm:h-72">
+              <Image
+                src="/partners/atom-edu-logo.png"
+                alt="Atom Edu logo"
+                fill
+                sizes="(min-width: 1024px) 560px, 100vw"
+                className="scale-[1.45] object-cover transition duration-500 group-hover:scale-[1.5]"
+                priority={false}
+              />
+            </div>
+            <div className="flex flex-col gap-2 px-1 pt-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h3 className="text-xl font-semibold text-deep-text">
+                  Atom Edu
+                </h3>
+                <p className="mt-1 text-sm leading-relaxed text-deep-text-soft">
+                  Edtech for faster assignment creation and smoother student
+                  management.
+                </p>
+              </div>
+              <span className="mono text-[10px] font-semibold uppercase tracking-[0.16em] text-deep-accent">
+                atom-edu.org
+              </span>
+            </div>
+          </a>
         </div>
       </section>
     </div>
