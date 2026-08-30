@@ -334,7 +334,7 @@ export async function POST(req: NextRequest) {
         // account TPM limit before it starts generating. Keep the ceiling below
         // the current 8,000-token on-demand limit.
         max_completion_tokens: 7000,
-        reasoning_effort: "high",
+        reasoning_effort: "medium",
         response_format: { type: "json_object" },
         stream: false,
       }),
