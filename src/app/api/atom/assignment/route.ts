@@ -28,6 +28,14 @@ function stringValue(value: unknown, maxLength: number) {
   return String(value ?? "").trim().slice(0, maxLength);
 }
 
+function periodLabel(value: unknown) {
+  const compact = stringValue(value, 60).replace(/\s+/g, " ");
+  const match = compact.match(/^(period|section|block)\s*[:#-]?\s*(?:(?:period|section|block)\s*[:#-]?\s*)?([a-z0-9][a-z0-9 -]*)$/i);
+  if (!match) return compact;
+  const prefix = match[1][0].toUpperCase() + match[1].slice(1).toLowerCase();
+  return `${prefix} ${match[2].trim()}`;
+}
+
 function isInList<T extends string>(value: unknown, list: readonly { value: T }[]): value is T {
   return list.some((item) => item.value === value);
 }
@@ -46,7 +54,7 @@ function normalizeRequest(payload: unknown): AtomAssignmentRequest {
 
   const request: AtomAssignmentRequest = {
     className: stringValue(input.className, 100),
-    period: stringValue(input.period, 60),
+    period: periodLabel(input.period),
     assignmentTitle: stringValue(input.assignmentTitle, 140),
     topic: stringValue(input.topic, 220),
     studentLevel: stringValue(input.studentLevel, 100),
