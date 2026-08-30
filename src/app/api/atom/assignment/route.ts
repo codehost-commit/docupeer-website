@@ -240,12 +240,12 @@ function normalizeAssignment(value: unknown, request: AtomAssignmentRequest): At
 export async function POST(req: NextRequest) {
   try {
     const request = normalizeRequest(await req.json().catch(() => ({})));
-    const key = process.env.GROQ_API_KEY;
+    const key = process.env.GROQ_ATOM_API_KEY;
     if (!key) {
       return json(
         {
           error:
-            "GROQ_API_KEY is not configured yet. Add it as a Vercel environment variable, then redeploy.",
+            "GROQ_ATOM_API_KEY is not configured yet. Add it as a Vercel environment variable, then redeploy.",
         },
         503,
       );
