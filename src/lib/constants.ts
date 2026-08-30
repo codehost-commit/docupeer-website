@@ -99,6 +99,8 @@ export const ACCEPTED_PAPER_TYPES = [".pdf", ".docx"] as const;
 
 export const AI_MODEL_MAIN = "openai/gpt-oss-120b";
 export const AI_MODEL_SMALL = "openai/gpt-oss-20b";
+export const AI_MODEL_ATOM_LABEL_PRIMARY = "llama-3.3-70b-versatile";
+export const AI_MODEL_ATOM_LABEL_BACKUP = "openai/gpt-oss-20b";
 
 export function countWords(text: string): number {
   const t = text.trim();

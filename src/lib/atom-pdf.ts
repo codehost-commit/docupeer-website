@@ -16,10 +16,16 @@ const encoder = new TextEncoder();
 
 function normalizePdfText(value: unknown): string {
   return String(value ?? "")
+    // Some JSON-generating models turn LaTeX escapes such as \f and \t into
+    // control characters. Restore those commands before removing controls.
+    .replace(/\u000c(?=rac)/g, "\\f")
+    .replace(/\u0009(?=ext)/g, "\\t")
+    .replace(/\u0009(?=mathrm|mathbf)/g, "\\")
     .replace(/\\\((.*?)\\\)/g, "$1")
     .replace(/\\\[(.*?)\\\]/gs, "$1")
     .replace(/\$(.*?)\$/gs, "$1")
-    .replace(/\\frac\{([^{}]*)\}\{([^{}]*)\}/g, "($1)/($2)")
+    .replace(/\\(?:d|t)?frac\{([^{}]*)\}\{([^{}]*)\}/g, "($1)/($2)")
+    .replace(/\b(?:d|t)?rac\{([^{}]*)\}\{([^{}]*)\}/g, "($1)/($2)")
     .replace(/\\sqrt\{([^{}]*)\}/g, "sqrt($1)")
     .replace(/\\text\{([^{}]*)\}/g, "$1")
     .replace(/\\mathrm\{([^{}]*)\}/g, "$1")
@@ -27,17 +33,30 @@ function normalizePdfText(value: unknown): string {
     .replace(/\\(cdot|times)/g, " x ")
     .replace(/\\(quad|qquad|enspace)/g, " ")
     .replace(/\\[,;:!]/g, "")
+    .replace(/\^\\circ/g, " deg")
+    .replace(/\^circ/g, " deg")
+    .replace(/\\circ/g, " deg")
+    .replace(/\\degree/g, " deg")
+    .replace(/\\left|\\right|\\displaystyle/g, "")
+    .replace(/\\(?:d|t)?frac\s*\(([^()]*)\)\s*\(([^()]*)\)/g, "($1)/($2)")
+    .replace(/\b(?:d|t)?frac\s*\(([^()]*)\)\s*\(([^()]*)\)/g, "($1)/($2)")
+    .replace(/\b(?:d|t)?rac\s*\(([^()]*)\)\s*\(([^()]*)\)/g, "($1)/($2)")
+    .replace(/\brac\(([^()]*)\)\(([^()]*)\)/g, "($1)/($2)")
+    .replace(/\\(?:text|mathrm|mathbf)\s*([A-Za-z][A-Za-z0-9/]*)/g, "$1")
     .replace(/\\pm/g, "+/-")
     .replace(/\\(leq|le)/g, "<=")
     .replace(/\\(geq|ge)/g, ">=")
     .replace(/\\rightarrow/g, "->")
     .replace(/\\([a-zA-Z]+)/g, "$1")
+    .replace(/\bdisplaystyle\b/g, "")
+    .replace(/\bext(?=(?:kg|N|m|s)\b)/gi, "")
+    .replace(/\\[()[\]]/g, "")
     .replace(/\^\{([^{}]*)\}/g, "^$1")
     .replace(/_\{([^{}]*)\}/g, "_$1")
     .replace(/[{}]/g, "")
     .replace(/[\u2018\u2019]/g, "'")
     .replace(/[\u201c\u201d]/g, '"')
-    .replace(/[\u2013\u2014]/g, "-")
+    .replace(/[\u2011\u2013\u2014]/g, "-")
     .replace(/\u2026/g, "...")
     .replace(/[^\x09\x0a\x0d\x20-\x7e]/g, "")
     .replace(/\r\n/g, "\n")
@@ -173,18 +192,25 @@ class PdfDocument {
     this.line(x2, y2, x2 - size * Math.cos(angle + Math.PI / 6), y2 - size * Math.sin(angle + Math.PI / 6));
   }
 
-  private diagramDrawing(kind: string, x: number, y: number, width: number, height: number) {
+  private diagramDrawing(kind: string, x: number, y: number, width: number, height: number, labels: string[] = []) {
     const cx = x + width / 2;
     const cy = y + height / 2;
     const normalized = kind.toLowerCase();
     if (normalized.includes("free") || normalized.includes("force")) {
-      this.addRaw(`q ${color([0.92, 0.94, 0.95])} rg ${fit(cx - 22)} ${fit(cy - 15)} 44 30 re f Q`);
-      this.arrow(cx, cy + 15, cx, cy + 48);
-      this.arrow(cx, cy - 15, cx, cy - 48);
-      this.arrow(cx - 22, cy, cx - 56, cy);
-      this.arrow(cx + 22, cy, cx + 56, cy);
-      this.textAt("up", cx + 8, cy + 41, 8, "regular", MUTED);
-      this.textAt("down", cx + 8, cy - 46, 8, "regular", MUTED);
+      const findLabel = (pattern: RegExp, fallback: string) => labels.find((label) => pattern.test(label)) || fallback;
+      const objectY = cy + 8;
+      const surfaceY = objectY - 28;
+      this.line(x + 38, surfaceY, x + width - 38, surfaceY, BLUE, 1.5);
+      this.addRaw(`q ${color([0.88, 0.92, 0.94])} rg ${fit(cx - 25)} ${fit(objectY - 18)} 50 36 re f Q`);
+      this.addRaw(`q ${color(BLUE)} RG 1 w ${fit(cx - 25)} ${fit(objectY - 18)} 50 36 re S Q`);
+      this.arrow(cx, objectY + 18, cx, objectY + 58);
+      this.arrow(cx, objectY - 18, cx, objectY - 58);
+      this.arrow(cx - 25, objectY, cx - 72, objectY);
+      this.arrow(cx + 25, objectY, cx + 72, objectY);
+      this.textAt(findLabel(/normal|support/i, "normal"), cx + 8, objectY + 60, 8, "regular", MUTED);
+      this.textAt(findLabel(/weight|gravity/i, "weight"), cx + 8, objectY - 69, 8, "regular", MUTED);
+      this.textAt(findLabel(/friction/i, "friction"), cx - 73, objectY + 9, 8, "regular", MUTED);
+      this.textAt(findLabel(/applied|tension|push|pull/i, "applied force"), cx + 37, objectY + 9, 8, "regular", MUTED);
     } else if (normalized.includes("coordinate") || normalized.includes("graph")) {
       this.line(x + 36, cy, x + width - 30, cy);
       this.line(cx, y + 22, cx, y + height - 18);
@@ -209,8 +235,9 @@ class PdfDocument {
       for (let index = 0; index < 4; index += 1) {
         const px = x + 62 + (index % 2) * 92;
         const py = cy + (index < 2 ? 21 : -21);
-        this.addRaw(`q ${color([0.92, 0.94, 0.95])} rg ${fit(px - 13)} ${fit(py - 13)} 26 26 re f Q`);
+        this.addRaw(`q ${color([0.88, 0.92, 0.94])} rg ${fit(px - 13)} ${fit(py - 13)} 26 26 re f Q`);
         if (index > 0) this.line(px - 44, py, px - 14, py, BLUE, 1);
+        this.textAt(labels[index] || `atom ${index + 1}`, px - 16, py - 24, 7.5, "regular", MUTED);
       }
     } else {
       this.line(x + 35, cy, x + width - 35, cy, LIGHT_LINE, 0.8);
@@ -223,15 +250,15 @@ class PdfDocument {
     const height = 148;
     this.ensureSpace(height + 34);
     const boxY = this.y - height;
-    const fill = teacher ? [0.99, 0.95, 0.95] : [0.96, 0.97, 0.97];
+    const fill = [0.96, 0.97, 0.97];
     this.addRaw(`q ${color(fill as PdfColor)} rg ${MARGIN} ${fit(boxY)} ${CONTENT_WIDTH} ${height} re f Q`);
-    this.addRaw(`q ${color(teacher ? [0.82, 0.45, 0.45] : [0.61, 0.68, 0.72])} RG 0.8 w ${MARGIN} ${fit(boxY)} ${CONTENT_WIDTH} ${height} re S Q`);
+    this.addRaw(`q ${color([0.61, 0.68, 0.72])} RG 0.8 w ${MARGIN} ${fit(boxY)} ${CONTENT_WIDTH} ${height} re S Q`);
     const diagram = question.diagram;
-    this.textAt(diagram?.title || `Diagram ${number}`, MARGIN + 14, boxY + height - 19, 9, "bold", teacher ? RED : BLUE);
-    this.diagramDrawing(diagram?.kind || "generic", MARGIN + 14, boxY + 37, CONTENT_WIDTH - 28, height - 62);
+    this.textAt(diagram?.title || `Diagram ${number}`, MARGIN + 14, boxY + height - 19, 9, "bold", BLUE);
+    this.diagramDrawing(diagram?.kind || "generic", MARGIN + 14, boxY + 37, CONTENT_WIDTH - 28, height - 62, diagram?.labels || []);
     this.y = boxY + 24;
     const labels = diagram?.labels?.length ? ` Labels: ${diagram.labels.join(", ")}.` : "";
-    this.paragraph(`${diagram?.caption || question.diagramPrompt || "Use the visual reference to support your reasoning."}${labels}`, { size: 8.5, leading: 11, indent: 14, maxWidth: CONTENT_WIDTH - 28, color: teacher ? RED : MUTED });
+    this.paragraph(`${diagram?.caption || question.diagramPrompt || "Use the visual reference to support your reasoning."}${labels}`, { size: 8.5, leading: 11, indent: 14, maxWidth: CONTENT_WIDTH - 28, color: MUTED });
     this.y = boxY - 18;
   }
 
@@ -315,6 +342,7 @@ function selectedItems(assignment: AtomAssignmentDocument) {
 
 function addHeader(pdf: PdfDocument, assignment: AtomAssignmentDocument, teacher: boolean) {
   pdf.smallLabel(teacher ? "Atom for DocuPeer | Teacher Copy" : "Atom for DocuPeer");
+  pdf.move(8);
   pdf.heading(teacher ? `${assignment.title || "Assignment"} | Answer Key` : assignment.title || "Assignment", 23, teacher ? RED : BLACK);
   pdf.paragraph("Name: ________________________________________________", { size: 10.5, font: "bold" });
   pdf.paragraph(`Period / Section: ${assignment.period || "________________"}`, { size: 10.5, font: "bold" });

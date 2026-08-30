@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { AI_MODEL_SMALL } from "@/lib/constants";
+import { AI_MODEL_ATOM_LABEL_BACKUP, AI_MODEL_ATOM_LABEL_PRIMARY } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -46,30 +46,37 @@ export async function POST(req: NextRequest) {
     const key = process.env.GROQ_ATOM_API_KEY;
     if (!key) return NextResponse.json({ value: fallback(kind, value), fallback: true });
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 18000);
-    const response = await fetch(GROQ_CHAT_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-      signal: controller.signal,
-      body: JSON.stringify({
-        model: AI_MODEL_SMALL,
-        messages: [
-          { role: "system", content: "You clean and normalize short education labels. Return only valid JSON." },
-          { role: "user", content: promptFor(kind, value) },
-        ],
-        temperature: 0.1,
-        max_completion_tokens: 120,
-        response_format: { type: "json_object" },
-      }),
-    }).finally(() => clearTimeout(timeout));
-
-    if (!response.ok) return NextResponse.json({ value: fallback(kind, value), fallback: true });
-    const data = await response.json();
-    const content = String(data?.choices?.[0]?.message?.content ?? "").trim();
-    const parsed = JSON.parse(content.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, ""));
-    const normalized = clean(parsed?.value, kind === "topic" ? 90 : kind === "title" ? 120 : 60);
-    return NextResponse.json({ value: normalized || fallback(kind, value) });
+    const models = [AI_MODEL_ATOM_LABEL_PRIMARY, AI_MODEL_ATOM_LABEL_BACKUP];
+    for (const model of models) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 18000);
+      try {
+        const response = await fetch(GROQ_CHAT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+          signal: controller.signal,
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: "system", content: "You clean and normalize short education labels. Return only valid JSON." },
+              { role: "user", content: promptFor(kind, value) },
+            ],
+            temperature: 0.1,
+            max_completion_tokens: 160,
+            response_format: { type: "json_object" },
+          }),
+        }).finally(() => clearTimeout(timeout));
+        if (!response.ok) continue;
+        const data = await response.json();
+        const content = String(data?.choices?.[0]?.message?.content ?? "").trim();
+        const parsed = JSON.parse(content.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, ""));
+        const normalized = clean(parsed?.value, kind === "topic" ? 90 : kind === "title" ? 120 : 60);
+        if (normalized) return NextResponse.json({ value: normalized, model });
+      } catch {
+        // Try the backup model before using the deterministic fallback.
+      }
+    }
+    return NextResponse.json({ value: fallback(kind, value), fallback: true });
   } catch {
     const body = await req.clone().json().catch(() => ({}));
     const kind = body?.kind as NormalizeKind;

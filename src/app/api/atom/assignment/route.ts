@@ -102,6 +102,7 @@ function buildPrompt(request: AtomAssignmentRequest) {
     "Return exactly the requested number of questions across the sections. Never add extra questions. Number them in order through the sections.",
     "For diagrams, create actual visual specifications, not just a sentence saying a diagram exists. Every requested diagram must be attached to a question with diagramPrompt and diagram: {kind, title, caption, labels}. Use kinds such as free_body, coordinate_plane, process, timeline, molecular, or generic.",
     "Use LaTeX for every mathematical, chemical, scientific, or symbolic expression: inline as \\( ... \\) and displayed equations as \\[ ... \\]. Do not use raw ASCII equations when LaTeX is appropriate.",
+    "Because this is JSON, escape every LaTeX backslash correctly inside JSON strings. Use double backslashes in the JSON source for commands such as \\text{}, \\frac{}, \\sin{}, \\cos{}, \\mu{}, and \\circ. Always use braces for commands and never emit malformed fragments such as ext, rac, displaystyle, or ^circ.",
     "The answer key must contain one answer for every question and should be concise, accurate, and formatted with LaTeX wherever math, chemistry, biology, or symbolic notation appears.",
     "Use the full requested detail level. Spend substantial effort on quality, realistic distractors, worked reasoning, and useful diagram specifications. Do not pad with duplicate questions.",
     "Return only valid JSON. No Markdown fences. No prose outside JSON.",
@@ -187,6 +188,16 @@ function stringArray(value: unknown, maxItems: number) {
   return value.map((item) => stringValue(item, 500)).filter(Boolean).slice(0, maxItems);
 }
 
+function inferDiagramKind(prompt: string, diagramPrompt: string) {
+  const source = `${prompt} ${diagramPrompt}`.toLowerCase();
+  if (/free[- ]?body|force|vector|tension|normal force|friction/.test(source)) return "free_body";
+  if (/coordinate|axis|graph|slope|function/.test(source)) return "coordinate_plane";
+  if (/timeline|chronolog|sequence|era|event/.test(source)) return "timeline";
+  if (/molecule|molecular|cell|organelle|atom|reaction/.test(source)) return "molecular";
+  if (/process|cycle|flow|pathway|steps/.test(source)) return "process";
+  return "generic";
+}
+
 function normalizeAssignment(value: unknown, request: AtomAssignmentRequest): AtomAssignmentDocument {
   const input = (value ?? {}) as Partial<AtomAssignmentDocument>;
   const sectionsInput = Array.isArray(input.sections) ? input.sections : [];
@@ -200,20 +211,24 @@ function normalizeAssignment(value: unknown, request: AtomAssignmentRequest): At
           const choices = Array.isArray(item.choices)
             ? item.choices.map((choice) => stringValue(choice, 300)).filter(Boolean).slice(0, 6)
             : undefined;
+          const diagramPrompt = stringValue(item.diagramPrompt, 900);
+          const inferredKind = inferDiagramKind(stringValue(item.prompt, 1200), diagramPrompt);
+          const rawDiagram = item.diagram && typeof item.diagram === "object" ? item.diagram : undefined;
+          const rawKind = rawDiagram ? stringValue(rawDiagram.kind, 40) : "";
           return {
             type: stringValue(item.type, 60) || "Question",
             prompt: stringValue(item.prompt, 1200),
             choices,
             answer: stringValue(item.answer, 1200),
             points: Number.isFinite(Number(item.points)) ? Math.max(0, Math.min(25, Number(item.points))) : undefined,
-            diagramPrompt: stringValue(item.diagramPrompt, 900) || undefined,
+            diagramPrompt: request.diagrams ? diagramPrompt || undefined : undefined,
             diagram:
-              item.diagram && typeof item.diagram === "object"
+              request.diagrams && rawDiagram
                 ? {
-                    kind: stringValue(item.diagram.kind, 40) || "generic",
-                    title: stringValue(item.diagram.title, 140),
-                    caption: stringValue(item.diagram.caption, 500),
-                    labels: stringArray(item.diagram.labels, 8),
+                    kind: rawKind && rawKind !== "generic" ? rawKind : inferredKind,
+                    title: stringValue(rawDiagram.title, 140),
+                    caption: stringValue(rawDiagram.caption, 500),
+                    labels: stringArray(rawDiagram.labels, 8),
                   }
                 : undefined,
             lines: Number.isFinite(Number(item.lines)) ? Math.max(1, Math.min(12, Number(item.lines))) : undefined,
@@ -259,7 +274,7 @@ function normalizeAssignment(value: unknown, request: AtomAssignmentRequest): At
       if (!question.diagramPrompt && !question.diagram) {
         question.diagramPrompt = `Use the visual reference to answer this question about ${request.topicSummary || request.topic}.`;
         question.diagram = {
-          kind: "generic",
+          kind: inferDiagramKind(question.prompt, question.diagramPrompt || ""),
           title: `Reference diagram ${diagramIndex + 1}`,
           caption: "Inspect the labeled relationships, direction, or sequence shown in the diagram.",
           labels: [],
