@@ -75,6 +75,7 @@ function normalizeRequest(payload: unknown): AtomAssignmentRequest {
     extraNotes: stringValue(input.extraNotes, 1000),
     optionalItems,
     topicSummary: stringValue(input.topicSummary, 100),
+    testMode: input.testMode === true,
   };
 
   if (request.className.length < 2) {
@@ -174,6 +175,16 @@ function buildPrompt(request: AtomAssignmentRequest) {
       null,
       2,
     ),
+  ].join("\n");
+}
+
+function buildTestPrompt(request: AtomAssignmentRequest) {
+  return [
+    "Create a maximum-detail, classroom-ready Calculus III assignment and return only valid JSON. This is a stress test: use the full response budget for rigor, useful explanations, realistic distractors, worked FRQ solutions, and precise diagrams without filler or duplicate questions.",
+    "Hard constraints: exactly 35 questions total across sections; exactly 2 actual diagrams attached to relevant questions; include all requested optional sections; include one answerKey entry for every question. Use multiple choice, short FRQ, and long FRQ. Use LaTeX for all math and scientific notation with inline \\( ... \\) or display \\[ ... \\]. In JSON strings, escape every LaTeX backslash as two backslashes. Never emit malformed fragments such as ext, rac, displaystyle, or ^circ.",
+    "Make the diagrams detailed visual specifications with kind, title, caption, and labels. Prefer coordinate-plane, free-body, vector-field, surface, or process diagrams when educationally appropriate. Make the teacher key accurate and detailed. Return no Markdown and no prose outside the JSON object.",
+    `Class: ${request.className}; period: ${request.period || "blank"}; title: ${request.assignmentTitle}; topic: ${request.topic}; level: ${request.studentLevel}; complexity: advanced; question count: EXACTLY 35; diagrams: EXACTLY 2, for both visual reference and questions; detail: maximum; optional items: ${request.optionalItems.join(", ")}; notes: ${request.extraNotes}`,
+    'JSON shape: {"className":"...","period":"...","title":"...","topic":"...","studentLevel":"...","complexity":"Advanced","estimatedTime":"...","objectives":["..."],"materials":["..."],"studentInstructions":"...","optionalItems":["..."],"sections":[{"heading":"...","directions":"...","questions":[{"type":"Multiple choice|Short FRQ|Long FRQ","prompt":"...","choices":["..."],"answer":"...","points":1,"lines":4,"diagramPrompt":"...","diagram":{"kind":"coordinate_plane","title":"...","caption":"...","labels":["..."]}}]}],"answerKey":[{"number":"1","answer":"..."}],"teacherNotes":["..."]}',
   ].join("\n");
 }
 
@@ -350,15 +361,13 @@ export async function POST(req: NextRequest) {
             content:
               "You are Atom for DocuPeer, an expert assignment designer for teachers and professors. You create practical, classroom-ready assignments and return only valid JSON.",
           },
-          { role: "user", content: buildPrompt(request) },
+          { role: "user", content: request.testMode ? buildTestPrompt(request) : buildPrompt(request) },
         ],
         temperature: 0.35,
         // Groq validates prompt tokens plus the requested ceiling against the
-        // account TPM limit before it starts generating. Keep the ceiling below
-        // the current 8,000-token on-demand limit.
-            // Keep the requested budget below Groq's current organization TPM
-            // ceiling while leaving enough room for a full 15-question paper.
-            max_completion_tokens: 6000,
+        // account TPM limit before it starts generating. The test route gets a
+        // larger budget; regular assignments stay below the current limit.
+        max_completion_tokens: request.testMode ? 6800 : 6000,
         reasoning_effort: "medium",
         response_format: { type: "json_object" },
         stream: false,

@@ -95,6 +95,12 @@ export async function middleware(req: NextRequest) {
       return NextResponse.rewrite(url);
     }
 
+    if (pathname === "/test") {
+      const url = req.nextUrl.clone();
+      url.pathname = "/atom/test";
+      return NextResponse.rewrite(url);
+    }
+
     const url = req.nextUrl.clone();
     url.pathname = "/";
     url.search = "";

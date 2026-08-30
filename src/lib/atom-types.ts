@@ -54,6 +54,7 @@ export type AtomAssignmentRequest = {
   extraNotes: string;
   optionalItems: AtomOptionalItem[];
   topicSummary: string;
+  testMode?: boolean;
 };
 
 export type AtomDiagram = {
@@ -119,4 +120,5 @@ export const DEFAULT_ATOM_REQUEST: AtomAssignmentRequest = {
   extraNotes: "",
   optionalItems: ["studentInstructions", "teacherAnswerKey"],
   topicSummary: "",
+  testMode: false,
 };
