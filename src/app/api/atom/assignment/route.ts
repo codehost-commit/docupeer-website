@@ -348,7 +348,9 @@ export async function POST(req: NextRequest) {
         // Groq validates prompt tokens plus the requested ceiling against the
         // account TPM limit before it starts generating. Keep the ceiling below
         // the current 8,000-token on-demand limit.
-        max_completion_tokens: 7000,
+            // Keep the requested budget below Groq's current organization TPM
+            // ceiling while leaving enough room for a full 15-question paper.
+            max_completion_tokens: 6000,
         reasoning_effort: "medium",
         response_format: { type: "json_object" },
         stream: false,
