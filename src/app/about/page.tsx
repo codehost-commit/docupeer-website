@@ -201,13 +201,13 @@ export default function AboutPage() {
                 </Link>
               </div>
             </div>
-            <div className="flex items-center justify-center bg-deep-panel2/60 p-6 sm:p-8">
+            <div className="flex items-center justify-center bg-[#efede5] p-8 sm:p-10">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/partners/atom-edu-logo.png"
+                src="/partners/atom-edu-logo-tight.png"
                 alt="Atom Edu logo"
                 loading="lazy"
-                className="aspect-square w-full max-w-sm rounded-lg border border-deep-border-strong/70 object-cover shadow-panel"
+                className="w-full max-w-sm object-contain mix-blend-multiply"
               />
             </div>
           </div>
