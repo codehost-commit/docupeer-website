@@ -40,12 +40,18 @@ type Subsidiary = {
   logoClassName?: string;
 };
 
-const FOUNDER: Person[] = [
+const FOUNDERS: Person[] = [
   {
     name: "Rahul Awasthi",
-    role: "Founder & CEO",
+    role: "Co-Founder & CEO",
     image: "/team/rahul.jpeg",
-    bio: "Building and operating DocuPeer as a free, reciprocal peer review platform for serious writers.",
+    bio: "Building DocuPeer as a free, reciprocal peer review platform for serious writers.",
+  },
+  {
+    name: "Aryan Patel",
+    role: "Co-Founder & COO",
+    image: "/team/founder-2.png",
+    bio: "Leading operations so DocuPeer can serve writers with clarity, consistency, and care.",
   },
 ];
 
@@ -220,26 +226,26 @@ export default function AboutPage() {
       {/* Intro */}
       <header className="text-center">
         <h1 className="poiret text-4xl text-deep-text sm:text-6xl">
-          The founder behind the{" "}
+          The founders behind the{" "}
           <span className="display text-deep-accent">review</span>.
         </h1>
         <p className="serif mx-auto mt-6 max-w-2xl text-xl leading-relaxed text-deep-text-soft">
           DocuPeer exists because thoughtful feedback should not be gated by
           money, prestige, or the right connections. It is built by Rahul
-          Awasthi, who believes writing improves when the people reviewing it
-          are qualified, honest, and treated as equals.
+          Awasthi and Aryan Patel, who believe writing improves when the people
+          reviewing it are qualified, honest, and treated as equals.
         </p>
         <p className="serif mx-auto mt-4 max-w-3xl text-lg leading-relaxed text-deep-dim">
-          Rahul Awasthi is the sole Founder & CEO of DocuPeer, a free peer
-          review platform for anonymous, reciprocal feedback.
+          Rahul Awasthi serves as Co-Founder & CEO, and Aryan Patel serves as
+          Co-Founder & COO.
         </p>
       </header>
 
-      {/* Founder */}
+      {/* Founders */}
       <section className="mt-20">
-        <SectionHeader title="Founder" />
-        <div className="mx-auto max-w-sm">
-          {FOUNDER.map((p) => (
+        <SectionHeader title="Meet the founders" />
+        <div className="mx-auto grid max-w-3xl gap-12 sm:grid-cols-2">
+          {FOUNDERS.map((p) => (
             <FounderCard key={p.name} person={p} />
           ))}
         </div>

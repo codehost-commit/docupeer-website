@@ -276,13 +276,13 @@ export default function Home() {
       <section className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
         <div className="mb-12 text-center">
           <h2 className="poiret text-4xl text-deep-text sm:text-5xl">
-            A few words from the{" "}
-            <span className="display text-deep-accent">founder</span>.
+            A word from our{" "}
+            <span className="display text-deep-accent">CEO</span>.
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-deep-text-soft">
-            Rahul Awasthi, DocuPeer&apos;s sole Founder & CEO, is building the
-            platform around useful feedback, open access, and real academic
-            and professional needs.
+            Rahul Awasthi, DocuPeer&apos;s Co-Founder & CEO, is building the
+            platform around useful feedback, open access, and real academic and
+            professional needs.
           </p>
         </div>
 
@@ -290,7 +290,7 @@ export default function Home() {
           <LeadershipCard
             title="A Word From Our CEO"
             name="Rahul Awasthi"
-            role="Founder & CEO"
+            role="Co-Founder & CEO"
             imageSrc="/team/rahul-cutout.png"
             imageAlt="Rahul Awasthi"
             imageSide="right"
@@ -320,7 +320,7 @@ export default function Home() {
             },
             {
               q: "Who is behind DocuPeer?",
-              a: "DocuPeer is built by Rahul Awasthi, its sole Founder & CEO.",
+              a: "DocuPeer is built by co-founders Rahul Awasthi, Co-Founder & CEO, and Aryan Patel, Co-Founder & COO.",
             },
           ].map((item) => (
             <div key={item.q} className="card h-full p-7 sm:p-8">
