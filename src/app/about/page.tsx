@@ -5,7 +5,7 @@ import { SITE_DESCRIPTION, absoluteUrl } from "@/lib/seo";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Learn what DocuPeer is, why it exists, and how Rahul Awasthi is building a free peer review platform for research papers, including its wholly owned subsidiary Atom Edu.",
+    "Learn what DocuPeer is, why it exists, and how Rahul Awasthi is building a free peer review platform for research papers, including its wholly owned subsidiaries Atom Edu and DocuClerk HQ.",
   alternates: {
     canonical: "/about",
   },
@@ -31,12 +31,39 @@ type Person = {
   bio?: string;
 };
 
+type Subsidiary = {
+  name: string;
+  href: string;
+  logo: string;
+  logoAlt: string;
+  body: string;
+  logoClassName?: string;
+};
+
 const FOUNDER: Person[] = [
   {
     name: "Rahul Awasthi",
     role: "Founder & CEO",
     image: "/team/rahul.jpeg",
     bio: "Building and operating DocuPeer as a free, reciprocal peer review platform for serious writers.",
+  },
+];
+
+const SUBSIDIARIES: Subsidiary[] = [
+  {
+    name: "Atom Edu",
+    href: "https://atom-edu.org",
+    logo: "/partners/atom-edu-logo-tight.png",
+    logoAlt: "Atom Edu logo",
+    body: "Atom Edu is an edtech company committed to saving teachers time and making it easier to manage students, create assignments, and keep classroom work moving with less friction.",
+    logoClassName: "mix-blend-multiply",
+  },
+  {
+    name: "DocuClerk HQ",
+    href: "https://docuclerkhq.com/about.html",
+    logo: "/partners/docuclerk-subsidiary-logo.svg",
+    logoAlt: "DocuClerk HQ logo",
+    body: "DocuClerk HQ is a privacy-first AI contract analysis tool for everyday users and freelancers. It uses on-device artificial intelligence to flag, categorize, and highlight potential red flags and important notes in complex legal agreements without sending sensitive contract data to an external server.",
   },
 ];
 
@@ -93,6 +120,43 @@ function FounderCard({ person }: { person: Person }) {
   );
 }
 
+function SubsidiaryCard({ subsidiary }: { subsidiary: Subsidiary }) {
+  return (
+    <div className="card flex h-full flex-col overflow-hidden">
+      <div className="flex min-h-[220px] items-center justify-center bg-[#f0ede5] p-8 sm:p-10">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={subsidiary.logo}
+          alt={subsidiary.logoAlt}
+          loading="lazy"
+          className={`max-h-40 w-full max-w-[13rem] object-contain ${subsidiary.logoClassName ?? ""}`}
+        />
+      </div>
+      <div className="flex flex-1 flex-col p-8 sm:p-10">
+        <p className="mono text-[10px] font-semibold uppercase tracking-[0.18em] text-deep-accent">
+          100% owned by DocuPeer
+        </p>
+        <h2 className="poiret mt-3 text-4xl text-deep-text sm:text-5xl">
+          {subsidiary.name}
+        </h2>
+        <p className="serif mt-5 flex-1 text-lg leading-relaxed text-deep-text-soft">
+          {subsidiary.body}
+        </p>
+        <div className="mt-7">
+          <Link
+            href={subsidiary.href}
+            target="_blank"
+            rel="noreferrer"
+            className="btn-secondary px-6 py-3 text-base"
+          >
+            Visit {subsidiary.name}
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SectionHeader({ title }: { title: string }) {
   return (
     <div className="mb-12 text-center">
@@ -127,13 +191,22 @@ export default function AboutPage() {
           name: "Rahul Awasthi",
           jobTitle: "Founder & CEO",
         },
-        subOrganization: {
-          "@type": "Organization",
-          name: "Atom Edu",
-          url: "https://atom-edu.org",
-          description:
-            "A wholly owned DocuPeer subsidiary building edtech tools that save teachers time and make student management easier.",
-        },
+        subOrganization: [
+          {
+            "@type": "Organization",
+            name: "Atom Edu",
+            url: "https://atom-edu.org",
+            description:
+              "A wholly owned DocuPeer subsidiary building edtech tools that save teachers time and make student management easier.",
+          },
+          {
+            "@type": "Organization",
+            name: "DocuClerk HQ",
+            url: "https://docuclerkhq.com/about.html",
+            description:
+              "A wholly owned DocuPeer subsidiary and privacy-first AI contract analysis tool that helps everyday users and freelancers understand complex contract clauses with on-device artificial intelligence.",
+          },
+        ],
       },
     ],
   };
@@ -174,43 +247,11 @@ export default function AboutPage() {
 
       {/* Subsidiary */}
       <section className="mt-24">
-        <SectionHeader title="Our subsidiary" />
-        <div className="card overflow-hidden">
-          <div className="grid gap-0 lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch">
-            <div className="flex flex-col justify-center border-b border-deep-border p-8 sm:p-10 lg:border-b-0 lg:border-r">
-              <p className="mono text-[10px] font-semibold uppercase tracking-[0.18em] text-deep-accent">
-                100% owned by DocuPeer
-              </p>
-              <h2 className="poiret mt-3 text-4xl text-deep-text sm:text-5xl">
-                Atom Edu
-              </h2>
-              <p className="serif mt-5 text-lg leading-relaxed text-deep-text-soft">
-                DocuPeer owns Atom Edu as a wholly owned subsidiary. Atom Edu is
-                an edtech company committed to saving teachers time and making
-                it easier to manage students, create assignments, and keep
-                classroom work moving with less friction.
-              </p>
-              <div className="mt-7">
-                <Link
-                  href="https://atom-edu.org"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn-secondary px-6 py-3 text-base"
-                >
-                  Visit Atom Edu
-                </Link>
-              </div>
-            </div>
-            <div className="flex items-center justify-center bg-[#f0ede5] p-8 sm:p-10">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/partners/atom-edu-logo-tight.png"
-                alt="Atom Edu logo"
-                loading="lazy"
-                className="w-full max-w-sm object-contain"
-              />
-            </div>
-          </div>
+        <SectionHeader title="Our subsidiaries" />
+        <div className="grid gap-6 lg:grid-cols-2">
+          {SUBSIDIARIES.map((subsidiary) => (
+            <SubsidiaryCard key={subsidiary.name} subsidiary={subsidiary} />
+          ))}
         </div>
       </section>
 

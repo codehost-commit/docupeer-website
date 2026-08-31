@@ -153,13 +153,22 @@ export default function Home() {
         name: "Rahul Awasthi",
         jobTitle: "Founder & CEO",
       },
-      subOrganization: {
-        "@type": "Organization",
-        name: "Atom Edu",
-        url: "https://atom-edu.org",
-        description:
-          "A wholly owned DocuPeer subsidiary building edtech tools that help teachers save time and manage student work more easily.",
-      },
+      subOrganization: [
+        {
+          "@type": "Organization",
+          name: "Atom Edu",
+          url: "https://atom-edu.org",
+          description:
+            "A wholly owned DocuPeer subsidiary building edtech tools that help teachers save time and manage student work more easily.",
+        },
+        {
+          "@type": "Organization",
+          name: "DocuClerk HQ",
+          url: "https://docuclerkhq.com/about.html",
+          description:
+            "A wholly owned DocuPeer subsidiary and privacy-first AI contract analysis tool that helps everyday users and freelancers understand complex contract clauses.",
+        },
+      ],
     },
   };
 
@@ -344,6 +353,21 @@ export default function Home() {
                 width={220}
                 height={220}
                 className="h-24 w-auto object-contain mix-blend-multiply sm:h-28"
+              />
+            </a>
+            <a
+              href="https://docuclerkhq.com/about.html"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Visit DocuClerk HQ"
+              className="inline-flex h-28 w-44 items-center justify-center rounded-md px-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-deep-accent focus-visible:ring-offset-2 focus-visible:ring-offset-deep-bg sm:h-32 sm:w-52"
+            >
+              <Image
+                src="/partners/docuclerk-subsidiary-logo.svg"
+                alt="DocuClerk HQ"
+                width={220}
+                height={220}
+                className="h-24 w-auto object-contain sm:h-28"
               />
             </a>
           </div>
