@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { AI_MODEL_MAIN } from "@/lib/constants";
+import {
+  AI_MODEL_ATOM_ASSIGNMENT,
+  OPENROUTER_ATOM_REFERER,
+  OPENROUTER_ATOM_TITLE,
+  OPENROUTER_CHAT_COMPLETIONS_URL,
+} from "@/lib/constants";
 import {
   ATOM_COMPLEXITIES,
   ATOM_DETAIL_LEVELS,
@@ -17,8 +22,12 @@ import {
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+export const maxDuration = 120;
 
-const GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions";
+const ATOM_ASSIGNMENT_TIMEOUT_MS = Number(process.env.ATOM_ASSIGNMENT_TIMEOUT_MS) || 115000;
+const ATOM_ASSIGNMENT_MAX_COMPLETION_TOKENS = Number(process.env.ATOM_ASSIGNMENT_MAX_COMPLETION_TOKENS) || 12000;
+const ATOM_ASSIGNMENT_TEST_MAX_COMPLETION_TOKENS =
+  Number(process.env.ATOM_ASSIGNMENT_TEST_MAX_COMPLETION_TOKENS) || 20000;
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -333,28 +342,30 @@ function normalizeAssignment(value: unknown, request: AtomAssignmentRequest): At
 export async function POST(req: NextRequest) {
   try {
     const request = normalizeRequest(await req.json().catch(() => ({})));
-    const key = process.env.GROQ_ATOM_API_KEY;
+    const key = process.env.OPENROUTER_API_KEY;
     if (!key) {
       return json(
         {
           error:
-            "GROQ_ATOM_API_KEY is not configured yet. Add it as a Vercel environment variable, then redeploy.",
+            "OPENROUTER_API_KEY is not configured yet. Add it as a Vercel environment variable, then redeploy.",
         },
         503,
       );
     }
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 55000);
-    const response = await fetch(GROQ_CHAT_URL, {
+    const timeout = setTimeout(() => controller.abort(), ATOM_ASSIGNMENT_TIMEOUT_MS);
+    const response = await fetch(OPENROUTER_CHAT_COMPLETIONS_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${key}`,
+        "HTTP-Referer": OPENROUTER_ATOM_REFERER,
+        "X-OpenRouter-Title": OPENROUTER_ATOM_TITLE,
       },
       signal: controller.signal,
       body: JSON.stringify({
-        model: AI_MODEL_MAIN,
+        model: AI_MODEL_ATOM_ASSIGNMENT,
         messages: [
           {
             role: "system",
@@ -364,11 +375,10 @@ export async function POST(req: NextRequest) {
           { role: "user", content: request.testMode ? buildTestPrompt(request) : buildPrompt(request) },
         ],
         temperature: 0.35,
-        // Groq validates prompt tokens plus the requested ceiling against the
-        // account TPM limit before it starts generating. The test route gets a
-        // larger budget; regular assignments stay below the current limit.
-        max_completion_tokens: request.testMode ? 6800 : 6000,
-        reasoning_effort: "medium",
+        max_completion_tokens: request.testMode
+          ? ATOM_ASSIGNMENT_TEST_MAX_COMPLETION_TOKENS
+          : ATOM_ASSIGNMENT_MAX_COMPLETION_TOKENS,
+        reasoning: { mode: "pro", effort: "high" },
         response_format: { type: "json_object" },
         stream: false,
       }),
@@ -376,7 +386,7 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok) {
       const detail = await response.text().catch(() => "");
-      console.error("Atom Groq error", response.status, detail.slice(0, 800));
+      console.error("Atom OpenRouter error", response.status, detail.slice(0, 800));
       const message =
           response.status === 429
             ? "Atom is busy right now. Wait a moment and try again."

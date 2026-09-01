@@ -63,6 +63,12 @@ only on the `AiDetector` interface and the `screenReview()` helper in
   `heuristic` provider ships by default so the flow works end to end. It is
   a placeholder, not a production-grade detector.
 
+## Atom AI Provider
+
+Atom for DocuPeer uses OpenRouter for assignment generation and short label
+normalization. Set `OPENROUTER_API_KEY` in Vercel and locally when exercising
+the Atom routes. The default Atom model is `openai/gpt-5.6-sol-pro`.
+
 ## Project structure
 
 ```

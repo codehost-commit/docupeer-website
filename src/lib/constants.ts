@@ -99,8 +99,13 @@ export const ACCEPTED_PAPER_TYPES = [".pdf", ".docx"] as const;
 
 export const AI_MODEL_MAIN = "openai/gpt-oss-120b";
 export const AI_MODEL_SMALL = "openai/gpt-oss-20b";
-export const AI_MODEL_ATOM_LABEL_PRIMARY = "llama-3.3-70b-versatile";
-export const AI_MODEL_ATOM_LABEL_BACKUP = "openai/gpt-oss-20b";
+
+export const OPENROUTER_CHAT_COMPLETIONS_URL = "https://openrouter.ai/api/v1/chat/completions";
+export const OPENROUTER_ATOM_REFERER = "https://atom.docupeer.org";
+export const OPENROUTER_ATOM_TITLE = "Atom for DocuPeer";
+export const AI_MODEL_ATOM_ASSIGNMENT = "openai/gpt-5.6-sol-pro";
+export const AI_MODEL_ATOM_LABEL_PRIMARY = AI_MODEL_ATOM_ASSIGNMENT;
+export const AI_MODEL_ATOM_LABEL_BACKUP = "~openai/gpt-latest";
 
 export function countWords(text: string): number {
   const t = text.trim();

@@ -535,6 +535,16 @@ export default function LegalPage() {
                 </p>
               </Clause>
 
+              <Clause title="Atom for DocuPeer">
+                <p>
+                  Atom for DocuPeer uses OpenRouter API services with the
+                  OpenAI GPT-5.6 Sol Pro model identifier for assignment
+                  generation and label normalization. Use of those services
+                  does not imply endorsement of DocuPeer by OpenRouter,
+                  OpenAI, or model contributors.
+                </p>
+              </Clause>
+
               <Clause title="Typography">
                 <p>
                   DocuPeer uses Poiret One (Google Fonts, OFL) and Space
