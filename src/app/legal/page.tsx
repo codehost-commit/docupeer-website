@@ -525,22 +525,13 @@ export default function LegalPage() {
                 </p>
               </Clause>
 
-              <Clause title="Secretariat">
+              <Clause title="Secretariat and Atom">
                 <p>
-                  Secretariat uses Groq API services with OpenAI GPT-OSS-120B
-                  and OpenAI GPT-OSS-20B model identifiers for paper feedback,
-                  prompt optimization, and chat naming. Use of those services
-                  does not imply endorsement of DocuPeer by Groq, OpenAI, or
-                  model contributors.
-                </p>
-              </Clause>
-
-              <Clause title="Atom for DocuPeer">
-                <p>
-                  Atom for DocuPeer uses OpenRouter API services with the
-                  OpenAI GPT-5.6 Sol Pro model identifier for assignment
-                  generation and label normalization. Use of those services
-                  does not imply endorsement of DocuPeer by OpenRouter,
+                  Secretariat and Atom for DocuPeer use Groq API services with
+                  OpenAI GPT-OSS-120B and OpenAI GPT-OSS-20B model identifiers
+                  for paper feedback, prompt optimization, chat naming,
+                  assignment generation, and label normalization. Use of those
+                  services does not imply endorsement of DocuPeer by Groq,
                   OpenAI, or model contributors.
                 </p>
               </Clause>

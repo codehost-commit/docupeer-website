@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   AI_MODEL_ATOM_ASSIGNMENT,
-  OPENROUTER_ATOM_REFERER,
-  OPENROUTER_ATOM_TITLE,
-  OPENROUTER_CHAT_COMPLETIONS_URL,
+  GROQ_CHAT_COMPLETIONS_URL,
 } from "@/lib/constants";
 import {
   ATOM_COMPLEXITIES,
@@ -25,11 +23,13 @@ export const runtime = "nodejs";
 export const maxDuration = 120;
 
 const ATOM_ASSIGNMENT_TIMEOUT_MS = Number(process.env.ATOM_ASSIGNMENT_TIMEOUT_MS) || 115000;
-const ATOM_MAX_QUESTIONS_PER_REQUEST = Number(process.env.ATOM_MAX_QUESTIONS_PER_REQUEST) || 4;
-const ATOM_MAX_DIAGRAMS_PER_REQUEST = Number(process.env.ATOM_MAX_DIAGRAMS_PER_REQUEST) || 1;
-const ATOM_ASSIGNMENT_MAX_COMPLETION_TOKENS = Number(process.env.ATOM_ASSIGNMENT_MAX_COMPLETION_TOKENS) || 1000;
+const ATOM_MAX_QUESTIONS_PER_REQUEST = Number(process.env.ATOM_MAX_QUESTIONS_PER_REQUEST) || 12;
+const ATOM_MAX_DIAGRAMS_PER_REQUEST = Number(process.env.ATOM_MAX_DIAGRAMS_PER_REQUEST) || 2;
+const ATOM_ASSIGNMENT_MAX_COMPLETION_TOKENS = Number(process.env.ATOM_ASSIGNMENT_MAX_COMPLETION_TOKENS) || 5600;
 const ATOM_ASSIGNMENT_TEST_MAX_COMPLETION_TOKENS =
-  Number(process.env.ATOM_ASSIGNMENT_TEST_MAX_COMPLETION_TOKENS) || 1000;
+  Number(process.env.ATOM_ASSIGNMENT_TEST_MAX_COMPLETION_TOKENS) || 5600;
+const ATOM_GROQ_FREE_PLAN_TOKEN_BUDGET = Number(process.env.ATOM_GROQ_TOKEN_BUDGET) || 7500;
+const ATOM_MIN_COMPLETION_TOKENS = 800;
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -37,6 +37,10 @@ function json(data: unknown, status = 200) {
 
 function stringValue(value: unknown, maxLength: number) {
   return String(value ?? "").trim().slice(0, maxLength);
+}
+
+function estimateTokens(text: string) {
+  return Math.ceil(text.length / 4);
 }
 
 function periodLabel(value: unknown) {
@@ -125,7 +129,7 @@ function buildPrompt(request: AtomAssignmentRequest) {
     "Because this is JSON, escape every LaTeX backslash correctly inside JSON strings. Use double backslashes in the JSON source for commands such as \\text{}, \\frac{}, \\sin{}, \\cos{}, \\mu{}, and \\circ. Always use braces for commands and never emit malformed fragments such as ext, rac, displaystyle, or ^circ.",
     "The answer key must contain one answer for every question and should be concise, accurate, and formatted with LaTeX wherever math, chemistry, biology, or symbolic notation appears.",
     "Use the full requested detail level while keeping each question and answer compact enough for one reliable JSON response. Do not pad with duplicate questions.",
-    "Token budget: keep prompts to 1-2 sentences, choices to short phrases, multiple-choice explanations to 1 sentence, FRQ answers to 1-3 sentences, and teacher notes short.",
+    "Token budget: keep prompts to 1-3 sentences, choices to short phrases, multiple-choice explanations to 1 sentence, FRQ answers to 2-4 sentences, and teacher notes short.",
     "Return only valid JSON. No Markdown fences. No prose outside JSON.",
     "",
     "Teacher request:",
@@ -193,9 +197,9 @@ function buildPrompt(request: AtomAssignmentRequest) {
 function buildTestPrompt(request: AtomAssignmentRequest) {
   return [
     "Create a high-detail, classroom-ready Calculus III assignment and return only valid JSON. This is a stress test for one reliable request: use rigor, realistic distractors, worked FRQ solutions, and precise diagrams without filler or duplicate questions.",
-    "Hard constraints: exactly 4 questions total across sections; exactly 1 actual diagram attached to a relevant question; include all requested optional sections; include one answerKey entry for every question. Use multiple choice, short FRQ, and long FRQ. Use LaTeX for all math and scientific notation with inline \\( ... \\) or display \\[ ... \\]. In JSON strings, escape every LaTeX backslash as two backslashes. Never emit malformed fragments such as ext, rac, displaystyle, or ^circ.",
+    "Hard constraints: exactly 12 questions total across sections; exactly 2 actual diagrams attached to relevant questions; include all requested optional sections; include one answerKey entry for every question. Use multiple choice, short FRQ, and long FRQ. Use LaTeX for all math and scientific notation with inline \\( ... \\) or display \\[ ... \\]. In JSON strings, escape every LaTeX backslash as two backslashes. Never emit malformed fragments such as ext, rac, displaystyle, or ^circ.",
     "Make the diagrams detailed visual specifications with kind, title, caption, and labels. Prefer coordinate-plane, free-body, vector-field, surface, or process diagrams when educationally appropriate. Make the teacher key accurate and detailed. Return no Markdown and no prose outside the JSON object.",
-    `Class: ${request.className}; period: ${request.period || "blank"}; title: ${request.assignmentTitle}; topic: ${request.topic}; level: ${request.studentLevel}; complexity: advanced; question count: EXACTLY 4; diagrams: EXACTLY 1, for both visual reference and questions; detail: high but compact; optional items: ${request.optionalItems.join(", ")}; notes: ${request.extraNotes}`,
+    `Class: ${request.className}; period: ${request.period || "blank"}; title: ${request.assignmentTitle}; topic: ${request.topic}; level: ${request.studentLevel}; complexity: advanced; question count: EXACTLY 12; diagrams: EXACTLY 2, for both visual reference and questions; detail: high but compact; optional items: ${request.optionalItems.join(", ")}; notes: ${request.extraNotes}`,
     'JSON shape: {"className":"...","period":"...","title":"...","topic":"...","studentLevel":"...","complexity":"Advanced","estimatedTime":"...","objectives":["..."],"materials":["..."],"studentInstructions":"...","optionalItems":["..."],"sections":[{"heading":"...","directions":"...","questions":[{"type":"Multiple choice|Short FRQ|Long FRQ","prompt":"...","choices":["..."],"answer":"...","points":1,"lines":4,"diagramPrompt":"...","diagram":{"kind":"coordinate_plane","title":"...","caption":"...","labels":["..."]}}]}],"answerKey":[{"number":"1","answer":"..."}],"teacherNotes":["..."]}',
   ].join("\n");
 }
@@ -345,26 +349,43 @@ function normalizeAssignment(value: unknown, request: AtomAssignmentRequest): At
 export async function POST(req: NextRequest) {
   try {
     const request = normalizeRequest(await req.json().catch(() => ({})));
-    const key = process.env.OPENROUTER_API_KEY;
+    const key = process.env.GROQ_ATOM_API_KEY || process.env.GROQ_API_KEY;
     if (!key) {
       return json(
         {
           error:
-            "OPENROUTER_API_KEY is not configured yet. Add it as a Vercel environment variable, then redeploy.",
+            "GROQ_ATOM_API_KEY is not configured yet. Add it as a Vercel environment variable, then redeploy.",
         },
         503,
       );
     }
 
+    const prompt = request.testMode ? buildTestPrompt(request) : buildPrompt(request);
+    const requestedMaxTokens = request.testMode
+      ? ATOM_ASSIGNMENT_TEST_MAX_COMPLETION_TOKENS
+      : ATOM_ASSIGNMENT_MAX_COMPLETION_TOKENS;
+    const promptTokens = estimateTokens(prompt);
+    if (promptTokens > ATOM_GROQ_FREE_PLAN_TOKEN_BUDGET - ATOM_MIN_COMPLETION_TOKENS) {
+      return json(
+        {
+          error:
+            "That assignment prompt is too large for the current Groq token budget. Shorten the standards or extra notes and try again.",
+        },
+        400,
+      );
+    }
+    const maxCompletionTokens = Math.max(
+      ATOM_MIN_COMPLETION_TOKENS,
+      Math.min(requestedMaxTokens, ATOM_GROQ_FREE_PLAN_TOKEN_BUDGET - promptTokens),
+    );
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), ATOM_ASSIGNMENT_TIMEOUT_MS);
-    const response = await fetch(OPENROUTER_CHAT_COMPLETIONS_URL, {
+    const response = await fetch(GROQ_CHAT_COMPLETIONS_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${key}`,
-        "HTTP-Referer": OPENROUTER_ATOM_REFERER,
-        "X-OpenRouter-Title": OPENROUTER_ATOM_TITLE,
       },
       signal: controller.signal,
       body: JSON.stringify({
@@ -375,15 +396,11 @@ export async function POST(req: NextRequest) {
             content:
               "You are Atom for DocuPeer, an expert assignment designer for teachers and professors. You create practical, classroom-ready assignments and return only valid JSON.",
           },
-          { role: "user", content: request.testMode ? buildTestPrompt(request) : buildPrompt(request) },
+          { role: "user", content: prompt },
         ],
         temperature: 0.35,
-        max_completion_tokens: request.testMode
-          ? ATOM_ASSIGNMENT_TEST_MAX_COMPLETION_TOKENS
-          : ATOM_ASSIGNMENT_MAX_COMPLETION_TOKENS,
-        // Pro keeps the strongest model behavior; minimal effort leaves most
-        // of a small account-limited budget for the visible JSON assignment.
-        reasoning: { mode: "pro", effort: "minimal", exclude: true },
+        max_completion_tokens: maxCompletionTokens,
+        reasoning_effort: "low",
         response_format: { type: "json_object" },
         stream: false,
       }),
@@ -391,7 +408,7 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok) {
       const detail = await response.text().catch(() => "");
-      console.error("Atom OpenRouter error", response.status, detail.slice(0, 800));
+      console.error("Atom Groq error", response.status, detail.slice(0, 800));
       const providerMessage = (() => {
         try {
           const parsed = JSON.parse(detail);
@@ -406,8 +423,7 @@ export async function POST(req: NextRequest) {
             : response.status === 413
               ? "That assignment is too large for the current AI quota. Try fewer questions or a less detailed assignment."
             : providerMessage || "Atom could not generate that assignment yet.";
-      const status = /more credits|can only afford|credit/i.test(message) ? 402 : response.status === 429 ? 429 : 502;
-      return json({ error: message }, status);
+      return json({ error: message }, response.status === 429 ? 429 : 502);
     }
 
     const data = await response.json();

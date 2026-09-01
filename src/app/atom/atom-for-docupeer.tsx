@@ -245,8 +245,8 @@ export function AtomForDocuPeer() {
     if (step === "studentLevel") return form.studentLevel.trim().length >= 2;
     if (step === "topic") return form.topic.trim().length >= 4;
     if (step === "questionTypes") return form.questionTypes.length > 0;
-    if (step === "questionCount") return form.questionCount >= 3 && form.questionCount <= 4;
-    if (step === "diagramCount") return form.diagramCount >= 1 && form.diagramCount <= 1;
+    if (step === "questionCount") return form.questionCount >= 3 && form.questionCount <= 12;
+    if (step === "diagramCount") return form.diagramCount >= 1 && form.diagramCount <= 2;
     return true;
   }
 
@@ -393,7 +393,7 @@ export function AtomForDocuPeer() {
           autoFocus
           type="number"
           min={3}
-          max={4}
+          max={12}
           value={form.questionCount}
           onChange={(event) => update({ questionCount: Number(event.target.value) })}
           className="w-full rounded-md border border-[#d6d0c5] bg-[#fbfaf7] px-4 py-4 text-lg outline-none transition focus:border-[#1f3447] focus:ring-2 focus:ring-[#1f3447]/15"
@@ -438,7 +438,7 @@ export function AtomForDocuPeer() {
           autoFocus
           type="number"
           min={1}
-          max={1}
+          max={2}
           value={form.diagramCount}
           onChange={(event) => update({ diagramCount: Number(event.target.value) })}
           className="w-full rounded-md border border-[#d6d0c5] bg-[#fbfaf7] px-4 py-4 text-lg outline-none transition focus:border-[#1f3447] focus:ring-2 focus:ring-[#1f3447]/15"

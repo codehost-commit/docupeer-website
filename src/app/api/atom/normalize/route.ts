@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   AI_MODEL_ATOM_LABEL_BACKUP,
   AI_MODEL_ATOM_LABEL_PRIMARY,
-  OPENROUTER_ATOM_REFERER,
-  OPENROUTER_ATOM_TITLE,
-  OPENROUTER_CHAT_COMPLETIONS_URL,
+  GROQ_CHAT_COMPLETIONS_URL,
 } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
@@ -65,7 +63,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ value: "" }, { status: 400 });
     }
 
-    const key = process.env.OPENROUTER_API_KEY;
+    const key = process.env.GROQ_ATOM_API_KEY || process.env.GROQ_API_KEY;
     if (!key) return NextResponse.json({ value: fallback(kind, value), fallback: true });
 
     const models = [AI_MODEL_ATOM_LABEL_PRIMARY, AI_MODEL_ATOM_LABEL_BACKUP];
@@ -73,13 +71,11 @@ export async function POST(req: NextRequest) {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 18000);
       try {
-        const response = await fetch(OPENROUTER_CHAT_COMPLETIONS_URL, {
+        const response = await fetch(GROQ_CHAT_COMPLETIONS_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${key}`,
-            "HTTP-Referer": OPENROUTER_ATOM_REFERER,
-            "X-OpenRouter-Title": OPENROUTER_ATOM_TITLE,
           },
           signal: controller.signal,
           body: JSON.stringify({
@@ -90,9 +86,7 @@ export async function POST(req: NextRequest) {
             ],
             temperature: 0.1,
             max_completion_tokens: 160,
-            reasoning: model === AI_MODEL_ATOM_LABEL_PRIMARY
-              ? { mode: "pro", effort: "minimal", exclude: true }
-              : undefined,
+            reasoning_effort: "low",
             response_format: { type: "json_object" },
           }),
         }).finally(() => clearTimeout(timeout));

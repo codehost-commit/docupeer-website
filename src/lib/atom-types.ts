@@ -111,7 +111,7 @@ export const DEFAULT_ATOM_REQUEST: AtomAssignmentRequest = {
   studentLevel: "",
   complexity: "standard",
   questionTypes: ["mcq", "short_frq"],
-  questionCount: 4,
+  questionCount: 10,
   diagrams: false,
   diagramPurpose: "visual",
   diagramCount: 1,
