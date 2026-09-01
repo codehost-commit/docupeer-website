@@ -90,7 +90,9 @@ export async function POST(req: NextRequest) {
             ],
             temperature: 0.1,
             max_completion_tokens: 160,
-            reasoning: model === AI_MODEL_ATOM_LABEL_PRIMARY ? { mode: "pro" } : undefined,
+            reasoning: model === AI_MODEL_ATOM_LABEL_PRIMARY
+              ? { mode: "pro", effort: "minimal", exclude: true }
+              : undefined,
             response_format: { type: "json_object" },
           }),
         }).finally(() => clearTimeout(timeout));

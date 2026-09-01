@@ -15,7 +15,7 @@ const TEST_REQUEST = {
   studentLevel: "University Calculus III",
   complexity: "advanced",
   questionTypes: ["mcq", "short_frq", "long_frq"],
-  questionCount: 35,
+  questionCount: 20,
   diagrams: true,
   diagramPurpose: "both",
   diagramCount: 2,
@@ -23,7 +23,7 @@ const TEST_REQUEST = {
   standards:
     "Calculus III / multivariable calculus. Use mathematically correct notation, units where relevant, and rigorous reasoning.",
   extraNotes:
-    "Stress-test maximum detail. Cover the full course coherently. Use clean LaTeX for every equation, vector, derivative, integral, limit, exponent, subscript, matrix, and symbol. Include two genuinely useful, detailed diagrams and a complete teacher answer key.",
+    "Stress-test high detail in one reliable request. Cover the full course coherently. Use clean LaTeX for every equation, vector, derivative, integral, limit, exponent, subscript, matrix, and symbol. Include two genuinely useful, detailed diagrams and a complete teacher answer key.",
   optionalItems: ["objectives", "materials", "studentInstructions", "teacherAnswerKey", "teacherNotes"],
   testMode: true,
 };
@@ -73,7 +73,7 @@ export default function AtomTestPage() {
           </p>
           <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-6xl">Test</h1>
           <p className="mx-auto mt-5 max-w-xl text-base leading-7 text-[#606978]">
-            Calculus III · 35 questions · 2 diagrams · maximum detail
+            Calculus III · 20 questions · 2 diagrams · high detail
           </p>
           <button
             type="button"

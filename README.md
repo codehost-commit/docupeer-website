@@ -68,6 +68,8 @@ only on the `AiDetector` interface and the `screenReview()` helper in
 Atom for DocuPeer uses OpenRouter for assignment generation and short label
 normalization. Set `OPENROUTER_API_KEY` in Vercel and locally when exercising
 the Atom routes. The default Atom model is `openai/gpt-5.6-sol-pro`.
+Each assignment request is capped to 20 questions and 3 diagrams so generation
+fits into one reliable model response.
 
 ## Project structure
 

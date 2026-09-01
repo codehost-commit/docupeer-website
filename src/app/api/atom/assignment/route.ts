@@ -25,9 +25,11 @@ export const runtime = "nodejs";
 export const maxDuration = 120;
 
 const ATOM_ASSIGNMENT_TIMEOUT_MS = Number(process.env.ATOM_ASSIGNMENT_TIMEOUT_MS) || 115000;
-const ATOM_ASSIGNMENT_MAX_COMPLETION_TOKENS = Number(process.env.ATOM_ASSIGNMENT_MAX_COMPLETION_TOKENS) || 12000;
+const ATOM_MAX_QUESTIONS_PER_REQUEST = Number(process.env.ATOM_MAX_QUESTIONS_PER_REQUEST) || 20;
+const ATOM_MAX_DIAGRAMS_PER_REQUEST = Number(process.env.ATOM_MAX_DIAGRAMS_PER_REQUEST) || 3;
+const ATOM_ASSIGNMENT_MAX_COMPLETION_TOKENS = Number(process.env.ATOM_ASSIGNMENT_MAX_COMPLETION_TOKENS) || 9000;
 const ATOM_ASSIGNMENT_TEST_MAX_COMPLETION_TOKENS =
-  Number(process.env.ATOM_ASSIGNMENT_TEST_MAX_COMPLETION_TOKENS) || 20000;
+  Number(process.env.ATOM_ASSIGNMENT_TEST_MAX_COMPLETION_TOKENS) || 11000;
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -71,12 +73,12 @@ function normalizeRequest(payload: unknown): AtomAssignmentRequest {
       ? (input.complexity as AtomComplexity)
       : "standard",
     questionTypes: questionTypes.length ? questionTypes.slice(0, 3) : ["mcq", "short_frq"],
-    questionCount: Math.max(3, Math.min(40, Number(input.questionCount) || 10)),
+    questionCount: Math.max(3, Math.min(ATOM_MAX_QUESTIONS_PER_REQUEST, Number(input.questionCount) || 10)),
     diagrams,
     diagramPurpose: isInList(input.diagramPurpose, ATOM_DIAGRAM_PURPOSES)
       ? (input.diagramPurpose as AtomDiagramPurpose)
       : "visual",
-    diagramCount: diagrams ? Math.max(1, Math.min(8, Number(input.diagramCount) || 1)) : 0,
+    diagramCount: diagrams ? Math.max(1, Math.min(ATOM_MAX_DIAGRAMS_PER_REQUEST, Number(input.diagramCount) || 1)) : 0,
     detailLevel: isInList(input.detailLevel, ATOM_DETAIL_LEVELS)
       ? (input.detailLevel as AtomDetailLevel)
       : "standard",
@@ -122,7 +124,8 @@ function buildPrompt(request: AtomAssignmentRequest) {
     "Use LaTeX for every mathematical, chemical, scientific, or symbolic expression: inline as \\( ... \\) and displayed equations as \\[ ... \\]. Do not use raw ASCII equations when LaTeX is appropriate.",
     "Because this is JSON, escape every LaTeX backslash correctly inside JSON strings. Use double backslashes in the JSON source for commands such as \\text{}, \\frac{}, \\sin{}, \\cos{}, \\mu{}, and \\circ. Always use braces for commands and never emit malformed fragments such as ext, rac, displaystyle, or ^circ.",
     "The answer key must contain one answer for every question and should be concise, accurate, and formatted with LaTeX wherever math, chemistry, biology, or symbolic notation appears.",
-    "Use the full requested detail level. Spend substantial effort on quality, realistic distractors, worked reasoning, and useful diagram specifications. Do not pad with duplicate questions.",
+    "Use the full requested detail level while keeping each question and answer compact enough for one reliable JSON response. Do not pad with duplicate questions.",
+    "Token budget: keep prompts to 1-4 sentences, multiple-choice explanations to 1-2 sentences, FRQ answers to 2-5 sentences, and teacher notes short.",
     "Return only valid JSON. No Markdown fences. No prose outside JSON.",
     "",
     "Teacher request:",
@@ -189,10 +192,10 @@ function buildPrompt(request: AtomAssignmentRequest) {
 
 function buildTestPrompt(request: AtomAssignmentRequest) {
   return [
-    "Create a maximum-detail, classroom-ready Calculus III assignment and return only valid JSON. This is a stress test: use the full response budget for rigor, useful explanations, realistic distractors, worked FRQ solutions, and precise diagrams without filler or duplicate questions.",
-    "Hard constraints: exactly 35 questions total across sections; exactly 2 actual diagrams attached to relevant questions; include all requested optional sections; include one answerKey entry for every question. Use multiple choice, short FRQ, and long FRQ. Use LaTeX for all math and scientific notation with inline \\( ... \\) or display \\[ ... \\]. In JSON strings, escape every LaTeX backslash as two backslashes. Never emit malformed fragments such as ext, rac, displaystyle, or ^circ.",
+    "Create a high-detail, classroom-ready Calculus III assignment and return only valid JSON. This is a stress test for one reliable request: use rigor, realistic distractors, worked FRQ solutions, and precise diagrams without filler or duplicate questions.",
+    "Hard constraints: exactly 20 questions total across sections; exactly 2 actual diagrams attached to relevant questions; include all requested optional sections; include one answerKey entry for every question. Use multiple choice, short FRQ, and long FRQ. Use LaTeX for all math and scientific notation with inline \\( ... \\) or display \\[ ... \\]. In JSON strings, escape every LaTeX backslash as two backslashes. Never emit malformed fragments such as ext, rac, displaystyle, or ^circ.",
     "Make the diagrams detailed visual specifications with kind, title, caption, and labels. Prefer coordinate-plane, free-body, vector-field, surface, or process diagrams when educationally appropriate. Make the teacher key accurate and detailed. Return no Markdown and no prose outside the JSON object.",
-    `Class: ${request.className}; period: ${request.period || "blank"}; title: ${request.assignmentTitle}; topic: ${request.topic}; level: ${request.studentLevel}; complexity: advanced; question count: EXACTLY 35; diagrams: EXACTLY 2, for both visual reference and questions; detail: maximum; optional items: ${request.optionalItems.join(", ")}; notes: ${request.extraNotes}`,
+    `Class: ${request.className}; period: ${request.period || "blank"}; title: ${request.assignmentTitle}; topic: ${request.topic}; level: ${request.studentLevel}; complexity: advanced; question count: EXACTLY 20; diagrams: EXACTLY 2, for both visual reference and questions; detail: maximum; optional items: ${request.optionalItems.join(", ")}; notes: ${request.extraNotes}`,
     'JSON shape: {"className":"...","period":"...","title":"...","topic":"...","studentLevel":"...","complexity":"Advanced","estimatedTime":"...","objectives":["..."],"materials":["..."],"studentInstructions":"...","optionalItems":["..."],"sections":[{"heading":"...","directions":"...","questions":[{"type":"Multiple choice|Short FRQ|Long FRQ","prompt":"...","choices":["..."],"answer":"...","points":1,"lines":4,"diagramPrompt":"...","diagram":{"kind":"coordinate_plane","title":"...","caption":"...","labels":["..."]}}]}],"answerKey":[{"number":"1","answer":"..."}],"teacherNotes":["..."]}',
   ].join("\n");
 }
@@ -378,7 +381,9 @@ export async function POST(req: NextRequest) {
         max_completion_tokens: request.testMode
           ? ATOM_ASSIGNMENT_TEST_MAX_COMPLETION_TOKENS
           : ATOM_ASSIGNMENT_MAX_COMPLETION_TOKENS,
-        reasoning: { mode: "pro", effort: "high" },
+        // Pro keeps the strongest model behavior; low effort leaves most of
+        // the completion budget for the visible JSON assignment.
+        reasoning: { mode: "pro", effort: "low", exclude: true },
         response_format: { type: "json_object" },
         stream: false,
       }),
@@ -387,12 +392,20 @@ export async function POST(req: NextRequest) {
     if (!response.ok) {
       const detail = await response.text().catch(() => "");
       console.error("Atom OpenRouter error", response.status, detail.slice(0, 800));
+      const providerMessage = (() => {
+        try {
+          const parsed = JSON.parse(detail);
+          return stringValue(parsed?.error?.message ?? parsed?.message, 220);
+        } catch {
+          return stringValue(detail, 220);
+        }
+      })();
       const message =
           response.status === 429
             ? "Atom is busy right now. Wait a moment and try again."
             : response.status === 413
               ? "That assignment is too large for the current AI quota. Try fewer questions or a less detailed assignment."
-            : "Atom could not generate that assignment yet.";
+            : providerMessage || "Atom could not generate that assignment yet.";
       return json({ error: message }, response.status === 429 ? 429 : 502);
     }
 
