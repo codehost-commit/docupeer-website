@@ -114,11 +114,6 @@ export async function middleware(req: NextRequest) {
     // without re-entering this branch.
     if (pathname.startsWith("/api/")) return NextResponse.next();
 
-    // Atom follows the site status: during maintenance, redirect to the status page.
-    if (await isMaintenance(req)) {
-      return NextResponse.redirect(statusUrl(req));
-    }
-
     if (pathname === "/" || pathname === "/atom") {
       const url = req.nextUrl.clone();
       url.pathname = "/atom";
