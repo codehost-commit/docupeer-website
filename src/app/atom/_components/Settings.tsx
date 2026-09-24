@@ -118,13 +118,16 @@ export function Settings({ state, refresh, reloadNotifications }: SectionProps &
       <Card className="p-5">
         <h2 className="mb-4 font-display text-lg text-deep-text">Profile</h2>
         <div className="flex items-center gap-4">
-          <label className="relative h-16 w-16 shrink-0 cursor-pointer overflow-hidden rounded-full border border-deep-border bg-deep-panel2">
+          <label className="group relative h-16 w-16 shrink-0 cursor-pointer overflow-hidden rounded-full border border-deep-border bg-deep-panel2">
             {avatar ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={avatar} alt="" className="h-full w-full object-cover" />
             ) : (
               <span className="flex h-full w-full items-center justify-center font-display text-2xl text-deep-dim">{name.charAt(0).toUpperCase()}</span>
             )}
+            <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+              <Icon name="upload" size={20} />
+            </span>
             <input type="file" accept="image/*" className="absolute inset-0 cursor-pointer opacity-0" onChange={(e) => {
               const f = e.target.files?.[0];
               if (!f) return;

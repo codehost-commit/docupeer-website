@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { api } from "../_lib/api";
 import { Btn, Field, Input, Select, Spinner } from "../_lib/ui";
+import { Icon } from "./icons";
 import type { GpaScale } from "@/lib/atom/types";
 
 const GRADE_OPTIONS = ["9", "10", "11", "12", "College", "Other"].map((g) => ({ value: g, label: g === "Other" ? "Other" : `Grade ${g}`.replace("Grade College", "College") }));
@@ -56,7 +57,7 @@ export function Onboarding({ initialName, onDone }: { initialName: string; onDon
         </div>
         <div className="space-y-4 rounded-2xl border border-deep-border bg-deep-panel p-6 shadow-panel">
           <div className="flex items-center gap-4">
-            <label className="relative h-16 w-16 shrink-0 cursor-pointer overflow-hidden rounded-full border border-deep-border bg-deep-panel2">
+            <label className="group relative h-16 w-16 shrink-0 cursor-pointer overflow-hidden rounded-full border border-deep-border bg-deep-panel2">
               {avatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={avatar} alt="" className="h-full w-full object-cover" />
@@ -65,6 +66,9 @@ export function Onboarding({ initialName, onDone }: { initialName: string; onDon
                   {name.trim().charAt(0).toUpperCase() || "?"}
                 </span>
               )}
+              <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                <Icon name="upload" size={20} />
+              </span>
               <input
                 type="file"
                 accept="image/*"
