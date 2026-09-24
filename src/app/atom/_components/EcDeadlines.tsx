@@ -29,7 +29,7 @@ export function EcDeadlines({ state, refresh }: SectionProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="max-w-xl text-sm text-deep-dim">Deadlines for competitions, applications, programs, scholarships, and tryouts — so nothing slips.</p>
+        <p className="max-w-xl text-sm text-deep-dim">Deadlines for competitions, applications, programs, scholarships, and tryouts - so nothing slips.</p>
         <Btn size="sm" onClick={() => setAdd(true)}><Icon name="plus" size={14} /> Add deadline</Btn>
       </div>
 

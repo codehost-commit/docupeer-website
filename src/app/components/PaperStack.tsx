@@ -176,7 +176,7 @@ function PageContent({
 }) {
   return (
     <div className="latex-page relative flex h-full w-full flex-col bg-[#fbf9f2] px-10 py-10 sm:px-14 sm:py-12">
-      {/* Running header slug — the short title on continuation pages, per
+      {/* Running header slug - the short title on continuation pages, per
           LaTeX manuscript convention. */}
       <div className="mb-6 flex items-baseline justify-between border-b border-black/10 pb-2 font-serif text-[9.5px] uppercase tracking-[0.32em] text-black/45">
         <span>
@@ -306,7 +306,7 @@ export function PaperStack() {
             opacity: 0.8,
           }}
         />
-        {/* Front page — the actual content */}
+        {/* Front page - the actual content */}
         <div
           className="absolute inset-0 overflow-hidden rounded-[10px] border border-black/10 bg-white shadow-[0_24px_50px_-24px_rgba(15,32,50,0.4),0_2px_6px_-3px_rgba(15,32,50,0.2)]"
         >

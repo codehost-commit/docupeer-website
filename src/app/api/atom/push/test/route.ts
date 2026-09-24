@@ -12,7 +12,7 @@ export async function POST() {
   if (!uid) return unauthorized();
   const settings = await getSettings(uid);
   const title = "Atom test notification";
-  const bodyText = "Nice — reminders are working. You'll get notices like this before your deadlines.";
+  const bodyText = "Nice - reminders are working. You'll get notices like this before your deadlines.";
 
   const result: { push: { sent: number; removed: number }; email: boolean; pushConfigured: boolean; emailConfigured: boolean } = {
     push: { sent: 0, removed: 0 },

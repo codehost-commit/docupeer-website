@@ -289,7 +289,7 @@ export function ConfirmNameModal({
 
 // ---- shared formatting ----
 export function fmtPct(p: number | null): string {
-  return p === null ? "—" : `${p.toFixed(1)}%`;
+  return p === null ? "-" : `${p.toFixed(1)}%`;
 }
 export function letterColor(letter: string | null): string {
   if (!letter) return "#6a7495";

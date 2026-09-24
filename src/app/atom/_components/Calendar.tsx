@@ -15,16 +15,74 @@ function dayKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+function localDate(iso: string): Date {
+  const d = new Date(iso);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function localIso(d: Date): string {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
+}
+
+function occurrenceIso(item: CalItem, day: Date, offset: number): string {
+  const result = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+  if (item.hasTime && offset === 0 && item.at) {
+    const original = new Date(item.at);
+    result.setHours(original.getHours(), original.getMinutes(), 0, 0);
+  }
+  return result.toISOString();
+}
+
+function nextOccurrence(date: Date, recurrence: NonNullable<CalItem["recurrence"]>): Date {
+  if (recurrence === "daily") return addDays(date, 1);
+  if (recurrence === "weekly") return addDays(date, 7);
+  return new Date(date.getFullYear(), date.getMonth() + 1, date.getDate());
+}
+
+function expandCalendarItem(item: CalItem): CalItem[] {
+  if (item.kind !== "event" || !item.at) return [item];
+  const startDate = localDate(item.at);
+  const originalEnd = item.endAt ? localDate(item.endAt) : startDate;
+  const spanDays = Math.max(0, Math.round((originalEnd.getTime() - startDate.getTime()) / 86400000));
+  const recurrence = item.recurrence && item.recurrence !== "none" ? item.recurrence : "none";
+  const repeatUntil = item.recurrenceEndAt ? localDate(item.recurrenceEndAt) : startDate;
+  const out: CalItem[] = [];
+  let occurrence = startDate;
+  for (let count = 0; count < 500 && occurrence <= repeatUntil; count++) {
+    const occurrenceEnd = addDays(occurrence, spanDays);
+    for (let offset = 0; offset <= spanDays; offset++) {
+      const day = addDays(occurrence, offset);
+      out.push({
+        ...item,
+        id: `${item.id}:${dayKey(day)}`,
+        sourceId: item.id,
+        at: occurrenceIso(item, day, offset),
+        endAt: localIso(occurrenceEnd),
+        spanStart: offset === 0,
+        spanEnd: offset === spanDays,
+      });
+    }
+    if (recurrence === "none") break;
+    occurrence = nextOccurrence(occurrence, recurrence);
+  }
+  return out;
+}
+
 export function CalendarView({ state, items, refresh, setView }: SectionProps) {
   const [view, setViewMode] = useState<"month" | "week" | "day" | "agenda">("month");
   const [cursor, setCursor] = useState(new Date());
   const [detail, setDetail] = useState<CalItem | null>(null);
-  const [addDate, setAddDate] = useState<string | null>(null);
+  const [addDate, setAddDate] = useState<{ start: string; end: string } | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
+  const [selection, setSelection] = useState<{ start: string; end: string } | null>(null);
+  const [selectionAnchor, setSelectionAnchor] = useState<string | null>(null);
+  const [selecting, setSelecting] = useState(false);
+
+  const calendarItems = useMemo(() => items.flatMap(expandCalendarItem), [items]);
 
   const byDay = useMemo(() => {
     const m = new Map<string, CalItem[]>();
-    for (const it of items) {
+    for (const it of calendarItems) {
       if (!it.at) continue;
       const k = dayKey(new Date(it.at));
       const arr = m.get(k) || [];
@@ -33,7 +91,7 @@ export function CalendarView({ state, items, refresh, setView }: SectionProps) {
     }
     for (const arr of m.values()) arr.sort((a, b) => (a.at! < b.at! ? -1 : 1));
     return m;
-  }, [items]);
+  }, [calendarItems]);
 
   async function reschedule(item: CalItem, target: Date) {
     if (!item.at) return;
@@ -44,7 +102,7 @@ export function CalendarView({ state, items, refresh, setView }: SectionProps) {
     const iso = d.toISOString();
     if (item.kind === "ec") await api.updateEc(item.id, { dueAt: iso });
     else if (item.kind === "task") await api.updateTask(item.id, { dueAt: iso });
-    else if (item.kind === "event") await api.updateEvent(item.id, { startAt: iso });
+    else if (item.kind === "event") await api.updateEvent(item.sourceId || item.id, { startAt: iso });
     else await api.updateAssignment(item.id, { dueAt: iso });
     refresh();
   }
@@ -55,7 +113,7 @@ export function CalendarView({ state, items, refresh, setView }: SectionProps) {
       : view === "day"
         ? cursor.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })
         : view === "week"
-          ? (() => { const { start, end } = weekRange(cursor); return `${start.toLocaleDateString(undefined, { month: "short", day: "numeric" })} – ${end.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`; })()
+          ? (() => { const { start, end } = weekRange(cursor); return `${start.toLocaleDateString(undefined, { month: "short", day: "numeric" })} - ${end.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`; })()
           : "Agenda";
 
   function move(dir: number) {
@@ -76,7 +134,7 @@ export function CalendarView({ state, items, refresh, setView }: SectionProps) {
               <button onClick={() => move(1)} className="rounded-lg border border-deep-border p-1.5 hover:bg-deep-panel2"><Icon name="chevron" size={16} /></button>
             </>
           )}
-          <Btn size="sm" onClick={() => setAddDate(dayKey(view === "month" ? new Date() : cursor))}><Icon name="plus" size={14} /> Event</Btn>
+          <Btn size="sm" onClick={() => { const date = dayKey(view === "month" ? new Date() : cursor); setAddDate({ start: date, end: date }); }}><Icon name="plus" size={14} /> Event</Btn>
         </div>
       </div>
       <div className="font-display text-lg text-deep-text">{label}</div>
@@ -91,26 +149,32 @@ export function CalendarView({ state, items, refresh, setView }: SectionProps) {
               const inMonth = day.getMonth() === cursor.getMonth();
               const isToday = day.toDateString() === new Date().toDateString();
               const list = byDay.get(dayKey(day)) || [];
+              const selected = selection && dayKey(day) >= selection.start && dayKey(day) <= selection.end;
               return (
                 <div
                   key={i}
                   onDragOver={(e) => e.preventDefault()}
-                  onDrop={() => { const it = items.find((x) => x.id === dragId); if (it) reschedule(it, day); setDragId(null); }}
-                  onClick={() => setAddDate(dayKey(day))}
-                  className={cx("min-h-[92px] border-b border-r border-deep-border p-1.5 last:border-r-0", !inMonth && "bg-deep-panel2/40", "cursor-pointer")}
+                  onDrop={() => { const it = calendarItems.find((x) => x.id === dragId || x.sourceId === dragId); if (it) reschedule(it, day); setDragId(null); }}
+                  onMouseDown={(e) => { if (e.button !== 0) return; const key = dayKey(day); setSelectionAnchor(key); setSelection({ start: key, end: key }); setSelecting(true); }}
+                  onMouseEnter={() => { if (!selecting || !selectionAnchor) return; const key = dayKey(day); setSelection({ start: selectionAnchor <= key ? selectionAnchor : key, end: selectionAnchor <= key ? key : selectionAnchor }); }}
+                  onMouseUp={() => { if (!selection) return; setAddDate(selection); setSelecting(false); setSelectionAnchor(null); }}
+                  className={cx("relative min-h-[92px] border-b border-r border-deep-border p-1.5 last:border-r-0", !inMonth && "bg-deep-panel2/40", selected && "bg-deep-accent-soft/35", "cursor-crosshair")}
                 >
                   <div className={cx("mb-1 text-right text-xs", isToday ? "font-bold text-deep-accent" : inMonth ? "text-deep-text-soft" : "text-deep-dim")}>{day.getDate()}</div>
+                  {selected && <div className="pointer-events-none absolute left-0 right-0 top-7 h-2 bg-deep-accent/45" />}
                   <div className="space-y-1">
                     {list.slice(0, 3).map((it) => (
                       <div
                         key={it.kind + it.id}
-                        draggable
-                        onDragStart={() => setDragId(it.id)}
+                        draggable={it.kind !== "event" || !!it.spanStart}
+                        onDragStart={(e) => { e.stopPropagation(); setDragId(it.sourceId || it.id); }}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onMouseUp={(e) => e.stopPropagation()}
                         onClick={(e) => { e.stopPropagation(); setDetail(it); }}
-                        className={cx("flex items-center gap-1 rounded px-1 py-0.5 text-[10px]", it.done && "opacity-50")}
+                        className={cx("flex items-center gap-1 px-1 py-0.5 text-[10px]", it.kind === "event" ? "-mx-1.5 min-h-5 bg-deep-accent/20 font-medium text-deep-accent" : "rounded", it.kind === "event" && it.spanStart && "rounded-l", it.kind === "event" && it.spanEnd && "rounded-r", it.done && "opacity-50")}
                         style={{ background: `${it.color}1f`, color: it.color }}
                       >
-                        <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: it.color }} />
+                        {it.kind !== "event" && <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: it.color }} />}
                         <span className="truncate">{it.title}</span>
                       </div>
                     ))}
@@ -133,7 +197,7 @@ export function CalendarView({ state, items, refresh, setView }: SectionProps) {
                 <div className="mb-2 text-center text-xs font-medium text-deep-dim">{day.toLocaleDateString(undefined, { weekday: "short", day: "numeric" })}</div>
                 <div className="space-y-1">
                   {list.map((it) => <DayItem key={it.kind + it.id} item={it} onClick={() => setDetail(it)} />)}
-                  {list.length === 0 && <div className="py-2 text-center text-[10px] text-deep-dim">—</div>}
+                  {list.length === 0 && <div className="py-2 text-center text-[10px] text-deep-dim">-</div>}
                 </div>
               </Card>
             );
@@ -175,7 +239,7 @@ export function CalendarView({ state, items, refresh, setView }: SectionProps) {
       <Legend />
 
       {detail && <ItemDetail item={detail} onClose={() => setDetail(null)} refresh={refresh} setView={setView} state={state} />}
-      {addDate && <EventForm defaultDate={addDate} onClose={() => setAddDate(null)} onSaved={refresh} />}
+      {addDate && <EventForm defaultDate={addDate.start} defaultEndDate={addDate.end} onClose={() => { setAddDate(null); setSelection(null); setSelectionAnchor(null); }} onSaved={refresh} />}
     </div>
   );
 }
@@ -213,7 +277,7 @@ function ItemDetail({ item, onClose, refresh, setView, state }: { item: CalItem;
   async function del() {
     if (item.kind === "ec") await api.deleteEc(item.id);
     else if (item.kind === "task") await api.deleteTask(item.id);
-    else if (item.kind === "event") await api.deleteEvent(item.id);
+    else if (item.kind === "event") await api.deleteEvent(item.sourceId || item.id);
     else await api.deleteAssignment(item.id);
     await refresh();
     onClose();

@@ -24,7 +24,7 @@ export type TokenStatus = {
   earnedTotal: number; // starter + earnedFromReviews
   earnedUsed: number; // prompts spent from the earned pool
   earnedAvailable: number; // max(0, earnedTotal - earnedUsed)
-  dailyAvailable: number; // 0 or 1 — the free daily prompt, if unused today
+  dailyAvailable: number; // 0 or 1 - the free daily prompt, if unused today
   totalAvailable: number; // earnedAvailable + dailyAvailable
   nextDailyResetAt: string; // ISO of the next local (CT) midnight
 };
@@ -247,7 +247,7 @@ export async function nameChat(firstPrompt: string): Promise<string> {
 const MAIN_SYSTEM = [
   "You are Secretariat, an expert academic reviewer and writing mentor inside DocuPeer.",
   "You are given the full text of the user's uploaded paper, followed by their questions.",
-  "Read the paper carefully and give specific, constructive, honest feedback grounded in the actual text — quote or reference concrete passages rather than speaking in generalities.",
+  "Read the paper carefully and give specific, constructive, honest feedback grounded in the actual text - quote or reference concrete passages rather than speaking in generalities.",
   "",
   "FORMATTING (strict):",
   "- Respond in GitHub-Flavored Markdown.",

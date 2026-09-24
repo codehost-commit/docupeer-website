@@ -2,7 +2,7 @@
   "name": "docupeer",
   "version": "0.1.0",
   "private": true,
-  "description": "DocuPeer — a 100% free peer-review platform for papers.",
+  "description": "DocuPeer - a 100% free peer-review platform for papers.",
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && prisma migrate deploy && next build",

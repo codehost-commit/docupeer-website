@@ -224,7 +224,7 @@ export function ImportWizard({ classes, defaultClassId, onClose, onSaved }: { cl
               {reportClasses.map((c, classIndex) => (
                 <div key={classIndex} className="rounded-xl border border-deep-border bg-deep-bg p-3">
                   <div className="mb-3 flex items-start gap-2"><div className="grid flex-1 grid-cols-1 gap-2 sm:grid-cols-[1fr_110px_90px]"><Input value={c.name} onChange={(e) => updateReportClass(classIndex, { name: e.target.value })} placeholder="Class name" /><Input value={c.importedGradePercent} onChange={(e) => updateReportClass(classIndex, { importedGradePercent: e.target.value })} placeholder="Grade %" type="number" min="0" max="100" /><Input value={c.importedGradeLetter} onChange={(e) => updateReportClass(classIndex, { importedGradeLetter: e.target.value.toUpperCase() })} placeholder="Letter" /></div><button onClick={() => setReportClasses(reportClasses.filter((_, i) => i !== classIndex))} className="rounded p-2 text-deep-dim hover:bg-deep-panel2 hover:text-deep-bad"><Icon name="trash" size={15} /></button></div>
-                  <div className="mb-2 text-xs text-deep-dim">{c.rows.length ? `${c.rows.length} assignment${c.rows.length === 1 ? "" : "s"} detected` : "No individual assignments detected — the overall grade will be saved."}</div>
+                  <div className="mb-2 text-xs text-deep-dim">{c.rows.length ? `${c.rows.length} assignment${c.rows.length === 1 ? "" : "s"} detected` : "No individual assignments detected - the overall grade will be saved."}</div>
                   {c.rows.length > 0 && rowTable(c.rows, (i, patch) => updateReportRow(classIndex, i, patch), (i) => updateReportClass(classIndex, { rows: c.rows.filter((_, j) => j !== i) }))}
                   <Btn size="sm" variant="ghost" onClick={() => updateReportClass(classIndex, { rows: [...c.rows, blankRow()] })}><Icon name="plus" size={13} /> Assignment</Btn>
                 </div>
@@ -232,7 +232,7 @@ export function ImportWizard({ classes, defaultClassId, onClose, onSaved }: { cl
               <Btn size="sm" variant="outline" onClick={() => setReportClasses([...reportClasses, blankClass()])}><Icon name="plus" size={13} /> Add class</Btn>
             </div>
           ) : (
-            <>{rows.length > 0 ? rowTable(rows, (i, patch) => setRows(rows.map((r, j) => j === i ? { ...r, ...patch } : r)), (i) => setRows(rows.filter((_, j) => j !== i)), selectedClass?.categories.length ? [{ value: "", label: "—" }, ...selectedClass.categories.map((c) => ({ value: c.id, label: c.name }))] : undefined) : <div className="py-4 text-center text-sm text-deep-dim">Nothing detected. Go back and check your input.</div>}</>
+            <>{rows.length > 0 ? rowTable(rows, (i, patch) => setRows(rows.map((r, j) => j === i ? { ...r, ...patch } : r)), (i) => setRows(rows.filter((_, j) => j !== i)), selectedClass?.categories.length ? [{ value: "", label: "-" }, ...selectedClass.categories.map((c) => ({ value: c.id, label: c.name }))] : undefined) : <div className="py-4 text-center text-sm text-deep-dim">Nothing detected. Go back and check your input.</div>}</>
           )}
           {error && <div className="rounded-lg bg-deep-bad/10 px-3 py-2 text-xs text-deep-bad">{error}</div>}
         </div>

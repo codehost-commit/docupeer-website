@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { bad, body, bool, dt, getUserId, notFound, ok, oneOf, str, unauthorized } from "@/lib/atom/api";
-import { EVENT_CATEGORIES, type EventCategory } from "@/lib/atom/types";
+import { EVENT_CATEGORIES, type EventCategory, type EventRecurrence } from "@/lib/atom/types";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -26,6 +26,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
   if (b.endAt !== undefined) data.endAt = dt(b.endAt);
   if (b.allDay !== undefined) data.allDay = bool(b.allDay);
+  if (b.recurrence !== undefined) data.recurrence = oneOf<EventRecurrence>(b.recurrence, ["none", "daily", "weekly", "monthly"], "none");
+  if (b.recurrenceEndAt !== undefined) data.recurrenceEndAt = dt(b.recurrenceEndAt);
   if (b.category !== undefined) data.category = oneOf<EventCategory>(b.category, EVENT_CATEGORIES, "personal");
   if (b.color !== undefined) data.color = str(b.color, 20);
   if (b.location !== undefined) data.location = str(b.location, 200);

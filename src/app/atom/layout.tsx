@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 
 export const metadata: Metadata = {
   title: { absolute: "Atom by DocuPeer" },
-  description: "Track your grades, assignments, tests, projects, and deadlines — all in one place.",
+  description: "Track your grades, assignments, tests, projects, and deadlines - all in one place.",
   manifest: "/atom-manifest.webmanifest",
   appleWebApp: { capable: true, title: "Atom", statusBarStyle: "default" },
   robots: { index: false, follow: false },

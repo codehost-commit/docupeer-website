@@ -55,7 +55,7 @@ export function Academics({
       {active.length === 0 ? (
         <Empty
           title="No classes yet"
-          subtitle="Add your classes to start tracking grades, assignments, and tests — or import a gradebook."
+          subtitle="Add your classes to start tracking grades, assignments, and tests - or import a gradebook."
           action={<div className="flex flex-wrap justify-center gap-2"><Btn onClick={() => setShowImport(true)}><Icon name="upload" size={14} /> Import grade report</Btn><Btn variant="outline" onClick={() => setShowAdd(true)}><Icon name="plus" size={14} /> Add your first class</Btn></div>}
         />
       ) : (

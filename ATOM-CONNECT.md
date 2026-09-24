@@ -1,22 +1,22 @@
-# Atom — go-live checklist
+# Atom - go-live checklist
 
 Atom (student planner) lives at **atom.docupeer.org** (also `docupeer.org/atom`) on
 the existing DocuPeer stack and reuses DocuPeer login. This branch is merged to
 `main`, so pushing it triggers a normal Vercel production deploy.
 
 Most setup is automated in code. What's left is adding secrets to Vercel and
-GitHub — the same way DocuPeer's existing secrets (DATABASE_URL, AUTH_SECRET,
+GitHub - the same way DocuPeer's existing secrets (DATABASE_URL, AUTH_SECRET,
 GROQ_ATOM_API_KEY) are already managed. **Secrets are never committed to git.**
 
 ## Automated already (no action needed)
 
-- **Database migration** — `prisma/migrations/20260924170000_atom_student_planner`
+- **Database migration** - `prisma/migrations/20260924170000_atom_student_planner`
   creates all `Atom*` tables and the optional `User.atom*` columns. The build
   command now runs `prisma migrate deploy`, so the migration applies to the
-  production database automatically on the next deploy. It is additive only — no
+  production database automatically on the next deploy. It is additive only - no
   existing table is touched. If it ever fails, the build fails and production
   stays on the current version (safe), rather than deploying a half-migrated app.
-- **Reminder cron** — `.github/workflows/atom-reminders.yml` pings the sweep every
+- **Reminder cron** - `.github/workflows/atom-reminders.yml` pings the sweep every
   15 minutes via GitHub Actions (works on any Vercel plan). `vercel.json` also
   defines an hourly Vercel cron for Pro plans; both are safe together (the
   endpoint deduplicates).

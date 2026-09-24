@@ -1,4 +1,4 @@
-/* Atom service worker — handles Web Push delivery and notification clicks.
+/* Atom service worker - handles Web Push delivery and notification clicks.
    Scope: "/" (served from the site root as /atom-sw.js). */
 self.addEventListener("install", () => {
   self.skipWaiting();

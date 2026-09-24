@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     const form = await req.formData();
     const file = form.get("file");
     if (!(file instanceof File)) return bad("Choose a PDF, image, CSV, or text file first.");
-    if (file.size > 4_000_000) return bad("That file is too large. Please use a file under 4 MB.");
+    if (file.size > 3_500_000) return bad("That file is too large. Please use a file under 3.5 MB.");
 
     const name = file.name.toLowerCase();
     const type = file.type.toLowerCase();

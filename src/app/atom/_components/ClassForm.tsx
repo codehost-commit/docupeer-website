@@ -95,7 +95,7 @@ export function ClassForm({ existing, onClose, onSaved }: { existing?: ClassDTO;
           <Field label="Class name"><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Chemistry" /></Field>
           <Field label="Teacher"><Input value={teacher} onChange={(e) => setTeacher(e.target.value)} placeholder="Dr. Smith" /></Field>
           <Field label="Period"><Input value={period} onChange={(e) => setPeriod(e.target.value)} placeholder="Period 3" /></Field>
-          <Field label="School year"><Input value={schoolYear} onChange={(e) => setSchoolYear(e.target.value)} placeholder="2026–27" /></Field>
+          <Field label="School year"><Input value={schoolYear} onChange={(e) => setSchoolYear(e.target.value)} placeholder="2026-27" /></Field>
           <Field label="Term">
             <Select value={term} onChange={setTerm} options={[
               { value: "", label: "Full year" }, { value: "S1", label: "Semester 1" }, { value: "S2", label: "Semester 2" },

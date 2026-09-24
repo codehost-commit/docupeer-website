@@ -170,6 +170,15 @@ function parseJson(content: string): unknown {
   try {
     return JSON.parse(stripped);
   } catch {
+    const start = Math.min(...[stripped.indexOf("{"), stripped.indexOf("[")].filter((n) => n >= 0));
+    const end = Math.max(stripped.lastIndexOf("}"), stripped.lastIndexOf("]"));
+    if (start >= 0 && end > start) {
+      try {
+        return JSON.parse(stripped.slice(start, end + 1));
+      } catch {
+        return null;
+      }
+    }
     return null;
   }
 }
@@ -293,14 +302,16 @@ export async function standardizeGradeReport(raw: string): Promise<ParseResult> 
   const key = process.env.GROQ_ATOM_API_KEY || process.env.GROQ_API_KEY;
   if (!key) return { rows: [], classes: [], source: "heuristic", warnings: ["AI grade-report parsing is not configured. Add a Groq API key, or paste assignments into a class instead."] };
 
-  const model = process.env.GROQ_ATOM_MODEL || AI_MODEL_ATOM_ASSIGNMENT;
-  const content = await groqJson(key, model, [
-    { role: "system", content: SYSTEM },
-    { role: "user", content: reportPrompt(text) },
-  ]);
-  if (content) {
-    const parsed = parseReport(content);
-    if (parsed.classes.length > 0 || parsed.rows.length > 0) return { ...parsed, source: "groq", warnings: [] };
+  const models = [...new Set([process.env.GROQ_ATOM_MODEL || AI_MODEL_ATOM_ASSIGNMENT, AI_MODEL_SMALL])];
+  for (const model of models) {
+    const content = await groqJson(key, model, [
+      { role: "system", content: SYSTEM },
+      { role: "user", content: reportPrompt(text) },
+    ]);
+    if (content) {
+      const parsed = parseReport(content);
+      if (parsed.classes.length > 0 || parsed.rows.length > 0) return { ...parsed, source: "groq", warnings: [] };
+    }
   }
   return { rows: [], classes: [], source: "heuristic", warnings: ["The report could not be confidently parsed. Try a clearer image or paste the grade table as text."] };
 }

@@ -98,6 +98,7 @@ export type TaskCategory = "academic" | "ec" | "personal";
 export const TASK_CATEGORIES: TaskCategory[] = ["academic", "ec", "personal"];
 
 export type EventCategory = "academic" | "ec" | "personal" | "other";
+export type EventRecurrence = "none" | "daily" | "weekly" | "monthly";
 export const EVENT_CATEGORIES: EventCategory[] = ["academic", "ec", "personal", "other"];
 
 export type GradingSystem = "weighted" | "points";
@@ -218,6 +219,8 @@ export interface EventDTO {
   startAt: string;
   endAt: string | null;
   allDay: boolean;
+  recurrence: EventRecurrence;
+  recurrenceEndAt: string | null;
   category: EventCategory;
   color: string | null;
   location: string | null;

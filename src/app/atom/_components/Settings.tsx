@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, type AtomSettingsShape } from "../_lib/api";
 import { enablePush } from "../_lib/push";
-import { Badge, Btn, Card, ConfirmNameModal, Field, Input, Select, Spinner, Toggle, cx } from "../_lib/ui";
+import { Btn, Card, ConfirmNameModal, Field, Input, Select, Toggle, cx } from "../_lib/ui";
 import { Icon } from "./icons";
 import type { SectionProps } from "../AtomApp";
 import type { GpaScale } from "@/lib/atom/types";
@@ -32,22 +32,57 @@ export function Settings({ state, refresh, reloadNotifications }: SectionProps &
   const [confirm, setConfirm] = useState<"export" | "reset" | null>(null);
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingNotif, setSavingNotif] = useState(false);
+  const profileFirstRender = useRef(true);
+  const settingsFirstRender = useRef(true);
 
   function flash(msg: string) {
     setToast(msg);
     setTimeout(() => setToast(""), 3000);
   }
 
-  async function saveProfile() {
-    setSavingProfile(true);
-    try {
-      await api.updateProfile({ name: name.trim().toUpperCase(), gradeLevel: gradeLevel || null, gpaScale, avatarUrl: avatar });
-      await refresh();
-      flash("Profile saved.");
-    } finally {
-      setSavingProfile(false);
+  useEffect(() => {
+    if (profileFirstRender.current) {
+      profileFirstRender.current = false;
+      return;
     }
-  }
+    const timer = window.setTimeout(async () => {
+      setSavingProfile(true);
+      try {
+        await api.updateProfile({ name: name.trim().toUpperCase(), gradeLevel: gradeLevel || null, gpaScale, avatarUrl: avatar });
+        await refresh();
+      } catch {
+        flash("Could not save profile changes.");
+      } finally {
+        setSavingProfile(false);
+      }
+    }, 600);
+    return () => window.clearTimeout(timer);
+  }, [name, gradeLevel, gpaScale, avatar, refresh]);
+
+  useEffect(() => {
+    if (settingsFirstRender.current) {
+      settingsFirstRender.current = false;
+      return;
+    }
+    const timer = window.setTimeout(async () => {
+      setSavingNotif(true);
+      try {
+        await api.settingsPatch({
+          pushEnabled: settings.pushEnabled,
+          emailEnabled: settings.emailEnabled,
+          reminderDefaults: settings.reminderDefaults,
+          categoryMutes: settings.categoryMutes,
+          quietHours: settings.quietHours,
+          timezone: settings.timezone,
+        });
+      } catch {
+        flash("Could not save notification changes.");
+      } finally {
+        setSavingNotif(false);
+      }
+    }, 500);
+    return () => window.clearTimeout(timer);
+  }, [settings]);
 
   async function togglePush(on: boolean) {
     if (on) {
@@ -58,13 +93,11 @@ export function Settings({ state, refresh, reloadNotifications }: SectionProps &
       }
     }
     setSettings((s) => ({ ...s, pushEnabled: on }));
-    await api.settingsPatch({ pushEnabled: on });
     flash(on ? "Push notifications on." : "Push notifications off.");
   }
 
-  async function toggleEmail(on: boolean) {
+  function toggleEmail(on: boolean) {
     setSettings((s) => ({ ...s, emailEnabled: on }));
-    await api.settingsPatch({ emailEnabled: on });
   }
 
   function toggleReminder(scope: string, minutes: number) {
@@ -75,27 +108,12 @@ export function Settings({ state, refresh, reloadNotifications }: SectionProps &
     });
   }
 
-  async function saveNotifications() {
-    setSavingNotif(true);
-    try {
-      await api.settingsPatch({
-        reminderDefaults: settings.reminderDefaults,
-        categoryMutes: settings.categoryMutes,
-        quietHours: settings.quietHours,
-        timezone: settings.timezone,
-      });
-      flash("Notification settings saved.");
-    } finally {
-      setSavingNotif(false);
-    }
-  }
-
   async function test() {
     try {
       const r = await api.pushTest();
       if (r.push.sent > 0) flash("Test notification sent to this device.");
       else if (!r.pushConfigured) flash("Push isn't configured on the server yet.");
-      else flash("No push device is subscribed — turn on push first.");
+      else flash("No push device is subscribed - turn on push first.");
     } catch {
       flash("Couldn't send a test.");
     }
@@ -152,15 +170,13 @@ export function Settings({ state, refresh, reloadNotifications }: SectionProps &
           </Field>
           <Field label="Email"><Input value={state.profile.email} disabled /></Field>
         </div>
-        <div className="mt-4 flex justify-end">
-          <Btn onClick={saveProfile} disabled={savingProfile}>{savingProfile ? <Spinner className="h-4 w-4" /> : "Save profile"}</Btn>
-        </div>
+        <div className="mt-4 flex justify-end text-xs text-deep-dim">{savingProfile ? "Saving profile changes..." : "Profile changes save automatically."}</div>
       </Card>
 
       {/* Notifications */}
       <Card className="p-5">
         <h2 className="mb-1 font-display text-lg text-deep-text">Notifications</h2>
-        <p className="mb-4 text-sm text-deep-dim">Get reminded before things are due — in your browser and, optionally, by email.</p>
+        <p className="mb-4 text-sm text-deep-dim">Get reminded before things are due in your browser and, optionally, by email.</p>
 
         <div className="space-y-3">
           <div className="flex items-center justify-between rounded-xl border border-deep-border p-3">
@@ -212,7 +228,7 @@ export function Settings({ state, refresh, reloadNotifications }: SectionProps &
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
           <Btn variant="outline" size="sm" onClick={test}><Icon name="bell" size={14} /> Send test notification</Btn>
-          <Btn onClick={saveNotifications} disabled={savingNotif}>{savingNotif ? <Spinner className="h-4 w-4" /> : "Save notification settings"}</Btn>
+          <span className="text-xs text-deep-dim">{savingNotif ? "Saving changes..." : "Notification changes save automatically."}</span>
         </div>
       </Card>
 

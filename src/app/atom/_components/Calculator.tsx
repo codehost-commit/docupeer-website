@@ -67,11 +67,11 @@ export function Calculator({ cls, assignments }: { cls: ClassDTO; assignments: A
       <div className="rounded-2xl border border-deep-border bg-deep-panel2 p-4">
         {result.alreadyMet ? (
           <div className="text-sm text-deep-good">
-            You&apos;re already on track — even a 0 keeps you at or above {target}% (you&apos;d need {result.requiredPercent.toFixed(1)}%).
+            You&apos;re already on track - even a 0 keeps you at or above {target}% (you&apos;d need {result.requiredPercent.toFixed(1)}%).
           </div>
         ) : result.impossible ? (
           <div className="text-sm text-deep-bad">
-            {target}% isn&apos;t reachable with this single assessment — you&apos;d need {result.requiredPercent.toFixed(1)}%. A perfect score gets you to {result.projectedIfPerfect.toFixed(1)}%.
+            {target}% isn&apos;t reachable with this single assessment - you&apos;d need {result.requiredPercent.toFixed(1)}%. A perfect score gets you to {result.projectedIfPerfect.toFixed(1)}%.
           </div>
         ) : (
           <div>

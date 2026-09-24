@@ -7,6 +7,7 @@ import { Badge, Btn, Card, Empty, cx, fmtPct, letterColor } from "../_lib/ui";
 import { Dot, ItemRow, SectionHeading, StatTile } from "./bits";
 import { Icon } from "./icons";
 import type { SectionProps } from "../AtomApp";
+import { dashboardGreeting } from "../_lib/greetings";
 
 export function Dashboard({ state, grades, items, gpa, setView, openClass }: SectionProps & { openClass: (id: string) => void }) {
   const now = new Date();
@@ -21,7 +22,7 @@ export function Dashboard({ state, grades, items, gpa, setView, openClass }: Sec
     .sort((a, b) => (a.at! < b.at! ? -1 : 1))
     .slice(0, 12);
 
-  // Weekly overview (Sun–Sat of the current week).
+  // Weekly overview (Sun-Sat of the current week).
   const weekStart = startOfDay(new Date(now.getTime() - now.getDay() * 86400000));
   const week = Array.from({ length: 7 }, (_, i) => {
     const day = new Date(weekStart.getTime() + i * 86400000);
@@ -33,19 +34,26 @@ export function Dashboard({ state, grades, items, gpa, setView, openClass }: Sec
   });
 
   const showGpa = state.profile.gpaScale !== "none" && state.profile.gpaScale !== "percent";
-  const hour = now.getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const displayName = state.profile.name.toUpperCase().split(" ")[0] || "THERE";
 
   return (
     <div className="space-y-6">
       {/* Header + stats */}
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-        <div>
-          <div className="font-display text-2xl text-deep-text">{greeting}, {state.profile.name.toUpperCase().split(" ")[0]}.</div>
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div className="flex items-center gap-4">
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-deep-border bg-deep-panel2 font-display text-2xl text-deep-dim">
+            {state.profile.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={state.profile.avatarUrl} alt="" className="h-full w-full object-cover" />
+            ) : displayName.charAt(0)}
+          </div>
+          <div>
+          <div className="font-display text-3xl leading-tight text-deep-text">{dashboardGreeting(displayName, now)}</div>
           <div className="text-sm text-deep-dim">{now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}</div>
+          </div>
         </div>
         <div className="grid grid-cols-3 gap-2">
-          {showGpa && <StatTile label="GPA" value={gpa === null ? "—" : gpa.toFixed(2)} />}
+          {showGpa && <StatTile label="GPA" value={gpa === null ? "-" : gpa.toFixed(2)} />}
           <StatTile label="Due today" value={today.length} color={today.length ? "#356d97" : undefined} />
           <StatTile label="Overdue" value={overdue.length} color={overdue.length ? "#b3455e" : undefined} />
         </div>
@@ -77,7 +85,7 @@ export function Dashboard({ state, grades, items, gpa, setView, openClass }: Sec
                       <div className="min-w-0">
                         <div className="truncate font-medium text-deep-text">{c.name}</div>
                         <div className="truncate text-xs text-deep-dim">
-                          {[c.period, c.teacher].filter(Boolean).join(" · ") || "—"}
+                          {[c.period, c.teacher].filter(Boolean).join(" · ") || "-"}
                         </div>
                       </div>
                       {g?.trend !== "flat" && g?.delta != null && (

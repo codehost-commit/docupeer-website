@@ -54,7 +54,7 @@ export function ClassDetail({
         <div className="flex flex-wrap items-center justify-between gap-3 p-4">
           <div>
             <div className="font-display text-xl text-deep-text">{cls.name}</div>
-            <div className="text-sm text-deep-dim">{[cls.period, cls.teacher, cls.term].filter(Boolean).join(" · ") || "—"}</div>
+            <div className="text-sm text-deep-dim">{[cls.period, cls.teacher, cls.term].filter(Boolean).join(" · ") || "-"}</div>
           </div>
           <div className="flex items-center gap-3">
             <div className="text-right">
@@ -93,7 +93,7 @@ export function ClassDetail({
                         <span className="text-xs text-deep-dim">{b.weight}%{b.count ? ` · ${b.count} graded` : ""}</span>
                       </div>
                       <div className="text-right">
-                        <span className="font-medium text-deep-text">{b.percent === null ? "—" : `${b.percent.toFixed(1)}%`}</span>
+                        <span className="font-medium text-deep-text">{b.percent === null ? "-" : `${b.percent.toFixed(1)}%`}</span>
                         {b.possible > 0 && <span className="ml-2 text-xs text-deep-dim">{b.earned}/{b.possible}</span>}
                       </div>
                     </div>
@@ -153,7 +153,7 @@ export function ClassDetail({
                     <div className="text-right text-sm">
                       {a.pointsPossible != null ? (
                         <>
-                          <span className="font-medium text-deep-text">{a.pointsEarned ?? "—"}/{a.pointsPossible}</span>
+                          <span className="font-medium text-deep-text">{a.pointsEarned ?? "-"}/{a.pointsPossible}</span>
                           {pct !== null && <span className="ml-1 text-xs text-deep-dim">{pct.toFixed(0)}%</span>}
                         </>
                       ) : (

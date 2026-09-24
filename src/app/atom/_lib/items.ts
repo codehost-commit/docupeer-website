@@ -11,6 +11,12 @@ export interface CalItem {
   title: string;
   subtitle: string;
   at: string | null;
+  endAt?: string | null;
+  sourceId?: string;
+  spanStart?: boolean;
+  spanEnd?: boolean;
+  recurrence?: "none" | "daily" | "weekly" | "monthly";
+  recurrenceEndAt?: string | null;
   hasTime: boolean;
   color: string;
   priority: string | null;
@@ -89,6 +95,10 @@ export function buildItems(state: AtomState): CalItem[] {
       title: ev.title,
       subtitle: [ev.location, ev.category].filter(Boolean).join(" · "),
       at: ev.startAt,
+      endAt: ev.endAt,
+      sourceId: ev.id,
+      recurrence: ev.recurrence,
+      recurrenceEndAt: ev.recurrenceEndAt,
       hasTime: !ev.allDay,
       color: ev.color || CATEGORY_COLORS[ev.category] || CATEGORY_COLORS.other,
       priority: null,

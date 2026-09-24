@@ -114,8 +114,8 @@ export function AssignmentForm({
           {hasTime && <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="w-32" />}
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Points earned"><Input type="number" step="0.01" value={earned} onChange={(e) => setEarned(e.target.value)} placeholder="—" /></Field>
-          <Field label="Points possible"><Input type="number" step="0.01" value={possible} onChange={(e) => setPossible(e.target.value)} placeholder="—" /></Field>
+          <Field label="Points earned"><Input type="number" step="0.01" value={earned} onChange={(e) => setEarned(e.target.value)} placeholder="-" /></Field>
+          <Field label="Points possible"><Input type="number" step="0.01" value={possible} onChange={(e) => setPossible(e.target.value)} placeholder="-" /></Field>
         </div>
         <Field label="Description"><Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Optional" /></Field>
         <Field label="Notes"><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional" /></Field>

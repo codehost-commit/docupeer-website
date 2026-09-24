@@ -68,6 +68,40 @@ async function jfetch<T = any>(url: string, opts?: RequestInit): Promise<T> {
 }
 const body = (v: unknown) => JSON.stringify(v);
 
+async function prepareImportFile(file: File): Promise<File> {
+  if (!file.type.startsWith("image/")) {
+    if (file.size > 3_500_000) throw new Error("That upload is too large. Please choose a file under 3.5 MB.");
+    return file;
+  }
+  const url = URL.createObjectURL(file);
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const next = new Image();
+      next.onload = () => resolve(next);
+      next.onerror = () => reject(new Error("Could not read that image."));
+      next.src = url;
+    });
+    const scale = Math.min(1, 1600 / Math.max(image.naturalWidth, image.naturalHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+    canvas.getContext("2d")?.drawImage(image, 0, 0, canvas.width, canvas.height);
+    let blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.7));
+    if (blob && blob.size > 3_000_000) {
+      const tighter = document.createElement("canvas");
+      const tighterScale = Math.min(1, 1200 / Math.max(image.naturalWidth, image.naturalHeight));
+      tighter.width = Math.max(1, Math.round(image.naturalWidth * tighterScale));
+      tighter.height = Math.max(1, Math.round(image.naturalHeight * tighterScale));
+      tighter.getContext("2d")?.drawImage(image, 0, 0, tighter.width, tighter.height);
+      blob = await new Promise<Blob | null>((resolve) => tighter.toBlob(resolve, "image/jpeg", 0.55));
+    }
+    if (!blob) return file;
+    return new File([blob], "grade-report.jpg", { type: "image/jpeg", lastModified: Date.now() });
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
 export const api = {
   // auth + profile
   me: () => jfetch<{ id: string } | { error: string }>("/api/atom/me"),
@@ -110,7 +144,19 @@ export const api = {
   settingsPatch: (b: Record<string, unknown>) => jfetch("/api/atom/settings", { method: "PATCH", body: body(b) }),
   reset: (confirmName: string) => jfetch("/api/atom/reset", { method: "POST", body: body({ confirmName }) }),
   importParse: (b: { kind: string; text?: string }) => jfetch("/api/atom/import/parse", { method: "POST", body: body(b) }),
-  importParseFile: (file: File) => fetch("/api/atom/import/parse", { method: "POST", body: (() => { const data = new FormData(); data.append("file", file); return data; })(), credentials: "same-origin" }).then(async (res) => { const data = await res.json().catch(() => ({})); if (!res.ok) throw new Error(data?.error || `Request failed (${res.status})`); return data; }),
+  importParseFile: async (file: File) => {
+    const prepared = await prepareImportFile(file);
+    if (prepared.size > 3_500_000) throw new Error("That upload is too large after compression. Try a smaller crop or a PDF under 3.5 MB.");
+    const data = new FormData();
+    data.append("file", prepared);
+    const res = await fetch("/api/atom/import/parse", { method: "POST", body: data, credentials: "same-origin" });
+    const result = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      if (res.status === 413) throw new Error("That upload is too large. The image was not sent to the AI. Try a smaller crop or a PDF under 3.5 MB.");
+      throw new Error(result?.error || `Request failed (${res.status})`);
+    }
+    return result;
+  },
   importCommit: (b: { classId?: string; rows?: unknown[]; classes?: unknown[] }) =>
     jfetch("/api/atom/import/commit", { method: "POST", body: body(b) }),
 

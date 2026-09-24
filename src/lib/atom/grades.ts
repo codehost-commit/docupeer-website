@@ -1,4 +1,4 @@
-// Atom grade engine — pure, deterministic, no Prisma imports so it can be unit-tested.
+// Atom grade engine - pure, deterministic, no Prisma imports so it can be unit-tested.
 // Supports points-based and weighted-category grading, letter/GPA mapping, the
 // "what do I need?" required-score solver, and cumulative GPA.
 
@@ -226,7 +226,7 @@ export function computeClassGrade(input: ClassGradeInput): ClassGradeResult {
 }
 
 // ---------------------------------------------------------------------------
-// "What do I need?" — required score on an upcoming assessment to hit a target.
+// "What do I need?" - required score on an upcoming assessment to hit a target.
 // ---------------------------------------------------------------------------
 
 export interface RequiredScoreInput {
@@ -284,7 +284,7 @@ export function requiredScore(input: RequiredScoreInput): RequiredScoreResult {
     const note =
       `Right now you have ${round(E)}/${round(P)} points. To reach ${round(input.targetPercent)}% overall after a ` +
       `${round(W)}-point assessment, you need (${round(input.targetPercent)}% x ${round(P + W)}) - ${round(E)} = ` +
-      `${round(x)} points on it — that's ${round((x / W) * 100)}%.`;
+      `${round(x)} points on it - that's ${round((x / W) * 100)}%.`;
     return build(x, ifPerfect, ifZero, note);
   }
 

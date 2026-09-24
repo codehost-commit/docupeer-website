@@ -236,7 +236,7 @@ model AiMessage {
 }
 
 // ============================================================================
-// Atom  —  student time-management platform (atom.docupeer.org)
+// Atom  -  student time-management platform (atom.docupeer.org)
 // Every row is scoped to a User; all queries filter by userId for isolation.
 // ============================================================================
 
@@ -369,6 +369,8 @@ model AtomEvent {
   startAt     DateTime
   endAt       DateTime?
   allDay      Boolean   @default(false)
+  recurrence  String    @default("none") // none|daily|weekly|monthly
+  recurrenceEndAt DateTime?
   category    String    @default("personal") // academic|ec|personal|other
   color       String?
   location    String?

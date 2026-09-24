@@ -9,9 +9,9 @@ helping people write better.
 
 ## Tech stack
 
-- **Next.js 14** (App Router, TypeScript) — one full-stack codebase
-- **Prisma + SQLite** — zero-config local database (swap `DATABASE_URL` for Postgres in production)
-- **Custom auth** — bcrypt password hashing + signed JWT session cookies (`jose`)
+- **Next.js 14** (App Router, TypeScript) - one full-stack codebase
+- **Prisma + SQLite** - zero-config local database (swap `DATABASE_URL` for Postgres in production)
+- **Custom auth** - bcrypt password hashing + signed JWT session cookies (`jose`)
 - **Tailwind CSS** with a dark, panelled design system (Space Grotesk + Inter + JetBrains Mono)
 
 ## Quick start

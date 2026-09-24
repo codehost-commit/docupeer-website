@@ -119,7 +119,7 @@ export default function SecretariatPage() {
       setChats(data.chats);
       setTokens(data.tokens);
     } catch {
-      /* unauthenticated / not launched — handled by the gate below */
+      /* unauthenticated / not launched - handled by the gate below */
     }
   }, []);
 
@@ -284,7 +284,7 @@ export default function SecretariatPage() {
             <div className="flex items-center justify-between">
               <span className="label mb-0">Tokens</span>
               <span className={`text-2xl font-semibold ${noTokens ? "text-deep-bad" : "text-deep-accent"}`}>
-                {tokens?.totalAvailable ?? "—"}
+                {tokens?.totalAvailable ?? "-"}
               </span>
             </div>
             <p className="mt-1 text-[11px] leading-snug text-deep-dim">{tokenHint(tokens)}</p>
@@ -386,7 +386,7 @@ export default function SecretariatPage() {
               <div ref={scrollRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-5">
                 {chat.messages.length === 0 && (
                   <div className="mx-auto max-w-md rounded-xl border border-deep-border bg-deep-panel2/60 p-4 text-center text-sm text-deep-text-soft">
-                    Ask Secretariat anything about <strong>{chat.paperName}</strong> — a critique, a
+                    Ask Secretariat anything about <strong>{chat.paperName}</strong> - a critique, a
                     clarity pass, help with an argument, or the math. Minimum {MIN_PROMPT_CHARS} characters.
                   </div>
                 )}
@@ -433,7 +433,7 @@ export default function SecretariatPage() {
                       if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); send(); }
                     }}
                     rows={2}
-                    placeholder={noTokens ? "Out of tokens — review a paper to unlock more" : "Ask about your paper…  (⌘/Ctrl + Enter to send)"}
+                    placeholder={noTokens ? "Out of tokens - review a paper to unlock more" : "Ask about your paper…  (⌘/Ctrl + Enter to send)"}
                     disabled={sending || noTokens}
                     className="input min-h-[3rem] flex-1 resize-y"
                   />
@@ -444,7 +444,7 @@ export default function SecretariatPage() {
                 <div className="mt-1.5 flex items-center justify-between text-[11px] text-deep-dim">
                   <span className={tooShort || tooLong ? "text-deep-bad" : ""}>
                     {tooLong
-                      ? `${words} / ${MAX_PROMPT_WORDS} words — too long`
+                      ? `${words} / ${MAX_PROMPT_WORDS} words - too long`
                       : tooShort
                       ? `Minimum ${MIN_PROMPT_CHARS} characters`
                       : `${words} / ${MAX_PROMPT_WORDS} words`}
