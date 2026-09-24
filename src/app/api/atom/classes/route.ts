@@ -44,6 +44,8 @@ export async function POST(req: NextRequest) {
       color: str(b.color, 20) ?? "#356d97",
       includeInGpa: bool(b.includeInGpa, true),
       gpaWeight: oneOf(b.gpaWeight, GPA_WEIGHTS, "regular"),
+      importedGradePercent: num(b.importedGradePercent),
+      importedGradeLetter: str(b.importedGradeLetter, 10),
       sortOrder: count,
       categories: Array.isArray(b.categories)
         ? {

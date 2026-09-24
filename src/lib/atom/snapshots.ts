@@ -12,7 +12,7 @@ export async function recordSnapshot(userId: string, classId: string): Promise<v
   });
   if (!cls) return;
 
-  const grade = computeClassGrade({
+  const computed = computeClassGrade({
     gradingSystem: cls.gradingSystem as GradingSystem,
     categories: cls.categories.map((c) => ({ id: c.id, name: c.name, weight: c.weight, dropLowest: c.dropLowest })),
     items: cls.assignments.map((a) => ({
@@ -21,6 +21,9 @@ export async function recordSnapshot(userId: string, classId: string): Promise<v
       pointsPossible: a.pointsPossible,
     })),
   });
+  const grade = computed.percent === null && cls.importedGradePercent != null
+    ? { percent: cls.importedGradePercent, letter: cls.importedGradeLetter }
+    : computed;
   if (grade.percent === null) return;
 
   const last = await prisma.atomGradeSnapshot.findFirst({

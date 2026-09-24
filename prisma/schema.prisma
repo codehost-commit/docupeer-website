@@ -255,6 +255,8 @@ model AtomClass {
   color         String  @default("#356d97")
   includeInGpa  Boolean @default(true)
   gpaWeight     String  @default("regular") // "regular" | "honors" | "ap"
+  importedGradePercent Float?
+  importedGradeLetter  String?
   archived      Boolean @default(false)
   sortOrder     Int     @default(0)
 

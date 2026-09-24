@@ -161,6 +161,8 @@ export interface ClassDTO {
   color: string;
   includeInGpa: boolean;
   gpaWeight: GpaWeight;
+  importedGradePercent: number | null;
+  importedGradeLetter: string | null;
   archived: boolean;
   sortOrder: number;
   categories: CategoryDTO[];

@@ -43,7 +43,7 @@ export function Academics({
       <div className="flex items-center justify-between">
         <div className="text-sm text-deep-dim">{active.length} {active.length === 1 ? "class" : "classes"}</div>
         <div className="flex gap-2">
-          <Btn variant="outline" size="sm" onClick={() => setShowImport(true)} disabled={active.length === 0}>
+          <Btn variant="outline" size="sm" onClick={() => setShowImport(true)}>
             <Icon name="upload" size={14} /> Import grades
           </Btn>
           <Btn size="sm" onClick={() => setShowAdd(true)}>
@@ -56,7 +56,7 @@ export function Academics({
         <Empty
           title="No classes yet"
           subtitle="Add your classes to start tracking grades, assignments, and tests — or import a gradebook."
-          action={<Btn onClick={() => setShowAdd(true)}><Icon name="plus" size={14} /> Add your first class</Btn>}
+          action={<div className="flex flex-wrap justify-center gap-2"><Btn onClick={() => setShowImport(true)}><Icon name="upload" size={14} /> Import grade report</Btn><Btn variant="outline" onClick={() => setShowAdd(true)}><Icon name="plus" size={14} /> Add your first class</Btn></div>}
         />
       ) : (
         <>

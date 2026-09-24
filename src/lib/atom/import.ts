@@ -17,8 +17,23 @@ export interface ParsedRow {
   status: WorkStatus;
 }
 
+export interface ParsedClass {
+  name: string;
+  teacher: string | null;
+  period: string | null;
+  schoolYear: string | null;
+  term: string | null;
+  gradingSystem: "weighted" | "points";
+  gpaWeight: "regular" | "honors" | "ap";
+  importedGradePercent: number | null;
+  importedGradeLetter: string | null;
+  categories: { name: string; weight: number; dropLowest: number }[];
+  rows: ParsedRow[];
+}
+
 export interface ParseResult {
   rows: ParsedRow[];
+  classes: ParsedClass[];
   source: "groq" | "heuristic";
   warnings: string[];
 }
@@ -82,7 +97,7 @@ function splitDelimited(text: string): string[][] {
 
 function heuristicParse(text: string): ParseResult {
   const rows = splitDelimited(text);
-  if (rows.length === 0) return { rows: [], source: "heuristic", warnings: ["No rows detected."] };
+  if (rows.length === 0) return { rows: [], classes: [], source: "heuristic", warnings: ["No rows detected."] };
   const header = rows[0].map((h) => h.toLowerCase());
   const find = (...names: string[]) => header.findIndex((h) => names.some((n) => h.includes(n)));
 
@@ -113,12 +128,12 @@ function heuristicParse(text: string): ParseResult {
       status: normalizeStatus(iStatus !== -1 ? row[iStatus] : null, earned),
     });
   }
-  return { rows: out, source: "heuristic", warnings };
+  return { rows: out, classes: [], source: "heuristic", warnings };
 }
 
 // ---- Groq standardization (primary path) ----
 
-const SYSTEM = `You convert a student's messy gradebook text (pasted, CSV, or OCR'd from a screenshot) into strict JSON. You never invent assignments. Return only JSON.`;
+const SYSTEM = `You convert a student's messy gradebook or school grade report into strict JSON. You never invent classes, assignments, scores, or metadata. Return only JSON.`;
 
 function userPrompt(raw: string): string {
   return `Extract every gradebook row from the text below into JSON of the form:
@@ -135,15 +150,32 @@ ${raw.slice(0, 12000)}
 """`;
 }
 
-function parseModelRows(content: string): ParsedRow[] {
+function reportPrompt(raw: string): string {
+  return `Extract every class and every grade/assignment visible in this school grade report into JSON:
+{"classes":[{"name":string,"teacher":string|null,"period":string|null,"schoolYear":string|null,"term":string|null,"gradingSystem":"weighted"|"points","gpaWeight":"regular"|"honors"|"ap","importedGradePercent":number|null,"importedGradeLetter":string|null,"categories":[{"name":string,"weight":number,"dropLowest":number}],"rows":[{"name":string,"type":one of ${JSON.stringify(ASSIGNMENT_TYPES)},"category":string|null,"pointsEarned":number|null,"pointsPossible":number|null,"dueDate":"YYYY-MM-DD"|null,"status":one of ${JSON.stringify(WORK_STATUSES)}}]}],"rows":[]}
+Rules:
+- Create one class for each clearly named course. Do not make up a class name; if no course is visible, return an empty classes array.
+- importedGradePercent is the overall percentage shown for the class, normalized to 0-100. importedGradeLetter is the letter shown, or null.
+- Include assignment rows only when the report gives individual assignment names and scores. Skip totals, averages, headers, and duplicate summary rows.
+- Use null for unknown metadata. Use "points" unless the report clearly labels category weights; use "weighted" only when weights are present.
+- If a class has a current grade but no assignment rows, keep the class and its imported grade.
+Report text:
+"""
+${raw.slice(0, 18000)}
+"""`;
+}
+
+function parseJson(content: string): unknown {
   const stripped = content.replace(/^\`\`\`(?:json)?\s*/i, "").replace(/\s*\`\`\`$/i, "").trim();
-  let data: unknown;
   try {
-    data = JSON.parse(stripped);
+    return JSON.parse(stripped);
   } catch {
-    return [];
+    return null;
   }
-  const arr = Array.isArray(data) ? data : (data as { rows?: unknown[] })?.rows;
+}
+
+function parseRows(data: unknown): ParsedRow[] {
+  const arr = Array.isArray(data) ? data : (data as { rows?: unknown[] } | null)?.rows;
   if (!Array.isArray(arr)) return [];
   const out: ParsedRow[] = [];
   for (const item of arr) {
@@ -164,44 +196,132 @@ function parseModelRows(content: string): ParsedRow[] {
   return out;
 }
 
+function normalizeLetter(value: unknown): string | null {
+  const letter = String(value ?? "").trim().toUpperCase();
+  return letter && letter.length <= 4 ? letter : null;
+}
+
+function normalizeClass(item: unknown): ParsedClass | null {
+  const raw = item as Record<string, unknown>;
+  const name = String(raw.name ?? raw.course ?? raw.className ?? "").trim();
+  if (!name) return null;
+  const rawCategories = Array.isArray(raw.categories) ? raw.categories : [];
+  const categories = rawCategories.slice(0, 20).flatMap((category) => {
+    const c = category as Record<string, unknown>;
+    const categoryName = String(c.name ?? "").trim();
+    if (!categoryName) return [];
+    return [{ name: categoryName.slice(0, 80), weight: Math.max(0, toNumber(c.weight) ?? 0), dropLowest: Math.max(0, Math.trunc(toNumber(c.dropLowest) ?? 0)) }];
+  });
+  const percent = toNumber(raw.importedGradePercent ?? raw.percent ?? raw.currentPercent ?? raw.gradePercent);
+  return {
+    name: name.slice(0, 120),
+    teacher: raw.teacher ? String(raw.teacher).slice(0, 120) : null,
+    period: raw.period ? String(raw.period).slice(0, 60) : null,
+    schoolYear: raw.schoolYear ? String(raw.schoolYear).slice(0, 40) : null,
+    term: raw.term ? String(raw.term).slice(0, 40) : null,
+    gradingSystem: raw.gradingSystem === "weighted" ? "weighted" : "points",
+    gpaWeight: raw.gpaWeight === "honors" || raw.gpaWeight === "ap" ? raw.gpaWeight : "regular",
+    importedGradePercent: percent === null ? null : Math.max(0, Math.min(100, percent)),
+    importedGradeLetter: normalizeLetter(raw.importedGradeLetter ?? raw.letter ?? raw.currentLetter),
+    categories,
+    rows: parseRows(raw.rows),
+  };
+}
+
+function parseReport(content: string): { classes: ParsedClass[]; rows: ParsedRow[] } {
+  const data = parseJson(content) as { classes?: unknown[]; rows?: unknown[] } | unknown[] | null;
+  if (!data) return { classes: [], rows: [] };
+  const classes = Array.isArray(data)
+    ? []
+    : (Array.isArray(data.classes) ? data.classes.flatMap((item) => { const parsed = normalizeClass(item); return parsed ? [parsed] : []; }) : []);
+  const rows = Array.isArray(data) ? parseRows(data) : parseRows(data.rows);
+  return { classes, rows };
+}
+
+async function groqJson(key: string, model: string, messages: unknown[]): Promise<string | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 45000);
+  try {
+    const res = await fetch(GROQ_CHAT_COMPLETIONS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model,
+        messages,
+        temperature: 0.1,
+        max_completion_tokens: 5000,
+        response_format: { type: "json_object" },
+      }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return String(data?.choices?.[0]?.message?.content ?? "").trim() || null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export async function standardizeGrades(raw: string): Promise<ParseResult> {
   const text = raw.trim();
-  if (!text) return { rows: [], source: "heuristic", warnings: ["Nothing to import."] };
+  if (!text) return { rows: [], classes: [], source: "heuristic", warnings: ["Nothing to import."] };
 
   const key = process.env.GROQ_ATOM_API_KEY || process.env.GROQ_API_KEY;
   if (!key) return heuristicParse(text);
 
   for (const model of [AI_MODEL_ATOM_ASSIGNMENT, AI_MODEL_SMALL]) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 25000);
-    try {
-      const res = await fetch(GROQ_CHAT_COMPLETIONS_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-        signal: controller.signal,
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: "system", content: SYSTEM },
-            { role: "user", content: userPrompt(text) },
-          ],
-          temperature: 0.1,
-          max_completion_tokens: 4000,
-          reasoning_effort: "low",
-          response_format: { type: "json_object" },
-        }),
-      }).finally(() => clearTimeout(timeout));
-      if (!res.ok) continue;
-      const data = await res.json();
-      const content = String(data?.choices?.[0]?.message?.content ?? "").trim();
-      const rows = parseModelRows(content);
-      if (rows.length > 0) return { rows, source: "groq", warnings: [] };
-    } catch {
-      // try next model, then fall back
+    const content = await groqJson(key, model, [
+      { role: "system", content: SYSTEM },
+      { role: "user", content: userPrompt(text) },
+    ]);
+    if (content) {
+      const rows = parseRows(parseJson(content));
+      if (rows.length > 0) return { rows, classes: [], source: "groq", warnings: [] };
     }
   }
 
   const fallback = heuristicParse(text);
   fallback.warnings.unshift("AI standardization was unavailable; used a basic parser. Please review carefully.");
   return fallback;
+}
+
+export async function standardizeGradeReport(raw: string): Promise<ParseResult> {
+  const text = raw.trim();
+  if (!text) return { rows: [], classes: [], source: "heuristic", warnings: ["No readable text was found in that report."] };
+  const key = process.env.GROQ_ATOM_API_KEY || process.env.GROQ_API_KEY;
+  if (!key) return { rows: [], classes: [], source: "heuristic", warnings: ["AI grade-report parsing is not configured. Add a Groq API key, or paste assignments into a class instead."] };
+
+  const model = process.env.GROQ_ATOM_MODEL || AI_MODEL_ATOM_ASSIGNMENT;
+  const content = await groqJson(key, model, [
+    { role: "system", content: SYSTEM },
+    { role: "user", content: reportPrompt(text) },
+  ]);
+  if (content) {
+    const parsed = parseReport(content);
+    if (parsed.classes.length > 0 || parsed.rows.length > 0) return { ...parsed, source: "groq", warnings: [] };
+  }
+  return { rows: [], classes: [], source: "heuristic", warnings: ["The report could not be confidently parsed. Try a clearer image or paste the grade table as text."] };
+}
+
+export async function standardizeGradeImage(dataUri: string): Promise<ParseResult> {
+  const key = process.env.GROQ_ATOM_API_KEY || process.env.GROQ_API_KEY;
+  if (!key) return { rows: [], classes: [], source: "heuristic", warnings: ["AI image parsing is not configured. Add a Groq API key, or upload a text PDF instead."] };
+  const model = process.env.GROQ_ATOM_VISION_MODEL || "meta-llama/llama-4-scout-17b-16e-instruct";
+  const content = await groqJson(key, model, [
+    { role: "system", content: SYSTEM },
+    {
+      role: "user",
+      content: [
+        { type: "text", text: reportPrompt("Read the attached grade report image. Preserve every visible course, overall grade, and individual assignment score.") },
+        { type: "image_url", image_url: { url: dataUri } },
+      ],
+    },
+  ]);
+  if (content) {
+    const parsed = parseReport(content);
+    if (parsed.classes.length > 0 || parsed.rows.length > 0) return { ...parsed, source: "groq", warnings: [] };
+  }
+  return { rows: [], classes: [], source: "heuristic", warnings: ["The image could not be confidently parsed. Try a sharper, well-lit photo with the full table visible."] };
 }

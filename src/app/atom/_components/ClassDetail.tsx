@@ -106,7 +106,12 @@ export function ClassDetail({
                 )}
               </Card>
             ) : (
-              <Empty title="No grades yet" subtitle="Add graded assignments to see your category breakdown." />
+              cls.importedGradePercent != null ? (
+                <Card className="p-4">
+                  <div className="text-xs font-medium uppercase tracking-wide text-deep-dim">Imported grade</div>
+                  <div className="mt-1 text-sm text-deep-text-soft">This overall grade came from your uploaded report. Add assignments to replace it with a live breakdown.</div>
+                </Card>
+              ) : <Empty title="No grades yet" subtitle="Add graded assignments to see your category breakdown." />
             )
           ) : (
             <Card className="p-4 text-sm text-deep-text-soft">This class uses total points. Your grade is the sum of all points earned over points possible.</Card>

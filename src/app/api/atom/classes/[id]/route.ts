@@ -31,6 +31,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (b.color !== undefined) data.color = str(b.color, 20) ?? "#356d97";
   if (b.includeInGpa !== undefined) data.includeInGpa = bool(b.includeInGpa, true);
   if (b.gpaWeight !== undefined) data.gpaWeight = oneOf(b.gpaWeight, GPA_WEIGHTS, "regular");
+  if (b.importedGradePercent !== undefined) data.importedGradePercent = num(b.importedGradePercent);
+  if (b.importedGradeLetter !== undefined) data.importedGradeLetter = str(b.importedGradeLetter, 10);
   if (b.archived !== undefined) data.archived = bool(b.archived);
   if (b.sortOrder !== undefined) data.sortOrder = Math.trunc(num(b.sortOrder) ?? 0);
 

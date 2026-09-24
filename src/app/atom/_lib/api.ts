@@ -110,7 +110,8 @@ export const api = {
   settingsPatch: (b: Record<string, unknown>) => jfetch("/api/atom/settings", { method: "PATCH", body: body(b) }),
   reset: (confirmName: string) => jfetch("/api/atom/reset", { method: "POST", body: body({ confirmName }) }),
   importParse: (b: { kind: string; text?: string }) => jfetch("/api/atom/import/parse", { method: "POST", body: body(b) }),
-  importCommit: (b: { classId: string; rows: unknown[] }) =>
+  importParseFile: (file: File) => fetch("/api/atom/import/parse", { method: "POST", body: (() => { const data = new FormData(); data.append("file", file); return data; })(), credentials: "same-origin" }).then(async (res) => { const data = await res.json().catch(() => ({})); if (!res.ok) throw new Error(data?.error || `Request failed (${res.status})`); return data; }),
+  importCommit: (b: { classId?: string; rows?: unknown[]; classes?: unknown[] }) =>
     jfetch("/api/atom/import/commit", { method: "POST", body: body(b) }),
 
   // notifications + push
@@ -153,17 +154,24 @@ export function computeGrade(cls: ClassDTO, assignments: AssignmentDTO[], snapsh
     categories: cls.categories.map((c) => ({ id: c.id, name: c.name, weight: c.weight, dropLowest: c.dropLowest })),
     items,
   });
+  const imported = base.percent === null && cls.importedGradePercent != null
+    ? {
+        ...base,
+        percent: cls.importedGradePercent,
+        letter: cls.importedGradeLetter,
+      }
+    : base;
   const history = snapshots
     .filter((s) => s.classId === cls.id)
     .sort((a, b) => a.capturedAt.localeCompare(b.capturedAt))
     .map((s) => ({ at: s.capturedAt, percent: s.percent }));
   let trend: Trend = "flat";
   let delta: number | null = null;
-  if (history.length >= 2 && base.percent !== null) {
-    delta = Math.round((base.percent - history[history.length - 2].percent) * 100) / 100;
+  if (history.length >= 2 && imported.percent !== null) {
+    delta = Math.round((imported.percent - history[history.length - 2].percent) * 100) / 100;
     trend = delta > 0.05 ? "up" : delta < -0.05 ? "down" : "flat";
   }
-  return { ...base, trend, delta, history };
+  return { ...imported, trend, delta, history };
 }
 
 export function computeGpa(state: AtomState, grades: Map<string, ClassGrade>): number | null {
