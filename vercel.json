@@ -1,8 +1,1 @@
-{
-  "crons": [
-    {
-      "path": "/api/atom/cron/reminders",
-      "schedule": "0 * * * *"
-    }
-  ]
-}
+{}
