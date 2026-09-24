@@ -88,7 +88,7 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
       createdAt: true,
     },
   });
-  return user;
+  return user ? { ...user, name: user.name.toUpperCase() } : null;
 }
 
 // Convenience for API routes that require auth.

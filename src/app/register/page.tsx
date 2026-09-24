@@ -73,8 +73,8 @@ function RegisterForm() {
             <input
               className="input"
               value={form.name}
-              onChange={(e) => set("name", e.target.value)}
-              placeholder="Ada Lovelace"
+              onChange={(e) => set("name", e.target.value.toUpperCase())}
+              placeholder="ADA LOVELACE"
             />
             {errors.name && <p className="field-error">{errors.name}</p>}
           </div>

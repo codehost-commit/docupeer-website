@@ -26,7 +26,7 @@ export async function GET() {
   if (!user) return unauthorized();
   return ok({
     id: user.id,
-    name: user.name,
+    name: user.name.toUpperCase(),
     email: user.email,
     onboarded: !!user.atomOnboardedAt,
     gradeLevel: user.atomGradeLevel,
@@ -45,7 +45,7 @@ export async function PATCH(req: NextRequest) {
   if (b.name !== undefined) {
     const name = str(b.name, 120);
     if (!name) return bad("Name can't be empty.");
-    data.name = name;
+    data.name = name.toUpperCase();
   }
   if (b.gradeLevel !== undefined) data.atomGradeLevel = str(b.gradeLevel, 60);
   if (b.avatarUrl !== undefined) {

@@ -39,7 +39,7 @@ export async function GET() {
   return ok({
     profile: {
       id: user.id,
-      name: user.name,
+      name: user.name.toUpperCase(),
       email: user.email,
       onboarded: !!user.atomOnboardedAt,
       gradeLevel: user.atomGradeLevel,

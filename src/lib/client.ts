@@ -42,7 +42,7 @@ export function useMe() {
   const refresh = useCallback(async () => {
     try {
       const { user } = await apiGet<{ user: Me }>("/api/auth/me");
-      setMe(user);
+      setMe(user ? { ...user, name: user.name.toUpperCase() } : null);
     } catch {
       setMe(null);
     } finally {

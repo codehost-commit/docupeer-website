@@ -23,7 +23,7 @@ const SCOPES: { k: string; l: string }[] = [
 ];
 
 export function Settings({ state, refresh, reloadNotifications }: SectionProps & { reloadNotifications: () => Promise<void> }) {
-  const [name, setName] = useState(state.profile.name);
+  const [name, setName] = useState(state.profile.name.toUpperCase());
   const [gradeLevel, setGradeLevel] = useState(state.profile.gradeLevel ?? "");
   const [gpaScale, setGpaScale] = useState<GpaScale>(state.profile.gpaScale);
   const [avatar, setAvatar] = useState<string | null>(state.profile.avatarUrl);
@@ -41,7 +41,7 @@ export function Settings({ state, refresh, reloadNotifications }: SectionProps &
   async function saveProfile() {
     setSavingProfile(true);
     try {
-      await api.updateProfile({ name: name.trim(), gradeLevel: gradeLevel || null, gpaScale, avatarUrl: avatar });
+      await api.updateProfile({ name: name.trim().toUpperCase(), gradeLevel: gradeLevel || null, gpaScale, avatarUrl: avatar });
       await refresh();
       flash("Profile saved.");
     } finally {
@@ -138,7 +138,7 @@ export function Settings({ state, refresh, reloadNotifications }: SectionProps &
             }} />
           </label>
           <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2">
-            <Field label="Name"><Input value={name} onChange={(e) => setName(e.target.value)} /></Field>
+            <Field label="Name"><Input value={name} onChange={(e) => setName(e.target.value.toUpperCase())} /></Field>
             <Field label="Grade">
               <Select value={gradeLevel} onChange={setGradeLevel} options={[{ value: "", label: "Not set" }, ...["9", "10", "11", "12", "College", "Other"].map((g) => ({ value: g, label: g }))]} />
             </Field>

@@ -41,7 +41,7 @@ export function Dashboard({ state, grades, items, gpa, setView, openClass }: Sec
       {/* Header + stats */}
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
-          <div className="font-display text-2xl text-deep-text">{greeting}, {state.profile.name.split(" ")[0]}.</div>
+          <div className="font-display text-2xl text-deep-text">{greeting}, {state.profile.name.toUpperCase().split(" ")[0]}.</div>
           <div className="text-sm text-deep-dim">{now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}</div>
         </div>
         <div className="grid grid-cols-3 gap-2">

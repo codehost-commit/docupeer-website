@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
 
   const user = await prisma.user.create({
     data: {
-      name,
+      name: name.toUpperCase(),
       email,
       passwordHash: await hashPassword(password),
       // Placeholder reviewer-profile fields (Atom users are not part of peer review).

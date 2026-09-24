@@ -32,6 +32,7 @@ export function Shell({
   children: ReactNode;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const displayName = profile.name.toUpperCase();
   const activeLabel = NAV.find((n) => n.key === active)?.label ?? "Atom";
 
   const navList = (
@@ -65,11 +66,11 @@ export function Shell({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={profile.avatarUrl} alt="" className="h-full w-full object-cover" />
         ) : (
-          profile.name.charAt(0).toUpperCase()
+          displayName.charAt(0)
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-medium text-deep-text">{profile.name}</div>
+        <div className="truncate text-sm font-medium text-deep-text">{displayName}</div>
         <div className="truncate text-xs text-deep-dim">{profile.gradeLevel ? `Grade ${profile.gradeLevel}`.replace("Grade College", "College") : profile.email}</div>
       </div>
       <button onClick={onLogout} className="rounded-lg p-1.5 text-deep-dim hover:bg-deep-panel2" title="Sign out">

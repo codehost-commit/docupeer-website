@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 
   const user = await prisma.user.findUnique({ where: { id: uid }, select: { name: true } });
   if (!user) return unauthorized();
-  if (confirmName.toLowerCase() !== user.name.trim().toLowerCase()) {
+  if (confirmName.trim().toUpperCase() !== user.name.trim().toUpperCase()) {
     return bad("Name confirmation did not match. Nothing was deleted.");
   }
 

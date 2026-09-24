@@ -51,7 +51,7 @@ export function Auth({ onAuthed }: { onAuthed: () => void }) {
           <form onSubmit={submit} className="space-y-3">
             {mode === "register" && (
               <Field label="Name">
-                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" required />
+                <Input value={name} onChange={(e) => setName(e.target.value.toUpperCase())} placeholder="YOUR NAME" required />
               </Field>
             )}
             <Field label="Email">

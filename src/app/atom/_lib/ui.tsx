@@ -79,24 +79,24 @@ export function Modal({
   }, [onClose]);
   const width = { sm: "max-w-md", md: "max-w-xl", lg: "max-w-3xl" }[size];
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-deep-text/25 p-4 backdrop-blur-sm sm:p-8"
-      onClick={onClose}
-    >
-      <div
-        className={cx("relative w-full rounded-2xl border border-deep-border bg-deep-panel shadow-glow", width, "animate-fadeUp")}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between border-b border-deep-border px-5 py-4">
-          <h3 className="font-display text-lg text-deep-text">{title}</h3>
-          <button onClick={onClose} className="rounded-lg p-1 text-deep-dim hover:bg-deep-panel2" aria-label="Close">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
-          </button>
+    <div className="fixed inset-0 z-[80] overflow-y-auto overscroll-contain">
+      <div className="fixed inset-0 bg-deep-text/35 backdrop-blur-xl" onClick={onClose} aria-hidden="true" />
+      <div className="relative flex min-h-full items-start justify-center p-4 sm:p-8">
+        <div
+          className={cx("relative w-full rounded-2xl border border-deep-border bg-deep-panel shadow-glow", width, "animate-fadeUp")}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between border-b border-deep-border px-5 py-4">
+            <h3 className="font-display text-lg text-deep-text">{title}</h3>
+            <button onClick={onClose} className="rounded-lg p-1 text-deep-dim hover:bg-deep-panel2" aria-label="Close">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 6 6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="max-h-[70vh] overflow-y-auto px-5 py-4">{children}</div>
+          {footer && <div className="flex justify-end gap-2 border-t border-deep-border px-5 py-3">{footer}</div>}
         </div>
-        <div className="max-h-[70vh] overflow-y-auto px-5 py-4">{children}</div>
-        {footer && <div className="flex justify-end gap-2 border-t border-deep-border px-5 py-3">{footer}</div>}
       </div>
     </div>
   );
@@ -244,7 +244,8 @@ export function ConfirmNameModal({
 }) {
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
-  const matches = value.trim().toLowerCase() === name.trim().toLowerCase();
+  const displayName = name.trim().toUpperCase();
+  const matches = value.trim().toUpperCase() === displayName;
   return (
     <Modal
       title={action}
@@ -274,13 +275,13 @@ export function ConfirmNameModal({
     >
       {description && <p className="mb-3 text-sm text-deep-text-soft">{description}</p>}
       <p className="mb-2 text-sm text-deep-text-soft">
-        Type <span className="font-semibold text-deep-text">{name}</span> to continue.
+        Type <span className="font-semibold text-deep-text">{displayName}</span> to continue.
       </p>
       <Input
         autoFocus
         value={value}
-        onChange={(e) => setValue(e.target.value)}
-        placeholder={`Enter "${name}" to continue`}
+        onChange={(e) => setValue(e.target.value.toUpperCase())}
+        placeholder={`Enter "${displayName}" to continue`}
       />
     </Modal>
   );

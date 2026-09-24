@@ -9,7 +9,7 @@ import type { GpaScale } from "@/lib/atom/types";
 const GRADE_OPTIONS = ["9", "10", "11", "12", "College", "Other"].map((g) => ({ value: g, label: g === "Other" ? "Other" : `Grade ${g}`.replace("Grade College", "College") }));
 
 export function Onboarding({ initialName, onDone }: { initialName: string; onDone: () => void }) {
-  const [name, setName] = useState(initialName);
+  const [name, setName] = useState(initialName.toUpperCase());
   const [gradeLevel, setGradeLevel] = useState("");
   const [gpaScale, setGpaScale] = useState<GpaScale>("4.0");
   const [avatar, setAvatar] = useState<string | null>(null);
@@ -35,7 +35,7 @@ export function Onboarding({ initialName, onDone }: { initialName: string; onDon
     setError("");
     try {
       await api.updateProfile({
-        name: name.trim(),
+        name: name.trim().toUpperCase(),
         gradeLevel: gradeLevel || null,
         gpaScale,
         avatarUrl: avatar,
@@ -78,7 +78,7 @@ export function Onboarding({ initialName, onDone }: { initialName: string; onDon
             </label>
             <div className="flex-1">
               <Field label="Name">
-                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
+                <Input value={name} onChange={(e) => setName(e.target.value.toUpperCase())} placeholder="YOUR NAME" />
               </Field>
             </div>
           </div>

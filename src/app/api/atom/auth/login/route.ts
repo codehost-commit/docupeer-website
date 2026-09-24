@@ -20,6 +20,6 @@ export async function POST(req: NextRequest) {
   await createSession(user.id);
   return ok({
     ok: true,
-    user: { id: user.id, name: user.name, email: user.email, onboarded: !!user.atomOnboardedAt },
+    user: { id: user.id, name: user.name.toUpperCase(), email: user.email, onboarded: !!user.atomOnboardedAt },
   });
 }
