@@ -1,0 +1,16 @@
+{
+  "name": "Atom by DocuPeer",
+  "short_name": "Atom",
+  "description": "One place to track your grades, assignments, tests, projects, and deadlines.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f6f5f2",
+  "theme_color": "#356d97",
+  "categories": ["education", "productivity"],
+  "icons": [
+    { "src": "/atom/atom-for-docupeer-logo.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/atom/atom-for-docupeer-logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

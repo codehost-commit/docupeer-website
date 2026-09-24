@@ -35,6 +35,24 @@ model User {
   aiDailyDate   String? // America/Chicago date (YYYY-MM-DD) the daily free prompt was last used
   chats         AiChat[] @relation("UserChats")
 
+  // ---- Atom student planner (atom.docupeer.org) ----
+  // All fields optional so existing DocuPeer users are unaffected. A user becomes
+  // an Atom user by completing onboarding (atomOnboardedAt set).
+  atomOnboardedAt DateTime?
+  atomGradeLevel  String?   // e.g. "9", "10", "11", "12", "College Freshman", ...
+  atomAvatarUrl   String?   // optional avatar (hosted URL or small data URL)
+  gpaScale        String    @default("4.0") // "4.0" | "5.0" | "percent" | "none"
+
+  atomClasses       AtomClass[]           @relation("UserAtomClasses")
+  atomAssignments   AtomAssignment[]      @relation("UserAtomAssignments")
+  atomEcDeadlines   AtomECDeadline[]      @relation("UserAtomEc")
+  atomTasks         AtomTask[]            @relation("UserAtomTasks")
+  atomEvents        AtomEvent[]           @relation("UserAtomEvents")
+  atomSnapshots     AtomGradeSnapshot[]   @relation("UserAtomSnapshots")
+  atomSettings      AtomSettings?         @relation("UserAtomSettings")
+  atomPushSubs      AtomPushSubscription[] @relation("UserAtomPush")
+  atomNotifications AtomNotification[]    @relation("UserAtomNotifs")
+
   @@index([expertiseCategory, specialty])
 }
 
@@ -215,4 +233,218 @@ model AiMessage {
   createdAt DateTime @default(now())
 
   @@index([chatId, createdAt])
+}
+
+// ============================================================================
+// Atom  —  student time-management platform (atom.docupeer.org)
+// Every row is scoped to a User; all queries filter by userId for isolation.
+// ============================================================================
+
+model AtomClass {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation("UserAtomClasses", fields: [userId], references: [id], onDelete: Cascade)
+
+  name          String
+  teacher       String?
+  period        String?
+  schoolYear    String?
+  term          String? // "Full Year" | "S1" | "S2" | "Q1" | "Q2" | ...
+  credits       Float?  @default(1)
+  gradingSystem String  @default("weighted") // "weighted" | "points"
+  color         String  @default("#356d97")
+  includeInGpa  Boolean @default(true)
+  gpaWeight     String  @default("regular") // "regular" | "honors" | "ap"
+  archived      Boolean @default(false)
+  sortOrder     Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  categories  AtomCategory[]      @relation("ClassCategories")
+  assignments AtomAssignment[]    @relation("ClassAssignments")
+  tasks       AtomTask[]          @relation("ClassTasks")
+  snapshots   AtomGradeSnapshot[] @relation("ClassSnapshots")
+
+  @@index([userId, archived])
+}
+
+model AtomCategory {
+  id      String    @id @default(cuid())
+  classId String
+  class   AtomClass @relation("ClassCategories", fields: [classId], references: [id], onDelete: Cascade)
+
+  name       String
+  weight     Float @default(0) // weight in percent points (e.g. 50 => 50%)
+  dropLowest Int   @default(0)
+  sortOrder  Int   @default(0)
+
+  assignments AtomAssignment[] @relation("CategoryAssignments")
+
+  @@index([classId])
+}
+
+model AtomAssignment {
+  id         String        @id @default(cuid())
+  userId     String
+  user       User          @relation("UserAtomAssignments", fields: [userId], references: [id], onDelete: Cascade)
+  classId    String?
+  class      AtomClass?    @relation("ClassAssignments", fields: [classId], references: [id], onDelete: SetNull)
+  categoryId String?
+  category   AtomCategory? @relation("CategoryAssignments", fields: [categoryId], references: [id], onDelete: SetNull)
+
+  name           String
+  type           String    @default("homework") // homework|quiz|test|project|lab|essay|presentation|other
+  description    String?
+  dueAt          DateTime?
+  hasTime        Boolean   @default(false)
+  pointsEarned   Float?
+  pointsPossible Float?
+  status         String    @default("not_started") // not_started|in_progress|completed|missing
+  notes          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, dueAt])
+  @@index([classId])
+  @@index([categoryId])
+}
+
+model AtomECDeadline {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation("UserAtomEc", fields: [userId], references: [id], onDelete: Cascade)
+
+  name         String
+  organization String?
+  type         String    @default("other") // competition|tournament|club_application|leadership|summer_program|research|scholarship|audition|tryout|conference|other
+  dueAt        DateTime?
+  hasTime      Boolean   @default(false)
+  priority     String    @default("medium") // low|medium|high
+  status       String    @default("not_started") // not_started|in_progress|completed
+  link         String?
+  notes        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, dueAt])
+}
+
+model AtomTask {
+  id      String     @id @default(cuid())
+  userId  String
+  user    User       @relation("UserAtomTasks", fields: [userId], references: [id], onDelete: Cascade)
+  classId String?
+  class   AtomClass? @relation("ClassTasks", fields: [classId], references: [id], onDelete: SetNull)
+
+  title       String
+  description String?
+  dueAt       DateTime?
+  hasTime     Boolean   @default(false)
+  priority    String    @default("medium") // low|medium|high
+  status      String    @default("not_started") // not_started|in_progress|completed
+  category    String    @default("academic") // academic|ec|personal
+  relatedType String? // assignment|test|project|ec|event
+  relatedId   String?
+  notes       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, dueAt])
+  @@index([userId, status])
+}
+
+model AtomEvent {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation("UserAtomEvents", fields: [userId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  startAt     DateTime
+  endAt       DateTime?
+  allDay      Boolean   @default(false)
+  category    String    @default("personal") // academic|ec|personal|other
+  color       String?
+  location    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, startAt])
+}
+
+model AtomGradeSnapshot {
+  id      String    @id @default(cuid())
+  userId  String
+  user    User      @relation("UserAtomSnapshots", fields: [userId], references: [id], onDelete: Cascade)
+  classId String
+  class   AtomClass @relation("ClassSnapshots", fields: [classId], references: [id], onDelete: Cascade)
+
+  percent    Float
+  letter     String?
+  capturedAt DateTime @default(now())
+
+  @@index([classId, capturedAt])
+  @@index([userId])
+}
+
+model AtomSettings {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation("UserAtomSettings", fields: [userId], references: [id], onDelete: Cascade)
+
+  pushEnabled  Boolean @default(true)
+  emailEnabled Boolean @default(false)
+
+  // Per-type reminder offsets (minutes before due) + mutes + quiet hours, as JSON.
+  reminderDefaults Json?
+  categoryMutes    Json?
+  quietHours       Json?
+  timezone         String @default("America/Chicago")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AtomPushSubscription {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation("UserAtomPush", fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String  @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model AtomNotification {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation("UserAtomNotifs", fields: [userId], references: [id], onDelete: Cascade)
+
+  kind         String // reminder|digest|custom|system
+  title        String
+  body         String
+  url          String?
+  itemType     String? // assignment|test|project|ec|task|event
+  itemId       String?
+  dedupeKey    String
+  scheduledFor DateTime @default(now())
+
+  readAt      DateTime?
+  pushSentAt  DateTime?
+  emailSentAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, dedupeKey])
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
 }
