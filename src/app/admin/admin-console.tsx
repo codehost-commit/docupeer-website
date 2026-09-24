@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { LoadingState } from "../components/LoadingState";
 
 type AdminMetrics = {
   pageViews: number;
@@ -160,7 +161,7 @@ export function AdminConsole() {
   }
 
   if (checking) {
-    return <div className="grid min-h-screen place-items-center bg-[#f8f7f3] text-sm font-semibold text-[#606978]">Loading admin.</div>;
+    return <LoadingState label="Loading admin" className="min-h-screen bg-[#f8f7f3] text-[#606978]" />;
   }
 
   if (!authenticated) return <Login onLogin={finishLogin} />;

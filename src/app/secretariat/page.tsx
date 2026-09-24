@@ -8,6 +8,7 @@ import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import { apiGet, apiPost, useMe } from "@/lib/client";
 import { MIN_PROMPT_CHARS, MAX_PROMPT_WORDS, countWords } from "@/lib/constants";
+import { LoadingState } from "../components/LoadingState";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -244,7 +245,7 @@ export default function SecretariatPage() {
 
   // ---- gate: must be signed in ----
   if (loading) {
-    return <div className="mx-auto max-w-6xl px-4 py-16 text-deep-dim">Loading…</div>;
+    return <LoadingState className="mx-auto max-w-6xl px-4 text-deep-dim" />;
   }
   if (!me) {
     return (

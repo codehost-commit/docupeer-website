@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { apiGet } from "@/lib/client";
 import { educationLabel } from "@/lib/constants";
 import { kindLabel } from "@/lib/highlight";
+import { LoadingState } from "../components/LoadingState";
 
 type Annotation = {
   id: string;
@@ -75,11 +76,7 @@ function HistoryInner() {
   }, [router]);
 
   if (loading)
-    return (
-      <div className="mono mx-auto max-w-4xl px-4 py-16 text-xs uppercase tracking-widest text-deep-dim">
-        Loading.
-      </div>
-    );
+    return <LoadingState className="mx-auto max-w-4xl px-4 text-deep-dim" />;
 
   const totalReceived =
     received?.reduce((n, p) => n + p.reviews.length, 0) ?? 0;
@@ -254,9 +251,7 @@ export default function HistoryPage() {
   return (
     <Suspense
       fallback={
-        <div className="mono px-4 py-16 text-center text-xs uppercase tracking-widest text-deep-dim">
-          Loading.
-        </div>
+        <LoadingState className="px-4 text-deep-dim" />
       }
     >
       <HistoryInner />

@@ -26,6 +26,7 @@ import {
   type Selection,
 } from "@/lib/highlight";
 import { educationLabel } from "@/lib/constants";
+import { LoadingState } from "../components/LoadingState";
 import { ConfirmModal } from "../components/ConfirmModal";
 
 type AnonPaper = {
@@ -286,11 +287,7 @@ function ReviewInner() {
   }
 
   if (loading) {
-    return (
-      <div className="mono mx-auto max-w-3xl px-4 py-20 text-center text-xs uppercase tracking-widest text-deep-dim">
-        Finding a paper.
-      </div>
-    );
+    return <LoadingState label="Finding a paper" className="mx-auto max-w-3xl px-4 text-deep-dim" />;
   }
 
   if (!paper) {
@@ -589,9 +586,7 @@ export default function ReviewPage() {
   return (
     <Suspense
       fallback={
-        <div className="mono px-4 py-20 text-center text-xs uppercase tracking-widest text-deep-dim">
-          Loading.
-        </div>
+        <LoadingState className="px-4 text-deep-dim" />
       }
     >
       <ReviewInner />

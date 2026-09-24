@@ -14,6 +14,7 @@ import {
   type StatusPhase,
   type StatusSnapshotPayload,
 } from "@/lib/status-shared";
+import { LoadingState } from "../components/LoadingState";
 
 function toLocalInput(value: number | null) {
   if (!value) return "";
@@ -213,7 +214,7 @@ export function StatusManage() {
   }
 
   if (checkingAccess || !allowed) {
-    return <div className="grid min-h-screen place-items-center bg-[#f8f7f3] text-sm font-semibold text-[#606978]">Loading status controls.</div>;
+    return <LoadingState label="Loading status controls" className="min-h-screen bg-[#f8f7f3] text-[#606978]" />;
   }
 
   return (

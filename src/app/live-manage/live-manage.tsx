@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ScreenBroadcaster } from "./ScreenBroadcaster";
+import { LoadingState } from "../components/LoadingState";
 import {
   DEFAULT_LIVE_DESCRIPTION,
   DEFAULT_LIVE_TITLE,
@@ -118,7 +119,7 @@ export function LiveManage() {
   }
 
   if (checkingAccess || !allowed) {
-    return <div className="grid min-h-screen place-items-center bg-[#f8f7f3] text-sm font-semibold text-[#606978]">Loading live controls.</div>;
+    return <LoadingState label="Loading live controls" className="min-h-screen bg-[#f8f7f3] text-[#606978]" />;
   }
 
   return (

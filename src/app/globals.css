@@ -108,9 +108,24 @@ h1, h2, h3, h4, h5, h6 {
   .link {
     @apply text-deep-accent hover:text-deep-accent-strong underline-offset-4 hover:underline;
   }
-  .rule {
+.rule {
     @apply h-px w-full bg-gradient-to-r from-transparent via-deep-border-strong to-transparent;
   }
+}
+
+.loading-dots::after {
+  content: ".";
+  display: inline-block;
+  width: 1.5em;
+  text-align: left;
+  animation: loading-dots 1.2s steps(1, end) infinite;
+}
+
+@keyframes loading-dots {
+  0%, 24% { content: "."; }
+  25%, 49% { content: ".."; }
+  50%, 74% { content: "..."; }
+  75%, 100% { content: "."; }
 }
 
 /* Highlight styles for the reviewing surface. */

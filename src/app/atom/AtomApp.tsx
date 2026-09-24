@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, computeGpa, computeGrade, type AtomState, type ClassGrade, type NotificationRow } from "./_lib/api";
 import { buildItems, type CalItem } from "./_lib/items";
-import { Spinner } from "./_lib/ui";
 import { Auth } from "./_components/Auth";
 import { Onboarding } from "./_components/Onboarding";
 import { Shell, NAV } from "./_components/Shell";
@@ -14,6 +13,7 @@ import { EcDeadlines } from "./_components/EcDeadlines";
 import { Tasks } from "./_components/Tasks";
 import { NotificationsView } from "./_components/Notifications";
 import { Settings } from "./_components/Settings";
+import { LoadingState } from "../components/LoadingState";
 
 export interface SectionProps {
   state: AtomState;
@@ -95,11 +95,7 @@ export default function AtomApp() {
   const gpa = useMemo(() => (state ? computeGpa(state, grades) : null), [state, grades]);
 
   if (status === "loading") {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-deep-bg text-deep-accent">
-        <Spinner className="h-7 w-7" />
-      </div>
-    );
+    return <LoadingState className="min-h-screen bg-deep-bg text-deep-dim" />;
   }
   if (status === "signedout") return <Auth onAuthed={load} />;
   if (status === "error") {

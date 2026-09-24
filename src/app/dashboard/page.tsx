@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { apiGet } from "@/lib/client";
 import { educationLabel } from "@/lib/constants";
+import { LoadingState } from "../components/LoadingState";
 
 type Dashboard = {
   profile: {
@@ -83,11 +84,7 @@ export default function DashboardPage() {
   }, [router]);
 
   if (loading)
-    return (
-      <div className="mono mx-auto max-w-5xl px-4 py-16 text-xs uppercase tracking-widest text-deep-dim">
-        Loading.
-      </div>
-    );
+    return <LoadingState className="mx-auto max-w-5xl px-4 text-deep-dim" />;
   if (!data) return null;
 
   const { profile, stats } = data;

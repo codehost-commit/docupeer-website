@@ -44,6 +44,7 @@ export function GlobalLoadingIndicator() {
       if (url.origin !== window.location.origin) return;
       if (url.pathname === window.location.pathname && url.search === window.location.search && url.hash === window.location.hash) return;
 
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       setNavigating(true);
     }
 

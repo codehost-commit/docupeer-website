@@ -7,6 +7,7 @@ import {
   type LiveSnapshotPayload,
 } from "@/lib/live-shared";
 import { LivePlayer } from "./LivePlayer";
+import { LoadingState } from "../components/LoadingState";
 
 function TheatrePanel({ snapshot }: { snapshot: LiveSnapshotPayload }) {
   return <LivePlayer snapshot={snapshot} />;
@@ -50,10 +51,8 @@ export function LivePublic({ initialSnapshot }: { initialSnapshot: LiveSnapshotP
           <main className="flex-1 py-8">
             <section className="overflow-hidden rounded-lg border border-[#1d2531] bg-[#090d13] shadow-[0_26px_80px_rgba(8,13,20,0.28)]">
               <div className="relative grid aspect-video w-full place-items-center bg-[#0b1017] px-5 text-center">
-                <div>
-                  <div className="mx-auto inline-flex items-center gap-2 rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm font-semibold text-[#d4deea]">
-                    Loading
-                  </div>
+                <div className="text-[#d4deea]">
+                  <LoadingState className="min-h-0 text-[#d4deea]" />
                   <h1 className="mt-6 text-4xl font-semibold tracking-normal text-white sm:text-6xl">
                     DocuPeer Live
                   </h1>
