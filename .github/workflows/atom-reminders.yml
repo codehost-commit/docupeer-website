@@ -1,0 +1,27 @@
+name: Atom reminders
+
+# Pings the Atom reminder sweep on a schedule. This is plan-independent (works on
+# Vercel Hobby, which caps native cron at once/day). The endpoint is deduplicated,
+# so it is safe to run alongside the vercel.json cron.
+#
+# Setup: add a repository secret named CRON_SECRET (Settings -> Secrets and
+# variables -> Actions) with the SAME value you set for CRON_SECRET in Vercel.
+
+on:
+  schedule:
+    - cron: "*/15 * * * *" # every 15 minutes (GitHub best-effort timing)
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger reminder sweep
+        run: |
+          code=$(curl -s -o /tmp/atom-cron.out -w "%{http_code}" -X POST \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "https://docupeer.org/api/atom/cron/reminders")
+          echo "HTTP $code"
+          cat /tmp/atom-cron.out || true
+          echo
+          test "$code" = "200"

@@ -24,8 +24,8 @@ export async function POST(req: NextRequest) {
   });
   if (!cls) return bad("Class not found.", 404);
 
-  const catByName = new Map(cls.categories.map((c) => [c.name.toLowerCase(), c.id]));
-  const catById = new Set(cls.categories.map((c) => c.id));
+  const catByName = new Map<string, string>(cls.categories.map((c) => [c.name.toLowerCase(), c.id]));
+  const catById = new Set<string>(cls.categories.map((c) => c.id));
 
   const data = rows.slice(0, 500).map((r) => {
     let categoryId: string | null = null;
