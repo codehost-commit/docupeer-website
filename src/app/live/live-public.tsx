@@ -27,12 +27,11 @@ function DefaultAvatar({ className = "" }: { className?: string }) {
   );
 }
 
-function formatCommentTime(value: string) {
+function formatCommentDate(value: string) {
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
+    year: "numeric",
   }).format(new Date(value));
 }
 
@@ -397,7 +396,7 @@ export function PodcastPublic() {
                                   <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                                     <span className="text-sm font-semibold">DocuPeer listener</span>
                                     <time className="text-[11px] text-deep-dim">
-                                      {formatCommentTime(item.createdAt)}
+                                      {formatCommentDate(item.createdAt)}
                                     </time>
                                   </div>
                                   <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-deep-text-soft">
