@@ -19,7 +19,7 @@ const COLUMNS: Col[] = [
       { href: "/submit", label: "Submit your paper" },
       { href: "/dashboard", label: "Dashboard" },
       { href: "/history", label: "History" },
-      { href: "/live", label: "DocuPeer Live" },
+      { href: "/live", label: "DocuPeer Podcasts" },
     ],
   },
   {
@@ -114,7 +114,7 @@ export function Footer() {
               href="/live"
               className="group inline-flex items-center gap-1.5 text-deep-text-soft transition hover:text-deep-accent"
             >
-              Watch DocuPeer Live
+              Watch DocuPeer Podcasts
               <svg
                 width="14"
                 height="14"

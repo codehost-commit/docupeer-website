@@ -189,6 +189,22 @@ model SiteLiveChunk {
   @@index([createdAt])
 }
 
+model PodcastEpisode {
+  id           String           @id
+  commentCount Int              @default(0)
+  comments     PodcastComment[]
+}
+
+model PodcastComment {
+  id        String         @id @default(cuid())
+  episodeId String
+  episode   PodcastEpisode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  body      String
+  createdAt DateTime       @default(now())
+
+  @@index([episodeId, createdAt])
+}
+
 model AdminMetrics {
   id        String   @id @default("global")
   pageViews Int      @default(0)

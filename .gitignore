@@ -40,3 +40,6 @@ _to_delete/
 THIRD_PARTY_VALIDATION.md
 .vercel
 .env*
+
+# Source copies are kept locally; published podcast video is served from Cloudflare R2.
+/public/podcasts/

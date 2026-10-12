@@ -31,7 +31,7 @@ export function Nav() {
 
   const links = !isLaunched
     ? [
-        { href: "/live", label: "DocuPeer Live" },
+        { href: "/live", label: "DocuPeer Podcasts" },
         { href: "/about", label: "About" },
       ]
     : me
@@ -41,12 +41,12 @@ export function Nav() {
         { href: "/dashboard", label: "Dashboard" },
         { href: "/secretariat", label: "Secretariat" },
         { href: "/history", label: "History" },
-        { href: "/live", label: "DocuPeer Live" },
+        { href: "/live", label: "DocuPeer Podcasts" },
         { href: "/about", label: "About" },
       ]
     : [
         { href: "/review", label: "Start reviewing" },
-        { href: "/live", label: "DocuPeer Live" },
+        { href: "/live", label: "DocuPeer Podcasts" },
         { href: "/about", label: "About" },
       ];
 

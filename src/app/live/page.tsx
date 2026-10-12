@@ -1,15 +1,11 @@
 import type { Metadata } from "next";
-import { getLiveSnapshot } from "@/lib/live";
-import { LivePublic } from "./live-public";
-
-export const dynamic = "force-dynamic";
+import { PodcastPublic } from "./live-public";
 
 export const metadata: Metadata = {
-  title: "DocuPeer Live",
-  description: "Watch live DocuPeer sessions, screen shares, and updates.",
+  title: "DocuPeer Podcasts",
+  description: "Watch DocuPeer Podcasts, including 1 Minute with Ackee and new episodes from the team.",
 };
 
-export default async function LivePage() {
-  const snapshot = await getLiveSnapshot();
-  return <LivePublic initialSnapshot={snapshot} />;
+export default function LivePage() {
+  return <PodcastPublic />;
 }
