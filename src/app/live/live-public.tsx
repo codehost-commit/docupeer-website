@@ -46,12 +46,14 @@ export function PodcastPublic() {
   const [loadingComments, setLoadingComments] = useState(false);
   const [posting, setPosting] = useState(false);
   const [commentError, setCommentError] = useState("");
+  const [canComment, setCanComment] = useState(true);
 
   const episode = SEASON_TWO_EPISODES.find((item) => item.id === episodeId)!;
 
   useEffect(() => {
     setComments([]);
     setCommentError("");
+    setCanComment(true);
 
     if (show !== "podcasts" || season !== 2 || !episode.available) {
       setLoadingComments(false);
@@ -67,7 +69,10 @@ export function PodcastPublic() {
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Could not load comments.");
-        if (!cancelled) setComments(data.comments || []);
+        if (!cancelled) {
+          setComments(data.comments || []);
+          setCanComment(data.canComment !== false);
+        }
       })
       .catch((err) => {
         if (!cancelled) setCommentError(err.message || "Could not load comments.");
@@ -84,7 +89,7 @@ export function PodcastPublic() {
   async function postComment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const body = comment.trim();
-    if (!episode.available || !body || posting) return;
+    if (!episode.available || !canComment || !body || posting) return;
 
     setPosting(true);
     setCommentError("");
@@ -99,6 +104,7 @@ export function PodcastPublic() {
 
       setComments((current) => [...current, data.comment]);
       setComment("");
+      setCanComment(data.canComment !== false);
     } catch (err) {
       setCommentError(
         err instanceof Error ? err.message : "Could not post your comment."
@@ -364,7 +370,7 @@ export function PodcastPublic() {
                           </div>
                           <p className="mt-1 text-xs leading-5 text-deep-dim">
                             {episode.available
-                              ? `Temporary cap: each episode can have up to ${PODCAST_COMMENT_LIMIT} comments for now.`
+                              ? `One comment per listener across all podcast episodes. Temporary cap: ${PODCAST_COMMENT_LIMIT} comments per episode for now.`
                               : "Comments will open when this episode is released."}
                           </p>
                         </div>
@@ -419,9 +425,11 @@ export function PodcastPublic() {
                               onChange={(event) => setComment(event.target.value)}
                               maxLength={300}
                               rows={3}
-                              disabled={comments.length >= PODCAST_COMMENT_LIMIT || posting}
+                              disabled={!canComment || comments.length >= PODCAST_COMMENT_LIMIT || posting}
                               placeholder={
-                                comments.length >= PODCAST_COMMENT_LIMIT
+                              !canComment
+                                ? "You have already posted your one podcast comment."
+                                : comments.length >= PODCAST_COMMENT_LIMIT
                                   ? "This episode's temporary comment limit has been reached."
                                   : "Share a thought…"
                               }
@@ -431,7 +439,7 @@ export function PodcastPublic() {
                               <span className="text-[11px] text-deep-dim">{comment.length}/300</span>
                               <button
                                 type="submit"
-                                disabled={!comment.trim() || posting || comments.length >= PODCAST_COMMENT_LIMIT}
+                                disabled={!canComment || !comment.trim() || posting || comments.length >= PODCAST_COMMENT_LIMIT}
                                 className="btn-primary px-4 py-2 text-xs"
                               >
                                 {posting ? "Posting…" : "Post comment"}

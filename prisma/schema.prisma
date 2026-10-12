@@ -199,6 +199,7 @@ model PodcastComment {
   id        String         @id @default(cuid())
   episodeId String
   episode   PodcastEpisode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  visitorKey String?       @unique
   body      String
   createdAt DateTime       @default(now())
 
