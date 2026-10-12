@@ -1,5 +1,5 @@
 import { PodcastAnnouncementReactionKind } from "@prisma/client";
-import type { NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { error, handleRouteError, json } from "@/lib/http";
 import {
@@ -10,9 +10,54 @@ import {
 import { rateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
-const localReactionCounts = { likes: 0, dislikes: 0 };
+
+function localOrigin(req: NextRequest) {
+  const origin = req.headers.get("origin");
+  if (!origin) return null;
+
+  try {
+    const url = new URL(origin);
+    const localHost =
+      url.hostname === "localhost" ||
+      url.hostname === "127.0.0.1" ||
+      url.hostname === "::1";
+    return url.protocol === "http:" && localHost ? origin : null;
+  } catch {
+    return null;
+  }
+}
+
+function isLocalAnnouncementRequest(req: NextRequest) {
+  return isPodcastLocalhost(req) || Boolean(localOrigin(req));
+}
+
+function withLocalCors(req: NextRequest, response: NextResponse) {
+  const origin = localOrigin(req);
+  if (origin) {
+    response.headers.set("Access-Control-Allow-Origin", origin);
+    response.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    response.headers.set("Access-Control-Allow-Headers", "content-type");
+    response.headers.set("Vary", "Origin");
+  }
+  return response;
+}
+
+function announcementJson(req: NextRequest, data: unknown, status = 200) {
+  return withLocalCors(req, json(data, status));
+}
+
+function announcementError(
+  req: NextRequest,
+  message: string,
+  status = 400,
+  extra?: object
+) {
+  return withLocalCors(req, error(message, status, extra));
+}
 
 function isSameOrigin(req: NextRequest) {
+  if (isLocalAnnouncementRequest(req)) return true;
+
   const origin = req.headers.get("origin");
   if (!origin) return true;
   try {
@@ -40,11 +85,8 @@ async function reactionCounts() {
 
 export async function GET(req: NextRequest) {
   try {
-    if (isPodcastLocalhost(req)) {
-      return json({ ...localReactionCounts, canVote: true });
-    }
-
-    const key = podcastVisitorKey(req);
+    const local = isLocalAnnouncementRequest(req);
+    const key = local ? null : podcastVisitorKey(req);
     const [counts, existingReaction] = await Promise.all([
       reactionCounts(),
       key
@@ -55,17 +97,21 @@ export async function GET(req: NextRequest) {
         : null,
     ]);
 
-    return json({ ...counts, canVote: !existingReaction });
+    return announcementJson(req, { ...counts, canVote: local || !existingReaction });
   } catch (err) {
-    return handleRouteError(err);
+    return withLocalCors(req, handleRouteError(err));
   }
+}
+
+export function OPTIONS(req: NextRequest) {
+  return withLocalCors(req, new NextResponse(null, { status: 204 }));
 }
 
 export async function POST(req: NextRequest) {
   try {
-    if (!isSameOrigin(req)) return error("Invalid request origin.", 403);
+    if (!isSameOrigin(req)) return announcementError(req, "Invalid request origin.", 403);
 
-    const local = isPodcastLocalhost(req);
+    const local = isLocalAnnouncementRequest(req);
     if (!local) {
       const limit = rateLimit(
         `podcast-announcement:${podcastClientAddress(req)}`,
@@ -73,7 +119,7 @@ export async function POST(req: NextRequest) {
         60_000
       );
       if (!limit.ok) {
-        return error("Please wait a moment before voting again.", 429, {
+        return announcementError(req, "Please wait a moment before voting again.", 429, {
           retryAfterMs: limit.retryAfterMs,
         });
       }
@@ -81,15 +127,10 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json().catch(() => ({}));
     if (body.reaction !== "like" && body.reaction !== "dislike") {
-      return error("Choose a valid reaction.");
+      return announcementError(req, "Choose a valid reaction.");
     }
 
-    if (local) {
-      localReactionCounts[body.reaction === "like" ? "likes" : "dislikes"] += 1;
-      return json({ ...localReactionCounts, canVote: true }, 201);
-    }
-
-    const key = podcastVisitorKey(req);
+    const key = local ? null : podcastVisitorKey(req);
     const reaction =
       body.reaction === "like"
         ? PodcastAnnouncementReactionKind.LIKE
@@ -111,15 +152,15 @@ export async function POST(req: NextRequest) {
     });
 
     if (result.status === "already-voted") {
-      return error("You have already reacted to this announcement.", 409);
+      return announcementError(req, "You have already reacted to this announcement.", 409);
     }
 
-    return json({ ...(await reactionCounts()), canVote: local }, 201);
+    return announcementJson(req, { ...(await reactionCounts()), canVote: local }, 201);
   } catch (err) {
     // A simultaneous second tap may win the unique-key race above.
     if ((err as { code?: string })?.code === "P2002") {
-      return error("You have already reacted to this announcement.", 409);
+      return announcementError(req, "You have already reacted to this announcement.", 409);
     }
-    return handleRouteError(err);
+    return withLocalCors(req, handleRouteError(err));
   }
 }

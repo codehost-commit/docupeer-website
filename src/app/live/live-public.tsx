@@ -19,6 +19,18 @@ type AnnouncementCounts = {
   dislikes: number;
 };
 
+function announcementApiUrl() {
+  if (typeof window === "undefined") return "/api/podcasts/announcement";
+
+  const localHost =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1" ||
+    window.location.hostname === "::1";
+  return localHost
+    ? "https://docupeer.org/api/podcasts/announcement"
+    : "/api/podcasts/announcement";
+}
+
 function DefaultAvatar({ className = "" }: { className?: string }) {
   return (
     <span
@@ -120,7 +132,7 @@ export function PodcastPublic() {
   useEffect(() => {
     let cancelled = false;
 
-    fetch("/api/podcasts/announcement", { cache: "no-store" })
+    fetch(announcementApiUrl(), { cache: "no-store" })
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Could not load reactions.");
@@ -177,7 +189,7 @@ export function PodcastPublic() {
     setAnnouncementVoting(true);
     setAnnouncementError("");
     try {
-      const response = await fetch("/api/podcasts/announcement", {
+      const response = await fetch(announcementApiUrl(), {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ reaction }),
