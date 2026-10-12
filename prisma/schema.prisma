@@ -206,6 +206,20 @@ model PodcastComment {
   @@index([episodeId, createdAt])
 }
 
+enum PodcastAnnouncementReactionKind {
+  LIKE
+  DISLIKE
+}
+
+model PodcastAnnouncementReaction {
+  id         String                           @id @default(cuid())
+  visitorKey String?                          @unique
+  reaction   PodcastAnnouncementReactionKind
+  createdAt  DateTime                         @default(now())
+
+  @@index([reaction])
+}
+
 model AdminMetrics {
   id        String   @id @default("global")
   pageViews Int      @default(0)

@@ -12,6 +12,12 @@ import {
 
 type Show = "ackee" | "podcasts";
 type Season = 1 | 2;
+type AnnouncementReaction = "like" | "dislike";
+
+type AnnouncementCounts = {
+  likes: number;
+  dislikes: number;
+};
 
 function DefaultAvatar({ className = "" }: { className?: string }) {
   return (
@@ -35,6 +41,24 @@ function formatCommentDate(value: string) {
   }).format(new Date(value));
 }
 
+function ReactionIcon({ reaction }: { reaction: AnnouncementReaction }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className={`h-4 w-4 ${reaction === "dislike" ? "rotate-180" : ""}`}
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.8"
+    >
+      <path d="M7 10.5 10.8 2H18a2.7 2.7 0 0 1 2.5 3.8l-2.2 5.3a2.7 2.7 0 0 1-2.5 1.7H13l.8 4.1a3.1 3.1 0 0 1-1.2 3L11.4 21 7 16.6v-6.1Z" />
+      <path d="M3 10.5h4v6H3z" />
+    </svg>
+  );
+}
+
 export function PodcastPublic() {
   const [show, setShow] = useState<Show>("podcasts");
   const [season, setSeason] = useState<Season>(2);
@@ -47,6 +71,13 @@ export function PodcastPublic() {
   const [posting, setPosting] = useState(false);
   const [commentError, setCommentError] = useState("");
   const [canComment, setCanComment] = useState(true);
+  const [announcementCounts, setAnnouncementCounts] = useState<AnnouncementCounts>({
+    likes: 0,
+    dislikes: 0,
+  });
+  const [canReactToAnnouncement, setCanReactToAnnouncement] = useState(true);
+  const [announcementVoting, setAnnouncementVoting] = useState(false);
+  const [announcementError, setAnnouncementError] = useState("");
 
   const episode = SEASON_TWO_EPISODES.find((item) => item.id === episodeId)!;
 
@@ -86,6 +117,32 @@ export function PodcastPublic() {
     };
   }, [episode.available, episodeId, season, show]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch("/api/podcasts/announcement", { cache: "no-store" })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Could not load reactions.");
+        if (!cancelled) {
+          setAnnouncementCounts({
+            likes: Number(data.likes) || 0,
+            dislikes: Number(data.dislikes) || 0,
+          });
+          setCanReactToAnnouncement(data.canVote !== false);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setAnnouncementError(err.message || "Could not load reactions.");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   async function postComment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const body = comment.trim();
@@ -111,6 +168,34 @@ export function PodcastPublic() {
       );
     } finally {
       setPosting(false);
+    }
+  }
+
+  async function reactToAnnouncement(reaction: AnnouncementReaction) {
+    if (!canReactToAnnouncement || announcementVoting) return;
+
+    setAnnouncementVoting(true);
+    setAnnouncementError("");
+    try {
+      const response = await fetch("/api/podcasts/announcement", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ reaction }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Could not save your reaction.");
+
+      setAnnouncementCounts({
+        likes: Number(data.likes) || 0,
+        dislikes: Number(data.dislikes) || 0,
+      });
+      setCanReactToAnnouncement(data.canVote !== false);
+    } catch (err) {
+      setAnnouncementError(
+        err instanceof Error ? err.message : "Could not save your reaction."
+      );
+    } finally {
+      setAnnouncementVoting(false);
     }
   }
 
@@ -211,6 +296,70 @@ export function PodcastPublic() {
                   Browse seasons <span aria-hidden="true">→</span>
                 </span>
               </button>
+            </div>
+          </section>
+
+          <section
+            className="mt-8 overflow-hidden rounded-3xl border border-deep-accent/30 bg-deep-panel shadow-panel"
+            aria-labelledby="team-announcement-heading"
+          >
+            <div className="grid gap-7 px-6 py-7 sm:px-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-10">
+              <div className="max-w-3xl">
+                <p className="inline-flex rounded-full bg-deep-accent-soft px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-deep-accent">
+                  Announcement from the team
+                </p>
+                <h2 id="team-announcement-heading" className="mt-4 text-3xl sm:text-4xl">
+                  We&apos;re listening—and evolving the podcast.
+                </h2>
+                <p className="mt-4 text-sm leading-7 text-deep-text-soft sm:text-base">
+                  Thank you for the feedback. By Episode 30, we&apos;ll begin
+                  refreshing the podcast style, with Aryan taking the main camera
+                  and POV. Pritam will remain part of Lake Kingdom.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-deep-border bg-deep-panel2 p-4 sm:min-w-[18rem]">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-deep-dim">
+                  Your reaction
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {(
+                    [
+                      ["like", "Like", announcementCounts.likes],
+                      ["dislike", "Dislike", announcementCounts.dislikes],
+                    ] as const
+                  ).map(([reaction, label, count]) => (
+                    <button
+                      key={reaction}
+                      type="button"
+                      onClick={() => reactToAnnouncement(reaction)}
+                      disabled={!canReactToAnnouncement || announcementVoting}
+                      aria-label={`${label} this announcement. ${count} reactions.`}
+                      className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-deep-accent disabled:cursor-not-allowed disabled:opacity-55 ${
+                        reaction === "like"
+                          ? "border-[#8eb69a] bg-[#eaf5ed] text-[#245c38] hover:border-[#5e976d]"
+                          : "border-[#d3b1ad] bg-[#f9eeee] text-[#8a3d37] hover:border-[#b86a62]"
+                      }`}
+                    >
+                      <ReactionIcon reaction={reaction} />
+                      <span>{label}</span>
+                      <span className="min-w-5 border-l border-current/20 pl-2 text-center tabular-nums">
+                        {count}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-3 text-xs leading-5 text-deep-dim" aria-live="polite">
+                  {canReactToAnnouncement
+                    ? "One reaction per listener."
+                    : "Thanks for sharing your reaction."}
+                </p>
+                {announcementError && (
+                  <p role="alert" className="mt-2 text-xs font-medium text-deep-bad">
+                    {announcementError}
+                  </p>
+                )}
+              </div>
             </div>
           </section>
 

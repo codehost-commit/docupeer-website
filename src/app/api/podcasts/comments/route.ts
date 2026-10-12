@@ -1,8 +1,12 @@
 import type { NextRequest } from "next/server";
-import { createHmac } from "node:crypto";
 import { error, handleRouteError, json } from "@/lib/http";
 import { prisma } from "@/lib/db";
 import { rateLimit } from "@/lib/rate-limit";
+import {
+  isPodcastLocalhost,
+  podcastClientAddress,
+  podcastVisitorKey,
+} from "@/lib/podcast-visitor";
 import {
   isPodcastEpisodeId,
   PODCAST_COMMENT_LIMIT,
@@ -11,42 +15,10 @@ import {
 export const dynamic = "force-dynamic";
 
 const MAX_COMMENT_LENGTH = 300;
-
-function clientAddress(req: Request) {
-  return (
-    req.headers.get("cf-connecting-ip") ||
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    req.headers.get("x-real-ip") ||
-    "unknown"
-  );
-}
-
-function isLocalhost(req: NextRequest) {
-  const host = (req.headers.get("x-forwarded-host") || req.headers.get("host") || "")
-    .split(",")[0]
-    .trim()
-    .toLowerCase();
-  const hostname = host.startsWith("[")
-    ? host.slice(1, host.indexOf("]"))
-    : host.split(":")[0];
-
-  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
-}
-
-function visitorKey(req: NextRequest) {
-  if (isLocalhost(req)) return null;
-
-  // Store an opaque, stable identifier rather than the visitor's IP address.
-  // DATABASE_URL is always configured when this route can reach Prisma; the
-  // dedicated variable lets production rotate this identifier independently.
-  const secret =
-    process.env.PODCAST_COMMENT_IDENTITY_SECRET ||
-    process.env.DATABASE_URL ||
-    "docupeer-podcast-local-fallback";
-  return createHmac("sha256", secret)
-    .update(clientAddress(req))
-    .digest("hex");
-}
+const localComments = new Map<
+  string,
+  Array<{ id: string; body: string; createdAt: string }>
+>();
 
 function isSameOrigin(req: NextRequest) {
   const origin = req.headers.get("origin");
@@ -63,7 +35,15 @@ export async function GET(req: NextRequest) {
     const episodeId = req.nextUrl.searchParams.get("episode");
     if (!isPodcastEpisodeId(episodeId)) return error("Unknown episode.", 404);
 
-    const key = visitorKey(req);
+    if (isPodcastLocalhost(req)) {
+      return json({
+        comments: localComments.get(episodeId) || [],
+        limit: PODCAST_COMMENT_LIMIT,
+        canComment: true,
+      });
+    }
+
+    const key = podcastVisitorKey(req);
 
     const [comments, existingComment] = await Promise.all([
       prisma.podcastComment.findMany({
@@ -97,9 +77,9 @@ export async function POST(req: NextRequest) {
   try {
     if (!isSameOrigin(req)) return error("Invalid request origin.", 403);
 
-    const local = isLocalhost(req);
+    const local = isPodcastLocalhost(req);
     if (!local) {
-      const limit = rateLimit(`podcast-comment:${clientAddress(req)}`, 5, 60_000);
+      const limit = rateLimit(`podcast-comment:${podcastClientAddress(req)}`, 5, 60_000);
       if (!limit.ok) {
         return error("Please wait a moment before posting another comment.", 429, {
           retryAfterMs: limit.retryAfterMs,
@@ -107,7 +87,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const key = local ? null : visitorKey(req);
+    const key = local ? null : podcastVisitorKey(req);
 
     const body = await req.json().catch(() => ({}));
     const episodeId = body.episodeId;
@@ -117,6 +97,27 @@ export async function POST(req: NextRequest) {
     if (!comment) return error("Write a comment before posting.");
     if (comment.length > MAX_COMMENT_LENGTH) {
       return error(`Comments can be up to ${MAX_COMMENT_LENGTH} characters.`);
+    }
+
+    if (local) {
+      const comments = localComments.get(episodeId) || [];
+      if (comments.length >= PODCAST_COMMENT_LIMIT) {
+        return error(
+          `This episode has reached its temporary ${PODCAST_COMMENT_LIMIT}-comment limit.`,
+          409
+        );
+      }
+
+      const created = {
+        id: `local-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        body: comment,
+        createdAt: new Date().toISOString(),
+      };
+      localComments.set(episodeId, [...comments, created]);
+      return json(
+        { comment: created, limit: PODCAST_COMMENT_LIMIT, canComment: true },
+        201
+      );
     }
 
     const created = await prisma.$transaction(async (tx) => {
