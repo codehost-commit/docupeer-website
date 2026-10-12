@@ -1,0 +1,5 @@
+# Source copies stay on this machine; public podcast media is delivered from R2.
+public/podcasts/**
+
+# Local-only design assets unrelated to this deployment.
+Atom logo/**
