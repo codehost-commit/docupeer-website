@@ -19,16 +19,26 @@ type AnnouncementCounts = {
   dislikes: number;
 };
 
-function announcementApiUrl() {
-  if (typeof window === "undefined") return "/api/podcasts/announcement";
+function isLocalhostUrl() {
+  if (typeof window === "undefined") return false;
 
-  const localHost =
+  return (
     window.location.hostname === "localhost" ||
     window.location.hostname === "127.0.0.1" ||
-    window.location.hostname === "::1";
-  return localHost
+    window.location.hostname === "::1"
+  );
+}
+
+function announcementApiUrl() {
+  return isLocalhostUrl()
     ? "https://docupeer.org/api/podcasts/announcement"
     : "/api/podcasts/announcement";
+}
+
+function commentsApiUrl() {
+  return isLocalhostUrl()
+    ? "https://docupeer.org/api/podcasts/comments"
+    : "/api/podcasts/comments";
 }
 
 function DefaultAvatar({ className = "" }: { className?: string }) {
@@ -90,8 +100,15 @@ export function PodcastPublic() {
   const [canReactToAnnouncement, setCanReactToAnnouncement] = useState(true);
   const [announcementVoting, setAnnouncementVoting] = useState(false);
   const [announcementError, setAnnouncementError] = useState("");
+  const [testingOnLocalhost, setTestingOnLocalhost] = useState(false);
 
   const episode = SEASON_TWO_EPISODES.find((item) => item.id === episodeId)!;
+  const reachedPublicCommentLimit =
+    !testingOnLocalhost && comments.length >= PODCAST_COMMENT_LIMIT;
+
+  useEffect(() => {
+    setTestingOnLocalhost(isLocalhostUrl());
+  }, []);
 
   useEffect(() => {
     setComments([]);
@@ -106,7 +123,7 @@ export function PodcastPublic() {
     let cancelled = false;
     setLoadingComments(true);
 
-    fetch(`/api/podcasts/comments?episode=${encodeURIComponent(episodeId)}`, {
+    fetch(`${commentsApiUrl()}?episode=${encodeURIComponent(episodeId)}`, {
       cache: "no-store",
     })
       .then(async (response) => {
@@ -163,7 +180,7 @@ export function PodcastPublic() {
     setPosting(true);
     setCommentError("");
     try {
-      const response = await fetch("/api/podcasts/comments", {
+      const response = await fetch(commentsApiUrl(), {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ episodeId, comment: body }),
@@ -525,13 +542,17 @@ export function PodcastPublic() {
                             <h4 className="text-xl">Comments</h4>
                             <span className="rounded-full bg-deep-accent-soft px-2.5 py-1 text-[11px] font-semibold text-deep-accent">
                               {episode.available
-                                ? `${comments.length} / ${PODCAST_COMMENT_LIMIT}`
+                                ? testingOnLocalhost
+                                  ? `${comments.length} live`
+                                  : `${comments.length} / ${PODCAST_COMMENT_LIMIT}`
                                 : "Coming soon"}
                             </span>
                           </div>
                           <p className="mt-1 text-xs leading-5 text-deep-dim">
                             {episode.available
-                              ? `One comment per listener across all podcast episodes. Temporary cap: ${PODCAST_COMMENT_LIMIT} comments per episode for now.`
+                              ? testingOnLocalhost
+                                ? "Localhost testing posts directly to this live thread without a posting limit."
+                                : `One comment per listener across all podcast episodes. Temporary cap: ${PODCAST_COMMENT_LIMIT} comments per episode for now.`
                               : "Comments will open when this episode is released."}
                           </p>
                         </div>
@@ -586,11 +607,11 @@ export function PodcastPublic() {
                               onChange={(event) => setComment(event.target.value)}
                               maxLength={300}
                               rows={3}
-                              disabled={!canComment || comments.length >= PODCAST_COMMENT_LIMIT || posting}
+                              disabled={!canComment || reachedPublicCommentLimit || posting}
                               placeholder={
                               !canComment
                                 ? "You have already posted your one podcast comment."
-                                : comments.length >= PODCAST_COMMENT_LIMIT
+                                : reachedPublicCommentLimit
                                   ? "This episode's temporary comment limit has been reached."
                                   : "Share a thought…"
                               }
@@ -600,7 +621,7 @@ export function PodcastPublic() {
                               <span className="text-[11px] text-deep-dim">{comment.length}/300</span>
                               <button
                                 type="submit"
-                                disabled={!canComment || !comment.trim() || posting || comments.length >= PODCAST_COMMENT_LIMIT}
+                                disabled={!canComment || !comment.trim() || posting || reachedPublicCommentLimit}
                                 className="btn-primary px-4 py-2 text-xs"
                               >
                                 {posting ? "Posting…" : "Post comment"}
