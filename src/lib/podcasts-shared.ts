@@ -8,8 +8,8 @@ export const SEASON_TWO_EPISODES = [
     id: "season-2-episode-1",
     number: 1,
     title: "Episode 1",
-    src: null,
-    available: false,
+    src: `${R2_SEASON_TWO_BASE_URL}/Podcast%201%20Series%202%20%28Finished%29%20%281%29.mp4`,
+    available: true,
   },
   {
     id: "season-2-episode-2",
