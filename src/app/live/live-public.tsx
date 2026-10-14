@@ -544,7 +544,7 @@ export function PodcastPublic() {
                               {episode.available
                                 ? testingOnLocalhost
                                   ? `${comments.length} live`
-                                  : `${comments.length} / ${PODCAST_COMMENT_LIMIT}`
+                                  : `${comments.length} comments`
                                 : "Coming soon"}
                             </span>
                           </div>
@@ -552,7 +552,7 @@ export function PodcastPublic() {
                             {episode.available
                               ? testingOnLocalhost
                                 ? "Localhost testing posts directly to this live thread without a posting limit."
-                                : `One comment per listener across all podcast episodes. Temporary cap: ${PODCAST_COMMENT_LIMIT} comments per episode for now.`
+                                : `One comment per listener across all podcast episodes. New public comments are temporarily capped at ${PODCAST_COMMENT_LIMIT} per episode for now.`
                               : "Comments will open when this episode is released."}
                           </p>
                         </div>
