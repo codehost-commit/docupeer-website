@@ -91,6 +91,7 @@ export function PodcastPublic() {
   const [comment, setComment] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
   const [posting, setPosting] = useState(false);
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
   const [commentError, setCommentError] = useState("");
   const [canComment, setCanComment] = useState(true);
   const [announcementCounts, setAnnouncementCounts] = useState<AnnouncementCounts>({
@@ -197,6 +198,34 @@ export function PodcastPublic() {
       );
     } finally {
       setPosting(false);
+    }
+  }
+
+  async function deleteComment(item: PodcastComment) {
+    if (!testingOnLocalhost || deletingCommentId) return;
+    if (!window.confirm(`Delete this live comment?\n\n${item.body}`)) return;
+
+    const password = window.prompt("Enter the DocuPeer admin password:");
+    if (password === null) return;
+
+    setDeletingCommentId(item.id);
+    setCommentError("");
+    try {
+      const response = await fetch(commentsApiUrl(), {
+        method: "DELETE",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ commentId: item.id, password }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Could not delete the comment.");
+
+      setComments((current) => current.filter((comment) => comment.id !== item.id));
+    } catch (err) {
+      setCommentError(
+        err instanceof Error ? err.message : "Could not delete the comment."
+      );
+    } finally {
+      setDeletingCommentId(null);
     }
   }
 
@@ -581,11 +610,23 @@ export function PodcastPublic() {
                               <article key={item.id} className="flex gap-3">
                                 <DefaultAvatar className="h-9 w-9" />
                                 <div className="min-w-0 flex-1">
-                                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                                    <span className="text-sm font-semibold">DocuPeer listener</span>
-                                    <time className="text-[11px] text-deep-dim">
-                                      {formatCommentDate(item.createdAt)}
-                                    </time>
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                                      <span className="text-sm font-semibold">DocuPeer listener</span>
+                                      <time className="text-[11px] text-deep-dim">
+                                        {formatCommentDate(item.createdAt)}
+                                      </time>
+                                    </div>
+                                    {testingOnLocalhost && (
+                                      <button
+                                        type="button"
+                                        onClick={() => deleteComment(item)}
+                                        disabled={Boolean(deletingCommentId)}
+                                        className="shrink-0 text-[11px] font-semibold text-deep-bad transition hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-50"
+                                      >
+                                        {deletingCommentId === item.id ? "Deleting…" : "Delete"}
+                                      </button>
+                                    )}
                                   </div>
                                   <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-deep-text-soft">
                                     {item.body}

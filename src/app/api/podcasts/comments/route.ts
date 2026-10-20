@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { verifyAdminCredentials } from "@/lib/admin-auth";
 import { error, handleRouteError, json } from "@/lib/http";
 import { prisma } from "@/lib/db";
 import { rateLimit } from "@/lib/rate-limit";
@@ -40,7 +41,7 @@ function withLocalCors(req: NextRequest, response: NextResponse) {
   const origin = localOrigin(req);
   if (origin) {
     response.headers.set("Access-Control-Allow-Origin", origin);
-    response.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    response.headers.set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
     response.headers.set("Access-Control-Allow-Headers", "content-type");
     response.headers.set("Vary", "Origin");
   }
@@ -115,6 +116,58 @@ export async function GET(req: NextRequest) {
 
 export function OPTIONS(req: NextRequest) {
   return withLocalCors(req, new NextResponse(null, { status: 204 }));
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    // Comment moderation is intentionally exposed only to the local testing
+    // UI. The admin password is still required because Origin is not an
+    // authentication boundary and can be forged by non-browser clients.
+    if (!localOrigin(req)) {
+      return commentError(req, "Comment deletion is available only from localhost.", 403);
+    }
+
+    const limit = rateLimit(
+      `podcast-comment-delete:${podcastClientAddress(req)}`,
+      20,
+      60 * 60 * 1000
+    );
+    if (!limit.ok) {
+      return commentError(req, "Too many deletion attempts. Try again later.", 429, {
+        retryAfterMs: limit.retryAfterMs,
+      });
+    }
+
+    const body = await req.json().catch(() => ({}));
+    const commentId = typeof body.commentId === "string" ? body.commentId.trim() : "";
+    if (!verifyAdminCredentials("ADMIN", body.password)) {
+      return commentError(req, "The admin password is incorrect.", 401);
+    }
+    if (!commentId) return commentError(req, "Choose a comment to delete.");
+
+    const deleted = await prisma.$transaction(async (tx) => {
+      const existing = await tx.podcastComment.findUnique({
+        where: { id: commentId },
+        select: { id: true, episodeId: true, hidden: true },
+      });
+      if (!existing) return null;
+
+      await tx.podcastComment.delete({ where: { id: commentId } });
+      if (!existing.hidden) {
+        await tx.podcastEpisode.updateMany({
+          where: { id: existing.episodeId, commentCount: { gt: 0 } },
+          data: { commentCount: { decrement: 1 } },
+        });
+      }
+
+      return existing;
+    });
+
+    if (!deleted) return commentError(req, "That comment no longer exists.", 404);
+    return commentJson(req, { deleted: true, commentId: deleted.id });
+  } catch (err) {
+    return withLocalCors(req, handleRouteError(err));
+  }
 }
 
 export async function POST(req: NextRequest) {
