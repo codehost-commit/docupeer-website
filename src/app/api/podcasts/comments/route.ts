@@ -11,6 +11,7 @@ import {
 import {
   isPodcastEpisodeId,
   PODCAST_COMMENT_LIMIT,
+  PODCAST_COMMENTS_OPEN,
 } from "@/lib/podcasts-shared";
 
 export const dynamic = "force-dynamic";
@@ -77,6 +78,14 @@ export async function GET(req: NextRequest) {
   try {
     const episodeId = req.nextUrl.searchParams.get("episode");
     if (!isPodcastEpisodeId(episodeId)) return commentError(req, "Unknown episode.", 404);
+
+    if (!PODCAST_COMMENTS_OPEN) {
+      return commentJson(req, {
+        comments: [],
+        limit: PODCAST_COMMENT_LIMIT,
+        canComment: false,
+      });
+    }
 
     const local = isLocalCommentRequest(req);
     const key = local ? null : podcastVisitorKey(req);
@@ -173,6 +182,9 @@ export async function DELETE(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     if (!isSameOrigin(req)) return commentError(req, "Invalid request origin.", 403);
+    if (!PODCAST_COMMENTS_OPEN) {
+      return commentError(req, "Comments are closed for now.", 403);
+    }
 
     const local = isLocalCommentRequest(req);
     if (!local) {

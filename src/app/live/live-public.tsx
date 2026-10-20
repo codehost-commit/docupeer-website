@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   PODCAST_COMMENT_LIMIT,
+  PODCAST_COMMENTS_OPEN,
   SEASON_TWO_EPISODES,
   type PodcastComment,
   type PodcastEpisodeId,
@@ -117,6 +118,12 @@ export function PodcastPublic() {
     setCanComment(true);
 
     if (show !== "podcasts" || season !== 2 || !episode.available) {
+      setLoadingComments(false);
+      return;
+    }
+
+    if (!PODCAST_COMMENTS_OPEN) {
+      setCanComment(false);
       setLoadingComments(false);
       return;
     }
@@ -571,7 +578,9 @@ export function PodcastPublic() {
                             <h4 className="text-xl">Comments</h4>
                             <span className="rounded-full bg-deep-accent-soft px-2.5 py-1 text-[11px] font-semibold text-deep-accent">
                               {episode.available
-                                ? testingOnLocalhost
+                                ? !PODCAST_COMMENTS_OPEN
+                                  ? "Closed"
+                                  : testingOnLocalhost
                                   ? `${comments.length} live`
                                   : `${comments.length} comments`
                                 : "Coming soon"}
@@ -579,7 +588,9 @@ export function PodcastPublic() {
                           </div>
                           <p className="mt-1 text-xs leading-5 text-deep-dim">
                             {episode.available
-                              ? testingOnLocalhost
+                              ? !PODCAST_COMMENTS_OPEN
+                                ? "Comments are closed for now."
+                                : testingOnLocalhost
                                 ? "Localhost testing posts directly to this live thread without a posting limit."
                                 : `One comment per listener across all podcast episodes. New public comments are temporarily capped at ${PODCAST_COMMENT_LIMIT} per episode for now.`
                               : "Comments will open when this episode is released."}
@@ -594,6 +605,11 @@ export function PodcastPublic() {
                               <p className="mt-1 text-xs leading-5 text-deep-dim">
                                 Come back when Episode {episode.number} premieres.
                               </p>
+                            </div>
+                          ) : !PODCAST_COMMENTS_OPEN ? (
+                            <div className="flex flex-col items-center py-8 text-center">
+                              <DefaultAvatar className="h-12 w-12" />
+                              <p className="mt-3 text-sm font-medium text-deep-text">Comments are closed for now</p>
                             </div>
                           ) : loadingComments ? (
                             <p className="text-sm text-deep-dim">Loading comments…</p>
@@ -637,7 +653,7 @@ export function PodcastPublic() {
                           )}
                         </div>
 
-                        {episode.available && (
+                        {episode.available && PODCAST_COMMENTS_OPEN && (
                           <form onSubmit={postComment} className="border-t border-deep-border p-4">
                             <label htmlFor="podcast-comment" className="sr-only">
                               Add a comment
