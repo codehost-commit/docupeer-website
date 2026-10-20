@@ -201,9 +201,15 @@ model PodcastComment {
   episode   PodcastEpisode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
   visitorKey String?       @unique
   body      String
+  hidden    Boolean        @default(false)
   createdAt DateTime       @default(now())
 
   @@index([episodeId, createdAt])
+}
+
+model PodcastCommentShadowBan {
+  visitorKey String   @id
+  createdAt  DateTime @default(now())
 }
 
 enum PodcastAnnouncementReactionKind {

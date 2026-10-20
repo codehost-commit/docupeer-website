@@ -82,7 +82,13 @@ export async function GET(req: NextRequest) {
 
     const [comments, existingComment] = await Promise.all([
       prisma.podcastComment.findMany({
-        where: { episodeId },
+        where: {
+          episodeId,
+          OR: [
+            { hidden: false },
+            ...(key ? [{ hidden: true, visitorKey: key }] : []),
+          ],
+        },
         orderBy: { createdAt: "asc" },
         select: { id: true, body: true, createdAt: true },
       }),
@@ -138,6 +144,13 @@ export async function POST(req: NextRequest) {
     }
 
     const created = await prisma.$transaction(async (tx) => {
+      const shadowBan = key
+        ? await tx.podcastCommentShadowBan.findUnique({
+            where: { visitorKey: key },
+            select: { visitorKey: true },
+          })
+        : null;
+
       if (key) {
         const existingComment = await tx.podcastComment.findUnique({
           where: { visitorKey: key },
@@ -152,7 +165,7 @@ export async function POST(req: NextRequest) {
         update: {},
       });
 
-      if (!local) {
+      if (!local && !shadowBan) {
         // The count is reserved atomically before a public comment is created.
         // Localhost intentionally bypasses this temporary public limit while
         // writing to the very same production thread for testing.
@@ -168,7 +181,12 @@ export async function POST(req: NextRequest) {
       }
 
       const createdComment = await tx.podcastComment.create({
-        data: { episodeId, body: comment, visitorKey: key },
+        data: {
+          episodeId,
+          body: comment,
+          visitorKey: key,
+          hidden: Boolean(shadowBan),
+        },
         select: { id: true, body: true, createdAt: true },
       });
       return { status: "created" as const, comment: createdComment };
