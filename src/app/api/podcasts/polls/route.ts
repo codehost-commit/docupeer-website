@@ -67,6 +67,7 @@ const pollInclude = {
 };
 
 async function pollList(visitorKey: string | null) {
+  const now = new Date();
   const polls = await prisma.podcastPoll.findMany({
     orderBy: { createdAt: "desc" },
     include: pollInclude,
@@ -84,6 +85,7 @@ async function pollList(visitorKey: string | null) {
     title: poll.title,
     description: poll.description,
     createdAt: poll.createdAt,
+    endsAt: poll.endsAt,
     totalVotes: poll.options.reduce((sum, option) => sum + option._count.votes, 0),
     options: poll.options.map((option) => ({
       id: option.id,
@@ -91,7 +93,7 @@ async function pollList(visitorKey: string | null) {
       votes: option._count.votes,
     })),
     selectedOptionId: selected.get(poll.id) ?? null,
-    canVote: !visitorKey || !selected.has(poll.id),
+    canVote: (!poll.endsAt || poll.endsAt > now) && (!visitorKey || !selected.has(poll.id)),
   }));
 }
 
@@ -139,11 +141,16 @@ export async function POST(req: NextRequest) {
       if (new Set(options.map((option: string) => option.toLocaleLowerCase())).size !== options.length) {
         return pollError(req, "Each choice must be different.");
       }
+      const durationMinutes = body.durationMinutes;
+      if (!Number.isInteger(durationMinutes) || durationMinutes < 1 || durationMinutes > 365 * 24 * 60) {
+        return pollError(req, "Choose a poll duration between 1 minute and 365 days.");
+      }
 
       await prisma.podcastPoll.create({
         data: {
           title,
           description,
+          endsAt: new Date(Date.now() + durationMinutes * 60_000),
           options: {
             create: options.map((label: string, position: number) => ({ label, position })),
           },
@@ -171,10 +178,20 @@ export async function POST(req: NextRequest) {
     }
     const visitorKey = local ? null : podcastVisitorKey(req);
     const option = await prisma.podcastPollOption.findFirst({
-      where: { id: optionId, pollId },
+      where: {
+        id: optionId,
+        pollId,
+        poll: { OR: [{ endsAt: null }, { endsAt: { gt: new Date() } }] },
+      },
       select: { id: true },
     });
-    if (!option) return pollError(req, "That poll choice no longer exists.", 404);
+    if (!option) {
+      const poll = await prisma.podcastPoll.findUnique({ where: { id: pollId }, select: { endsAt: true } });
+      if (poll?.endsAt && poll.endsAt <= new Date()) {
+        return pollError(req, "This poll has ended.", 409);
+      }
+      return pollError(req, "That poll choice no longer exists.", 404);
+    }
 
     await prisma.podcastPollVote.create({
       data: { pollId, optionId, visitorKey },

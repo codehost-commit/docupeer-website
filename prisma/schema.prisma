@@ -231,6 +231,7 @@ model PodcastPoll {
   title       String
   description String
   createdAt   DateTime            @default(now())
+  endsAt      DateTime?
   options     PodcastPollOption[]
   votes       PodcastPollVote[]
 }

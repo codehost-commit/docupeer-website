@@ -1,0 +1,1 @@
+ALTER TABLE "PodcastPoll" ADD COLUMN "endsAt" TIMESTAMP(3);
