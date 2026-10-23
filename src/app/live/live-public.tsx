@@ -3,6 +3,7 @@
 import type { FormEvent } from "react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { PodcastPolls } from "./PodcastPolls";
 import {
   PODCAST_COMMENT_LIMIT,
   PODCAST_COMMENTS_OPEN,
@@ -427,6 +428,8 @@ export function PodcastPublic() {
               </div>
             </div>
           </section>
+
+          <PodcastPolls />
 
           {show === "ackee" ? (
             <section className="mt-8 rounded-3xl border border-dashed border-deep-border-strong bg-deep-panel2/70 px-6 py-12 text-center sm:px-10">

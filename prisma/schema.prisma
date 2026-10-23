@@ -226,6 +226,40 @@ model PodcastAnnouncementReaction {
   @@index([reaction])
 }
 
+model PodcastPoll {
+  id          String              @id @default(cuid())
+  title       String
+  description String
+  createdAt   DateTime            @default(now())
+  options     PodcastPollOption[]
+  votes       PodcastPollVote[]
+}
+
+model PodcastPollOption {
+  id       String            @id @default(cuid())
+  pollId   String
+  poll     PodcastPoll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  label    String
+  position Int
+  votes    PodcastPollVote[]
+
+  @@index([pollId, position])
+  @@unique([id, pollId])
+}
+
+model PodcastPollVote {
+  id         String            @id @default(cuid())
+  pollId     String
+  poll       PodcastPoll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  optionId   String
+  option     PodcastPollOption @relation(fields: [optionId, pollId], references: [id, pollId], onDelete: Cascade)
+  visitorKey String?
+  createdAt  DateTime          @default(now())
+
+  @@unique([pollId, visitorKey])
+  @@index([optionId])
+}
+
 model AdminMetrics {
   id        String   @id @default("global")
   pageViews Int      @default(0)
