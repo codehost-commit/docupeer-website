@@ -370,6 +370,28 @@ export default function Home() {
                 className="h-24 w-auto object-contain sm:h-28"
               />
             </a>
+            <div className="inline-block text-center">
+              <a
+                href="https://www.thebusinesslisting.co.uk/badge/TBL-W95T6J/"
+                rel="nofollow noopener"
+                target="_blank"
+              >
+                <img
+                  src="https://www.thebusinesslisting.co.uk/badge/TBL-W95T6J.svg"
+                  alt="Listed on The Business Listing"
+                  width="200"
+                  className="mx-auto block max-w-full border-0"
+                />
+              </a>
+              <a
+                href="https://www.thebusinesslisting.co.uk/badge/TBL-W95T6J/directory/"
+                rel="nofollow noopener"
+                target="_blank"
+                className="mt-1.5 inline-block font-sans text-xs leading-[1.4] text-[#666666] no-underline"
+              >
+                Washington Business Directory
+              </a>
+            </div>
           </div>
         </div>
       </section>
