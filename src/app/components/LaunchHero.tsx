@@ -31,6 +31,35 @@ export function LaunchHero() {
                 Sign up
               </Link>
             </div>
+            <div className="mt-5">
+              <a
+                href="https://vcboom.com/?promo=PARTNER-DOCUPEER"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "10px 16px",
+                  borderRadius: 999,
+                  border: "1px solid #211D15",
+                  background: "#fff",
+                  fontFamily: "system-ui,sans-serif",
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: "#211D15",
+                  textDecoration: "none",
+                }}
+              >
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    background: "#16a34a",
+                  }}
+                />
+                Official VC Boom partner
+              </a>
+            </div>
           </div>
 
           <div className="relative">

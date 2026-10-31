@@ -370,35 +370,14 @@ export default function Home() {
                 className="h-24 w-auto object-contain sm:h-28"
               />
             </a>
-            <div style={{ display: "inline-block", textAlign: "center" }}>
-              <a
-                href="https://www.thebusinesslisting.co.uk/badge/TBL-NUESAT/"
-                rel="nofollow noopener"
-                target="_blank"
-              >
-                <img
-                  src="https://www.thebusinesslisting.co.uk/badge/TBL-NUESAT.svg"
-                  alt="Listed on The Business Listing"
-                  width={200}
-                  style={{ border: 0, display: "block", margin: "0 auto", maxWidth: "100%" }}
-                />
-              </a>
-              <a
-                href="https://www.thebusinesslisting.co.uk/badge/TBL-NUESAT/directory/"
-                rel="nofollow noopener"
-                target="_blank"
-                style={{
-                  display: "inline-block",
-                  marginTop: 6,
-                  fontFamily: "Arial, Helvetica, sans-serif",
-                  fontSize: 12,
-                  color: "#666666",
-                  textDecoration: "none",
-                  lineHeight: 1.4,
-                }}
-              >
-                Abbots Langley Business Directory
-              </a>
+            <div className="inline-flex h-28 w-44 items-center justify-center rounded-md px-3 sm:h-32 sm:w-52">
+              <Image
+                src="/partners/VC-Boom-Partner-Logo.svg"
+                alt="VC Boom"
+                width={2024}
+                height={656}
+                className="h-auto w-full object-contain"
+              />
             </div>
           </div>
         </div>
