@@ -379,6 +379,18 @@ export default function Home() {
                 className="h-auto w-full object-contain"
               />
             </div>
+            <a
+              href="https://www.medaestheticsos.io/ref/docupeer-7sus"
+              target="_blank"
+              rel="noopener"
+            >
+              <img
+                src="https://www.medaestheticsos.io/partner-badge.svg"
+                alt="MedAestheticsOS Official Technology Partner"
+                width={220}
+                height={64}
+              />
+            </a>
           </div>
         </div>
       </section>
