@@ -372,19 +372,19 @@ export default function Home() {
             </a>
             <div style={{ display: "inline-block", textAlign: "center" }}>
               <a
-                href="https://www.thebusinesslisting.co.uk/badge/TBL-FF6D7S/"
+                href="https://www.thebusinesslisting.co.uk/badge/TBL-NUESAT/"
                 rel="nofollow noopener"
                 target="_blank"
               >
                 <img
-                  src="https://www.thebusinesslisting.co.uk/badge/TBL-FF6D7S.svg"
+                  src="https://www.thebusinesslisting.co.uk/badge/TBL-NUESAT.svg"
                   alt="Listed on The Business Listing"
                   width={200}
                   style={{ border: 0, display: "block", margin: "0 auto", maxWidth: "100%" }}
                 />
               </a>
               <a
-                href="https://www.thebusinesslisting.co.uk/badge/TBL-FF6D7S/directory/"
+                href="https://www.thebusinesslisting.co.uk/badge/TBL-NUESAT/directory/"
                 rel="nofollow noopener"
                 target="_blank"
                 style={{
