@@ -372,19 +372,19 @@ export default function Home() {
             </a>
             <div style={{ display: "inline-block", textAlign: "center" }}>
               <a
-                href="https://www.thebusinesslisting.co.uk/badge/TBL-QH4HEP/"
+                href="https://www.thebusinesslisting.co.uk/badge/TBL-MPV8AG/"
                 rel="nofollow noopener"
                 target="_blank"
               >
                 <img
-                  src="https://www.thebusinesslisting.co.uk/badge/TBL-QH4HEP.svg"
+                  src="https://www.thebusinesslisting.co.uk/badge/TBL-MPV8AG.svg"
                   alt="Listed on The Business Listing"
                   width={200}
                   style={{ border: 0, display: "block", margin: "0 auto", maxWidth: "100%" }}
                 />
               </a>
               <a
-                href="https://www.thebusinesslisting.co.uk/badge/TBL-QH4HEP/directory/"
+                href="https://www.thebusinesslisting.co.uk/badge/TBL-MPV8AG/directory/"
                 rel="nofollow noopener"
                 target="_blank"
                 style={{
@@ -397,7 +397,7 @@ export default function Home() {
                   lineHeight: 1.4,
                 }}
               >
-                UK Business Directory
+                Abbots Langley Business Directory
               </a>
             </div>
           </div>
