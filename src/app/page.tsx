@@ -370,7 +370,7 @@ export default function Home() {
                 className="h-24 w-auto object-contain sm:h-28"
               />
             </a>
-            <div className="inline-block text-center">
+            <div style={{ display: "inline-block", textAlign: "center" }}>
               <a
                 href="https://www.thebusinesslisting.co.uk/badge/TBL-W95T6J/"
                 rel="nofollow noopener"
@@ -379,15 +379,23 @@ export default function Home() {
                 <img
                   src="https://www.thebusinesslisting.co.uk/badge/TBL-W95T6J.svg"
                   alt="Listed on The Business Listing"
-                  width="200"
-                  className="mx-auto block max-w-full border-0"
+                  width={200}
+                  style={{ border: 0, display: "block", margin: "0 auto", maxWidth: "100%" }}
                 />
               </a>
               <a
                 href="https://www.thebusinesslisting.co.uk/badge/TBL-W95T6J/directory/"
                 rel="nofollow noopener"
                 target="_blank"
-                className="mt-1.5 inline-block font-sans text-xs leading-[1.4] text-[#666666] no-underline"
+                style={{
+                  display: "inline-block",
+                  marginTop: 6,
+                  fontFamily: "Arial, Helvetica, sans-serif",
+                  fontSize: 12,
+                  color: "#666666",
+                  textDecoration: "none",
+                  lineHeight: 1.4,
+                }}
               >
                 Washington Business Directory
               </a>
