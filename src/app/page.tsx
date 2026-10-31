@@ -397,7 +397,7 @@ export default function Home() {
                   lineHeight: 1.4,
                 }}
               >
-                UK Business Directory
+                Abbots Langley Business Directory
               </a>
             </div>
           </div>
