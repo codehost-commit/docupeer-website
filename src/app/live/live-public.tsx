@@ -57,14 +57,6 @@ function DefaultAvatar({ className = "" }: { className?: string }) {
   );
 }
 
-function formatCommentDate(value: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(value));
-}
-
 function ReactionIcon({ reaction }: { reaction: AnnouncementReaction }) {
   return (
     <svg
@@ -630,12 +622,7 @@ export function PodcastPublic() {
                                 <DefaultAvatar className="h-9 w-9" />
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-start justify-between gap-3">
-                                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                                      <span className="text-sm font-semibold">DocuPeer listener</span>
-                                      <time className="text-[11px] text-deep-dim">
-                                        {formatCommentDate(item.createdAt)}
-                                      </time>
-                                    </div>
+                                    <span className="text-sm font-semibold">DocuPeer listener</span>
                                     {testingOnLocalhost && (
                                       <button
                                         type="button"
