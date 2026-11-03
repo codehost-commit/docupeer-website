@@ -1,5 +1,5 @@
-export const PODCAST_COMMENT_LIMIT = 15;
-export const PODCAST_COMMENTS_OPEN = false;
+export const PODCAST_COMMENT_LIMIT = 10;
+export const PODCAST_COMMENTS_OPEN = true;
 
 const R2_SEASON_TWO_BASE_URL =
   "https://pub-6cccbfda38a24d07867ed6116b4ad012.r2.dev/season-2";
