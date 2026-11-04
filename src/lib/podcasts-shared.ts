@@ -1,5 +1,5 @@
-export const PODCAST_COMMENT_LIMIT = 10;
 export const PODCAST_COMMENTS_OPEN = true;
+export const PODCAST_FEEDBACK_THREAD_ID = "podcast-feedback";
 
 const R2_SEASON_TWO_BASE_URL =
   "https://pub-6cccbfda38a24d07867ed6116b4ad012.r2.dev/season-2";
@@ -43,6 +43,9 @@ export const SEASON_TWO_EPISODES = [
 ] as const;
 
 export type PodcastEpisodeId = (typeof SEASON_TWO_EPISODES)[number]["id"];
+export type PodcastCommentThreadId =
+  | PodcastEpisodeId
+  | typeof PODCAST_FEEDBACK_THREAD_ID;
 
 export type PodcastComment = {
   id: string;
@@ -55,4 +58,10 @@ export function isPodcastEpisodeId(value: unknown): value is PodcastEpisodeId {
     typeof value === "string" &&
     SEASON_TWO_EPISODES.some((episode) => episode.id === value)
   );
+}
+
+export function isPodcastCommentThreadId(
+  value: unknown
+): value is PodcastCommentThreadId {
+  return value === PODCAST_FEEDBACK_THREAD_ID || isPodcastEpisodeId(value);
 }

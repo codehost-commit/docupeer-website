@@ -9,8 +9,7 @@ import {
   podcastVisitorKey,
 } from "@/lib/podcast-visitor";
 import {
-  isPodcastEpisodeId,
-  PODCAST_COMMENT_LIMIT,
+  isPodcastCommentThreadId,
   PODCAST_COMMENTS_OPEN,
 } from "@/lib/podcasts-shared";
 
@@ -76,13 +75,16 @@ function isSameOrigin(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    const episodeId = req.nextUrl.searchParams.get("episode");
-    if (!isPodcastEpisodeId(episodeId)) return commentError(req, "Unknown episode.", 404);
+    const threadId =
+      req.nextUrl.searchParams.get("thread") ||
+      req.nextUrl.searchParams.get("episode");
+    if (!isPodcastCommentThreadId(threadId)) {
+      return commentError(req, "Unknown comment thread.", 404);
+    }
 
     if (!PODCAST_COMMENTS_OPEN) {
       return commentJson(req, {
         comments: [],
-        limit: PODCAST_COMMENT_LIMIT,
         canComment: false,
       });
     }
@@ -90,33 +92,24 @@ export async function GET(req: NextRequest) {
     const local = isLocalCommentRequest(req);
     const key = local ? null : podcastVisitorKey(req);
 
-    const [comments, existingComment] = await Promise.all([
-      prisma.podcastComment.findMany({
-        where: {
-          episodeId,
-          OR: [
-            { hidden: false },
-            ...(key ? [{ hidden: true, visitorKey: key }] : []),
-          ],
-        },
-        orderBy: { createdAt: "asc" },
-        select: { id: true, body: true, createdAt: true },
-      }),
-      key
-        ? prisma.podcastComment.findUnique({
-            where: { visitorKey: key },
-            select: { id: true },
-          })
-        : null,
-    ]);
+    const comments = await prisma.podcastComment.findMany({
+      where: {
+        episodeId: threadId,
+        OR: [
+          { hidden: false },
+          ...(key ? [{ hidden: true, visitorKey: key }] : []),
+        ],
+      },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, body: true, createdAt: true },
+    });
 
     return commentJson(req, {
       comments: comments.map((comment) => ({
         ...comment,
         createdAt: comment.createdAt.toISOString(),
       })),
-      limit: PODCAST_COMMENT_LIMIT,
-      canComment: local || !existingComment,
+      canComment: true,
     });
   } catch (err) {
     return withLocalCors(req, handleRouteError(err));
@@ -199,10 +192,12 @@ export async function POST(req: NextRequest) {
     const key = local ? null : podcastVisitorKey(req);
 
     const body = await req.json().catch(() => ({}));
-    const episodeId = body.episodeId;
+    const threadId = body.threadId || body.episodeId;
     const comment = typeof body.comment === "string" ? body.comment.trim() : "";
 
-    if (!isPodcastEpisodeId(episodeId)) return commentError(req, "Unknown episode.", 404);
+    if (!isPodcastCommentThreadId(threadId)) {
+      return commentError(req, "Unknown comment thread.", 404);
+    }
     if (!comment) return commentError(req, "Write a comment before posting.");
     if (comment.length > MAX_COMMENT_LENGTH) {
       return commentError(req, `Comments can be up to ${MAX_COMMENT_LENGTH} characters.`);
@@ -216,76 +211,43 @@ export async function POST(req: NextRequest) {
           })
         : null;
 
-      if (key) {
-        const existingComment = await tx.podcastComment.findUnique({
-          where: { visitorKey: key },
-          select: { id: true },
-        });
-        if (existingComment) return { status: "already-commented" as const };
-      }
-
       await tx.podcastEpisode.upsert({
-        where: { id: episodeId },
-        create: { id: episodeId },
+        where: { id: threadId },
+        create: { id: threadId },
         update: {},
       });
 
-      if (!local && !shadowBan) {
-        // The count is reserved atomically before a public comment is created.
-        // Localhost intentionally bypasses this temporary public limit while
-        // writing to the very same production thread for testing.
-        const reservation = await tx.podcastEpisode.updateMany({
-          where: {
-            id: episodeId,
-            commentCount: { lt: PODCAST_COMMENT_LIMIT },
-          },
+      if (!shadowBan) {
+        await tx.podcastEpisode.update({
+          where: { id: threadId },
           data: { commentCount: { increment: 1 } },
         });
-
-        if (reservation.count === 0) return { status: "episode-full" as const };
       }
 
       const createdComment = await tx.podcastComment.create({
         data: {
-          episodeId,
+          episodeId: threadId,
           body: comment,
           visitorKey: key,
           hidden: Boolean(shadowBan),
         },
         select: { id: true, body: true, createdAt: true },
       });
-      return { status: "created" as const, comment: createdComment };
+      return createdComment;
     });
-
-    if (created.status === "already-commented") {
-      return commentError(req, "You can post one comment across DocuPeer Podcasts.", 409);
-    }
-
-    if (created.status === "episode-full") {
-      return commentError(
-        req,
-        `This episode has reached its temporary ${PODCAST_COMMENT_LIMIT}-comment limit.`,
-        409
-      );
-    }
 
     return commentJson(
       req,
       {
         comment: {
-          ...created.comment,
-          createdAt: created.comment.createdAt.toISOString(),
+          ...created,
+          createdAt: created.createdAt.toISOString(),
         },
-        limit: PODCAST_COMMENT_LIMIT,
-        canComment: local,
+        canComment: true,
       },
       201
     );
   } catch (err) {
-    // A simultaneous second submission may win the unique-key race above.
-    if ((err as { code?: string })?.code === "P2002") {
-      return commentError(req, "You can post one comment across DocuPeer Podcasts.", 409);
-    }
     return withLocalCors(req, handleRouteError(err));
   }
 }

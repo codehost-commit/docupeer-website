@@ -199,12 +199,13 @@ model PodcastComment {
   id        String         @id @default(cuid())
   episodeId String
   episode   PodcastEpisode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
-  visitorKey String?       @unique
+  visitorKey String?
   body      String
   hidden    Boolean        @default(false)
   createdAt DateTime       @default(now())
 
   @@index([episodeId, createdAt])
+  @@index([visitorKey])
 }
 
 model PodcastCommentShadowBan {

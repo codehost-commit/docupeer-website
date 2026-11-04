@@ -1,12 +1,13 @@
 "use client";
 
 import type { FormEvent } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PodcastPolls } from "./PodcastPolls";
 import {
-  PODCAST_COMMENT_LIMIT,
   PODCAST_COMMENTS_OPEN,
+  PODCAST_FEEDBACK_THREAD_ID,
   SEASON_TWO_EPISODES,
   type PodcastComment,
   type PodcastEpisodeId,
@@ -87,7 +88,6 @@ export function PodcastPublic() {
   const [posting, setPosting] = useState(false);
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
   const [commentError, setCommentError] = useState("");
-  const [canComment, setCanComment] = useState(true);
   const [announcementCounts, setAnnouncementCounts] = useState<AnnouncementCounts>({
     likes: 0,
     dislikes: 0,
@@ -96,56 +96,60 @@ export function PodcastPublic() {
   const [announcementVoting, setAnnouncementVoting] = useState(false);
   const [announcementError, setAnnouncementError] = useState("");
   const [testingOnLocalhost, setTestingOnLocalhost] = useState(false);
+  const commentsListRef = useRef<HTMLDivElement>(null);
 
   const episode = SEASON_TWO_EPISODES.find((item) => item.id === episodeId)!;
-  const reachedPublicCommentLimit =
-    !testingOnLocalhost && comments.length >= PODCAST_COMMENT_LIMIT;
 
   useEffect(() => {
     setTestingOnLocalhost(isLocalhostUrl());
   }, []);
 
   useEffect(() => {
+    const list = commentsListRef.current;
+    if (list) list.scrollTop = list.scrollHeight;
+  }, [comments.length]);
+
+  useEffect(() => {
     setComments([]);
     setCommentError("");
-    setCanComment(true);
-
-    if (show !== "podcasts" || season !== 2 || !episode.available) {
-      setLoadingComments(false);
-      return;
-    }
 
     if (!PODCAST_COMMENTS_OPEN) {
-      setCanComment(false);
       setLoadingComments(false);
       return;
     }
 
     let cancelled = false;
     setLoadingComments(true);
-
-    fetch(`${commentsApiUrl()}?episode=${encodeURIComponent(episodeId)}`, {
-      cache: "no-store",
-    })
-      .then(async (response) => {
+    const loadComments = async () => {
+      try {
+        const response = await fetch(
+          `${commentsApiUrl()}?thread=${encodeURIComponent(PODCAST_FEEDBACK_THREAD_ID)}`,
+          { cache: "no-store" }
+        );
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Could not load comments.");
         if (!cancelled) {
           setComments(data.comments || []);
-          setCanComment(data.canComment !== false);
         }
-      })
-      .catch((err) => {
-        if (!cancelled) setCommentError(err.message || "Could not load comments.");
-      })
-      .finally(() => {
+      } catch (err) {
+        if (!cancelled) {
+          setCommentError(
+            err instanceof Error ? err.message : "Could not load comments."
+          );
+        }
+      } finally {
         if (!cancelled) setLoadingComments(false);
-      });
+      }
+    };
+
+    void loadComments();
+    const refreshTimer = window.setInterval(loadComments, 10_000);
 
     return () => {
       cancelled = true;
+      window.clearInterval(refreshTimer);
     };
-  }, [episode.available, episodeId, season, show]);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -176,7 +180,7 @@ export function PodcastPublic() {
   async function postComment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const body = comment.trim();
-    if (!episode.available || !canComment || !body || posting) return;
+    if (!body || posting) return;
 
     setPosting(true);
     setCommentError("");
@@ -184,14 +188,16 @@ export function PodcastPublic() {
       const response = await fetch(commentsApiUrl(), {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ episodeId, comment: body }),
+        body: JSON.stringify({
+          threadId: PODCAST_FEEDBACK_THREAD_ID,
+          comment: body,
+        }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Could not post your comment.");
 
       setComments((current) => [...current, data.comment]);
       setComment("");
-      setCanComment(data.canComment !== false);
     } catch (err) {
       setCommentError(
         err instanceof Error ? err.message : "Could not post your comment."
@@ -367,12 +373,11 @@ export function PodcastPublic() {
                   Announcement from the team
                 </p>
                 <h2 id="team-announcement-heading" className="mt-4 text-3xl sm:text-4xl">
-                  We&apos;re listening—and evolving the podcast.
+                  Aryan did not cheat.
                 </h2>
                 <p className="mt-4 text-sm leading-7 text-deep-text-soft sm:text-base">
-                  Thank you for the feedback. By Episode 30, we&apos;ll begin
-                  refreshing the podcast style, with Aryan taking the main camera
-                  and POV. Pritam will remain part of Lake Kingdom.
+                  Aryan had a mangrove nearby, grew bamboo, and finished his house
+                  at 4 a.m. The team considers the matter settled.
                 </p>
               </div>
 
@@ -419,6 +424,116 @@ export function PodcastPublic() {
                 )}
               </div>
             </div>
+            <figure className="border-t border-deep-border px-6 py-6 sm:px-8">
+              <Image
+                src="/announcements/aryan-house-message.png"
+                alt="Message from Aryan saying he finished his house."
+                width={1131}
+                height={136}
+                className="h-auto w-full rounded-xl border border-deep-border"
+              />
+            </figure>
+          </section>
+
+          <section
+            className="mt-8 overflow-hidden rounded-3xl border border-deep-border bg-deep-panel shadow-panel"
+            aria-labelledby="podcast-feedback-heading"
+          >
+            <div className="border-b border-deep-border px-5 py-5 sm:px-7">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-deep-dim">
+                    Community discussion
+                  </p>
+                  <h2 id="podcast-feedback-heading" className="mt-1 text-3xl">
+                    Let us know what you want us to do now
+                  </h2>
+                </div>
+                <span className="w-fit rounded-full bg-deep-accent-soft px-3 py-1 text-xs font-semibold text-deep-accent">
+                  {comments.length} {comments.length === 1 ? "message" : "messages"}
+                </span>
+              </div>
+              <p className="mt-2 text-sm leading-6 text-deep-text-soft">
+                Share as many ideas as you like. Everyone can read the full discussion.
+              </p>
+            </div>
+
+            <div
+              ref={commentsListRef}
+              className="max-h-80 min-h-40 space-y-4 overflow-y-auto px-5 py-5 sm:px-7"
+              aria-live="polite"
+            >
+              {!PODCAST_COMMENTS_OPEN ? (
+                <p className="text-sm text-deep-dim">The discussion is closed for now.</p>
+              ) : loadingComments ? (
+                <p className="text-sm text-deep-dim">Loading messages…</p>
+              ) : comments.length === 0 ? (
+                <div className="flex flex-col items-center py-5 text-center">
+                  <DefaultAvatar className="h-12 w-12" />
+                  <p className="mt-3 text-sm font-medium text-deep-text">Start the conversation</p>
+                  <p className="mt-1 text-xs leading-5 text-deep-dim">
+                    Be the first to tell the team what should happen next.
+                  </p>
+                </div>
+              ) : (
+                comments.map((item) => (
+                  <article key={item.id} className="flex gap-3">
+                    <DefaultAvatar className="h-9 w-9" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-3">
+                        <span className="text-sm font-semibold">DocuPeer listener</span>
+                        {testingOnLocalhost && (
+                          <button
+                            type="button"
+                            onClick={() => deleteComment(item)}
+                            disabled={Boolean(deletingCommentId)}
+                            className="shrink-0 text-[11px] font-semibold text-deep-bad transition hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {deletingCommentId === item.id ? "Deleting…" : "Delete"}
+                          </button>
+                        )}
+                      </div>
+                      <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-deep-text-soft">
+                        {item.body}
+                      </p>
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
+
+            {PODCAST_COMMENTS_OPEN && (
+              <form onSubmit={postComment} className="border-t border-deep-border p-4 sm:px-7 sm:py-5">
+                <label htmlFor="podcast-feedback" className="sr-only">
+                  Add a message
+                </label>
+                <textarea
+                  id="podcast-feedback"
+                  value={comment}
+                  onChange={(event) => setComment(event.target.value)}
+                  maxLength={300}
+                  rows={3}
+                  disabled={posting}
+                  placeholder="Tell us what you want us to do next…"
+                  className="input min-h-[5.5rem] resize-none disabled:cursor-not-allowed disabled:opacity-60"
+                />
+                <div className="mt-2 flex items-center justify-between gap-3">
+                  <span className="text-[11px] text-deep-dim">{comment.length}/300</span>
+                  <button
+                    type="submit"
+                    disabled={!comment.trim() || posting}
+                    className="btn-primary px-4 py-2 text-xs"
+                  >
+                    {posting ? "Posting…" : "Post message"}
+                  </button>
+                </div>
+                {commentError && (
+                  <p role="alert" className="mt-2 text-xs font-medium text-deep-bad">
+                    {commentError}
+                  </p>
+                )}
+              </form>
+            )}
           </section>
 
           <PodcastPolls />
@@ -526,7 +641,7 @@ export function PodcastPublic() {
                       })}
                     </div>
 
-                    <div className="mt-6 grid gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
+                    <div className="mt-6">
                       <article className="overflow-hidden rounded-2xl border border-deep-border bg-[#101823] shadow-panel">
                         <div className="flex items-center justify-between gap-4 border-b border-white/10 bg-[#172534] px-4 py-3 text-white">
                           <div>
@@ -566,122 +681,6 @@ export function PodcastPublic() {
                           </div>
                         )}
                       </article>
-
-                      <aside className="flex min-h-[30rem] flex-col rounded-2xl border border-deep-border bg-deep-panel2">
-                        <div className="border-b border-deep-border px-5 py-4">
-                          <div className="flex items-center justify-between gap-4">
-                            <h4 className="text-xl">Comments</h4>
-                            <span className="rounded-full bg-deep-accent-soft px-2.5 py-1 text-[11px] font-semibold text-deep-accent">
-                              {episode.available
-                                ? !PODCAST_COMMENTS_OPEN
-                                  ? "Closed"
-                                  : testingOnLocalhost
-                                  ? `${comments.length} live`
-                                  : `${comments.length} comments`
-                                : "Coming soon"}
-                            </span>
-                          </div>
-                          <p className="mt-1 text-xs leading-5 text-deep-dim">
-                            {episode.available
-                              ? !PODCAST_COMMENTS_OPEN
-                                ? "Comments are closed for now."
-                                : testingOnLocalhost
-                                ? "Localhost testing posts directly to this live thread without a posting limit."
-                                : `One comment per listener across all podcast episodes. New public comments are temporarily capped at ${PODCAST_COMMENT_LIMIT} per episode for now.`
-                              : "Comments will open when this episode is released."}
-                          </p>
-                        </div>
-
-                        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4 xl:max-h-[27rem]">
-                          {!episode.available ? (
-                            <div className="flex flex-col items-center py-8 text-center">
-                              <DefaultAvatar className="h-12 w-12" />
-                              <p className="mt-3 text-sm font-medium text-deep-text">Comments are not open yet</p>
-                              <p className="mt-1 text-xs leading-5 text-deep-dim">
-                                Come back when Episode {episode.number} premieres.
-                              </p>
-                            </div>
-                          ) : !PODCAST_COMMENTS_OPEN ? (
-                            <div className="flex flex-col items-center py-8 text-center">
-                              <DefaultAvatar className="h-12 w-12" />
-                              <p className="mt-3 text-sm font-medium text-deep-text">Comments are closed for now</p>
-                            </div>
-                          ) : loadingComments ? (
-                            <p className="text-sm text-deep-dim">Loading comments…</p>
-                          ) : comments.length === 0 ? (
-                            <div className="flex flex-col items-center py-8 text-center">
-                              <DefaultAvatar className="h-12 w-12" />
-                              <p className="mt-3 text-sm font-medium text-deep-text">Start the conversation</p>
-                              <p className="mt-1 text-xs leading-5 text-deep-dim">
-                                Be the first to leave a thought on this episode.
-                              </p>
-                            </div>
-                          ) : (
-                            comments.map((item) => (
-                              <article key={item.id} className="flex gap-3">
-                                <DefaultAvatar className="h-9 w-9" />
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex items-start justify-between gap-3">
-                                    <span className="text-sm font-semibold">DocuPeer listener</span>
-                                    {testingOnLocalhost && (
-                                      <button
-                                        type="button"
-                                        onClick={() => deleteComment(item)}
-                                        disabled={Boolean(deletingCommentId)}
-                                        className="shrink-0 text-[11px] font-semibold text-deep-bad transition hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-50"
-                                      >
-                                        {deletingCommentId === item.id ? "Deleting…" : "Delete"}
-                                      </button>
-                                    )}
-                                  </div>
-                                  <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-deep-text-soft">
-                                    {item.body}
-                                  </p>
-                                </div>
-                              </article>
-                            ))
-                          )}
-                        </div>
-
-                        {episode.available && PODCAST_COMMENTS_OPEN && (
-                          <form onSubmit={postComment} className="border-t border-deep-border p-4">
-                            <label htmlFor="podcast-comment" className="sr-only">
-                              Add a comment
-                            </label>
-                            <textarea
-                              id="podcast-comment"
-                              value={comment}
-                              onChange={(event) => setComment(event.target.value)}
-                              maxLength={300}
-                              rows={3}
-                              disabled={!canComment || reachedPublicCommentLimit || posting}
-                              placeholder={
-                              !canComment
-                                ? "You have already posted your one podcast comment."
-                                : reachedPublicCommentLimit
-                                  ? "This episode's temporary comment limit has been reached."
-                                  : "Share a thought…"
-                              }
-                              className="input min-h-[5.5rem] resize-none disabled:cursor-not-allowed disabled:opacity-60"
-                            />
-                            <div className="mt-2 flex items-center justify-between gap-3">
-                              <span className="text-[11px] text-deep-dim">{comment.length}/300</span>
-                              <button
-                                type="submit"
-                                disabled={!canComment || !comment.trim() || posting || reachedPublicCommentLimit}
-                                className="btn-primary px-4 py-2 text-xs"
-                              >
-                                {posting ? "Posting…" : "Post comment"}
-                              </button>
-                            </div>
-                            {commentError && (
-                              <p role="alert" className="mt-2 text-xs font-medium text-deep-bad">
-                                {commentError}
-                              </p>
-                            )}
-                          </form>
-                        )}
-                      </aside>
                     </div>
                   </div>
                 )}
