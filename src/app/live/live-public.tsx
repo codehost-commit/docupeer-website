@@ -1,15 +1,13 @@
 "use client";
 
-import type { FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { PodcastDiscussion } from "./PodcastDiscussion";
 import { PodcastPolls } from "./PodcastPolls";
 import {
-  PODCAST_COMMENTS_OPEN,
   PODCAST_FEEDBACK_THREAD_ID,
   SEASON_TWO_EPISODES,
-  type PodcastComment,
   type PodcastEpisodeId,
 } from "@/lib/podcasts-shared";
 
@@ -38,26 +36,6 @@ function announcementApiUrl() {
     : "/api/podcasts/announcement";
 }
 
-function commentsApiUrl() {
-  return isLocalhostUrl()
-    ? "https://docupeer.org/api/podcasts/comments"
-    : "/api/podcasts/comments";
-}
-
-function DefaultAvatar({ className = "" }: { className?: string }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={`grid shrink-0 place-items-center rounded-full bg-[#d9dadd] ${className}`}
-    >
-      <svg viewBox="0 0 48 48" className="h-full w-full fill-[#9ca1a8]">
-        <circle cx="24" cy="17" r="8" />
-        <path d="M8 43c1.4-10.1 7.2-15 16-15s14.6 4.9 16 15H8Z" />
-      </svg>
-    </span>
-  );
-}
-
 function ReactionIcon({ reaction }: { reaction: AnnouncementReaction }) {
   return (
     <svg
@@ -82,12 +60,6 @@ export function PodcastPublic() {
   const [episodeId, setEpisodeId] = useState<PodcastEpisodeId>(
     SEASON_TWO_EPISODES[1].id
   );
-  const [comments, setComments] = useState<PodcastComment[]>([]);
-  const [comment, setComment] = useState("");
-  const [loadingComments, setLoadingComments] = useState(false);
-  const [posting, setPosting] = useState(false);
-  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
-  const [commentError, setCommentError] = useState("");
   const [announcementCounts, setAnnouncementCounts] = useState<AnnouncementCounts>({
     likes: 0,
     dislikes: 0,
@@ -95,61 +67,8 @@ export function PodcastPublic() {
   const [canReactToAnnouncement, setCanReactToAnnouncement] = useState(true);
   const [announcementVoting, setAnnouncementVoting] = useState(false);
   const [announcementError, setAnnouncementError] = useState("");
-  const [testingOnLocalhost, setTestingOnLocalhost] = useState(false);
-  const commentsListRef = useRef<HTMLDivElement>(null);
 
   const episode = SEASON_TWO_EPISODES.find((item) => item.id === episodeId)!;
-
-  useEffect(() => {
-    setTestingOnLocalhost(isLocalhostUrl());
-  }, []);
-
-  useEffect(() => {
-    const list = commentsListRef.current;
-    if (list) list.scrollTop = list.scrollHeight;
-  }, [comments.length]);
-
-  useEffect(() => {
-    setComments([]);
-    setCommentError("");
-
-    if (!PODCAST_COMMENTS_OPEN) {
-      setLoadingComments(false);
-      return;
-    }
-
-    let cancelled = false;
-    setLoadingComments(true);
-    const loadComments = async () => {
-      try {
-        const response = await fetch(
-          `${commentsApiUrl()}?thread=${encodeURIComponent(PODCAST_FEEDBACK_THREAD_ID)}`,
-          { cache: "no-store" }
-        );
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Could not load comments.");
-        if (!cancelled) {
-          setComments(data.comments || []);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setCommentError(
-            err instanceof Error ? err.message : "Could not load comments."
-          );
-        }
-      } finally {
-        if (!cancelled) setLoadingComments(false);
-      }
-    };
-
-    void loadComments();
-    const refreshTimer = window.setInterval(loadComments, 10_000);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(refreshTimer);
-    };
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -176,64 +95,6 @@ export function PodcastPublic() {
       cancelled = true;
     };
   }, []);
-
-  async function postComment(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const body = comment.trim();
-    if (!body || posting) return;
-
-    setPosting(true);
-    setCommentError("");
-    try {
-      const response = await fetch(commentsApiUrl(), {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          threadId: PODCAST_FEEDBACK_THREAD_ID,
-          comment: body,
-        }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Could not post your comment.");
-
-      setComments((current) => [...current, data.comment]);
-      setComment("");
-    } catch (err) {
-      setCommentError(
-        err instanceof Error ? err.message : "Could not post your comment."
-      );
-    } finally {
-      setPosting(false);
-    }
-  }
-
-  async function deleteComment(item: PodcastComment) {
-    if (!testingOnLocalhost || deletingCommentId) return;
-    if (!window.confirm(`Delete this live comment?\n\n${item.body}`)) return;
-
-    const password = window.prompt("Enter the DocuPeer admin password:");
-    if (password === null) return;
-
-    setDeletingCommentId(item.id);
-    setCommentError("");
-    try {
-      const response = await fetch(commentsApiUrl(), {
-        method: "DELETE",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ commentId: item.id, password }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Could not delete the comment.");
-
-      setComments((current) => current.filter((comment) => comment.id !== item.id));
-    } catch (err) {
-      setCommentError(
-        err instanceof Error ? err.message : "Could not delete the comment."
-      );
-    } finally {
-      setDeletingCommentId(null);
-    }
-  }
 
   async function reactToAnnouncement(reaction: AnnouncementReaction) {
     if (!canReactToAnnouncement || announcementVoting) return;
@@ -373,11 +234,14 @@ export function PodcastPublic() {
                   Announcement from the team
                 </p>
                 <h2 id="team-announcement-heading" className="mt-4 text-3xl sm:text-4xl">
-                  Aryan did not cheat.
+                  Aryan did not cheat—he did the work.
                 </h2>
                 <p className="mt-4 text-sm leading-7 text-deep-text-soft sm:text-base">
-                  Aryan had a mangrove nearby, grew bamboo, and finished his house
-                  at 4 a.m. The team considers the matter settled.
+                  Aryan gathered the materials himself, made use of the mangrove
+                  nearby, grew the bamboo he needed, and kept building until 4 a.m.
+                  The finished house came from his own planning, resource gathering,
+                  and construction—not cheating. The team stands behind Aryan and
+                  considers the evidence clear.
                 </p>
               </div>
 
@@ -435,106 +299,15 @@ export function PodcastPublic() {
             </figure>
           </section>
 
-          <section
-            className="mt-8 overflow-hidden rounded-3xl border border-deep-border bg-deep-panel shadow-panel"
-            aria-labelledby="podcast-feedback-heading"
-          >
-            <div className="border-b border-deep-border px-5 py-5 sm:px-7">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-deep-dim">
-                    Community discussion
-                  </p>
-                  <h2 id="podcast-feedback-heading" className="mt-1 text-3xl">
-                    Let us know what you want us to do now
-                  </h2>
-                </div>
-                <span className="w-fit rounded-full bg-deep-accent-soft px-3 py-1 text-xs font-semibold text-deep-accent">
-                  {comments.length} {comments.length === 1 ? "message" : "messages"}
-                </span>
-              </div>
-              <p className="mt-2 text-sm leading-6 text-deep-text-soft">
-                Share as many ideas as you like. Everyone can read the full discussion.
-              </p>
-            </div>
-
-            <div
-              ref={commentsListRef}
-              className="max-h-80 min-h-40 space-y-4 overflow-y-auto px-5 py-5 sm:px-7"
-              aria-live="polite"
-            >
-              {!PODCAST_COMMENTS_OPEN ? (
-                <p className="text-sm text-deep-dim">The discussion is closed for now.</p>
-              ) : loadingComments ? (
-                <p className="text-sm text-deep-dim">Loading messages…</p>
-              ) : comments.length === 0 ? (
-                <div className="flex flex-col items-center py-5 text-center">
-                  <DefaultAvatar className="h-12 w-12" />
-                  <p className="mt-3 text-sm font-medium text-deep-text">Start the conversation</p>
-                  <p className="mt-1 text-xs leading-5 text-deep-dim">
-                    Be the first to tell the team what should happen next.
-                  </p>
-                </div>
-              ) : (
-                comments.map((item) => (
-                  <article key={item.id} className="flex gap-3">
-                    <DefaultAvatar className="h-9 w-9" />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-3">
-                        <span className="text-sm font-semibold">DocuPeer listener</span>
-                        {testingOnLocalhost && (
-                          <button
-                            type="button"
-                            onClick={() => deleteComment(item)}
-                            disabled={Boolean(deletingCommentId)}
-                            className="shrink-0 text-[11px] font-semibold text-deep-bad transition hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            {deletingCommentId === item.id ? "Deleting…" : "Delete"}
-                          </button>
-                        )}
-                      </div>
-                      <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-deep-text-soft">
-                        {item.body}
-                      </p>
-                    </div>
-                  </article>
-                ))
-              )}
-            </div>
-
-            {PODCAST_COMMENTS_OPEN && (
-              <form onSubmit={postComment} className="border-t border-deep-border p-4 sm:px-7 sm:py-5">
-                <label htmlFor="podcast-feedback" className="sr-only">
-                  Add a message
-                </label>
-                <textarea
-                  id="podcast-feedback"
-                  value={comment}
-                  onChange={(event) => setComment(event.target.value)}
-                  maxLength={300}
-                  rows={3}
-                  disabled={posting}
-                  placeholder="Tell us what you want us to do next…"
-                  className="input min-h-[5.5rem] resize-none disabled:cursor-not-allowed disabled:opacity-60"
-                />
-                <div className="mt-2 flex items-center justify-between gap-3">
-                  <span className="text-[11px] text-deep-dim">{comment.length}/300</span>
-                  <button
-                    type="submit"
-                    disabled={!comment.trim() || posting}
-                    className="btn-primary px-4 py-2 text-xs"
-                  >
-                    {posting ? "Posting…" : "Post message"}
-                  </button>
-                </div>
-                {commentError && (
-                  <p role="alert" className="mt-2 text-xs font-medium text-deep-bad">
-                    {commentError}
-                  </p>
-                )}
-              </form>
-            )}
-          </section>
+          <PodcastDiscussion
+            threadId={PODCAST_FEEDBACK_THREAD_ID}
+            eyebrow="Community discussion"
+            heading="Let us know what you want us to do now"
+            description="Share as many ideas as you like. This thread is separate from episode comments, and everyone can read the full discussion."
+            emptyMessage="Be the first to tell the team what should happen next."
+            placeholder="Tell us what you want us to do next…"
+            className="mt-8"
+          />
 
           <PodcastPolls />
 
@@ -641,7 +414,7 @@ export function PodcastPublic() {
                       })}
                     </div>
 
-                    <div className="mt-6">
+                    <div className="mt-6 grid gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
                       <article className="overflow-hidden rounded-2xl border border-deep-border bg-[#101823] shadow-panel">
                         <div className="flex items-center justify-between gap-4 border-b border-white/10 bg-[#172534] px-4 py-3 text-white">
                           <div>
@@ -681,6 +454,24 @@ export function PodcastPublic() {
                           </div>
                         )}
                       </article>
+
+                      {episode.available ? (
+                        <PodcastDiscussion
+                          threadId={episode.id}
+                          eyebrow="Episode discussion"
+                          heading={`${episode.title} comments`}
+                          description="Talk about this episode here. These messages stay separate from the community feedback thread."
+                          emptyMessage="Be the first to leave a thought about this episode."
+                          placeholder="Share a thought about this episode…"
+                        />
+                      ) : (
+                        <aside className="rounded-3xl border border-deep-border bg-deep-panel2 px-6 py-10 text-center">
+                          <p className="text-lg font-semibold text-deep-text">Comments open at release</p>
+                          <p className="mt-2 text-sm leading-6 text-deep-dim">
+                            Come back when {episode.title} is available.
+                          </p>
+                        </aside>
+                      )}
                     </div>
                   </div>
                 )}
