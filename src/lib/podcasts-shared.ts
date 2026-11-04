@@ -1,5 +1,6 @@
 export const PODCAST_COMMENTS_OPEN = true;
 export const PODCAST_FEEDBACK_THREAD_ID = "podcast-feedback-v2";
+export const PODCAST_FEEDBACK_POSTING_OPEN = false;
 
 const R2_SEASON_TWO_BASE_URL =
   "https://pub-6cccbfda38a24d07867ed6116b4ad012.r2.dev/season-2";

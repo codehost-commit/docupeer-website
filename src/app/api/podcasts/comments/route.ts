@@ -11,6 +11,8 @@ import {
 import {
   isPodcastCommentThreadId,
   PODCAST_COMMENTS_OPEN,
+  PODCAST_FEEDBACK_POSTING_OPEN,
+  PODCAST_FEEDBACK_THREAD_ID,
 } from "@/lib/podcasts-shared";
 
 export const dynamic = "force-dynamic";
@@ -197,6 +199,12 @@ export async function POST(req: NextRequest) {
 
     if (!isPodcastCommentThreadId(threadId)) {
       return commentError(req, "Unknown comment thread.", 404);
+    }
+    if (
+      threadId === PODCAST_FEEDBACK_THREAD_ID &&
+      !PODCAST_FEEDBACK_POSTING_OPEN
+    ) {
+      return commentError(req, "This feedback thread is read-only for now.", 403);
     }
     if (!comment) return commentError(req, "Write a comment before posting.");
     if (comment.length > MAX_COMMENT_LENGTH) {

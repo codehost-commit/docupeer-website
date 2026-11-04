@@ -15,6 +15,7 @@ type PodcastDiscussionProps = {
   description: string;
   emptyMessage: string;
   placeholder: string;
+  allowPosting?: boolean;
   className?: string;
 };
 
@@ -55,6 +56,7 @@ export function PodcastDiscussion({
   description,
   emptyMessage,
   placeholder,
+  allowPosting = true,
   className = "",
 }: PodcastDiscussionProps) {
   const [comments, setComments] = useState<PodcastComment[]>([]);
@@ -179,6 +181,7 @@ export function PodcastDiscussion({
             <h2 className="mt-1 text-3xl">{heading}</h2>
           </div>
           <span className="w-fit rounded-full bg-deep-accent-soft px-3 py-1 text-xs font-semibold text-deep-accent">
+            {!allowPosting && "Read only · "}
             {comments.length} {comments.length === 1 ? "message" : "messages"}
           </span>
         </div>
@@ -227,7 +230,7 @@ export function PodcastDiscussion({
         )}
       </div>
 
-      {PODCAST_COMMENTS_OPEN && (
+      {PODCAST_COMMENTS_OPEN && allowPosting && (
         <form onSubmit={postComment} className="border-t border-deep-border p-4 sm:px-7 sm:py-5">
           <label htmlFor={`comment-${threadId}`} className="sr-only">
             Add a message

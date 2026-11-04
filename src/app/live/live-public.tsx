@@ -303,9 +303,10 @@ export function PodcastPublic() {
             threadId={PODCAST_FEEDBACK_THREAD_ID}
             eyebrow="Community discussion"
             heading="Let us know what you want us to do now"
-            description="Share as many ideas as you like. This thread is separate from episode comments, and everyone can read the full discussion."
-            emptyMessage="Be the first to tell the team what should happen next."
+            description="Posting is paused for now, but everyone can still read the full discussion. This thread remains separate from episode comments."
+            emptyMessage="There are no messages in this discussion yet."
             placeholder="Tell us what you want us to do next…"
+            allowPosting={false}
             className="mt-8"
           />
 
