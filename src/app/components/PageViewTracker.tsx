@@ -6,8 +6,7 @@ import { useEffect } from "react";
 function shouldTrack(pathname: string) {
   return !(
     pathname === "/admin" ||
-    pathname === "/status-manage" ||
-    pathname === "/live-manage"
+    pathname === "/status-manage"
   );
 }
 

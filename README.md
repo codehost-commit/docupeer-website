@@ -63,17 +63,6 @@ only on the `AiDetector` interface and the `screenReview()` helper in
   `heuristic` provider ships by default so the flow works end to end. It is
   a placeholder, not a production-grade detector.
 
-## Atom AI Provider
-
-Atom for DocuPeer uses Groq for assignment generation and short label
-normalization. Set `GROQ_ATOM_API_KEY` in Vercel and locally when exercising
-the Atom routes. The default Atom model is `openai/gpt-oss-120b`.
-Each assignment request defaults to 12 questions, 2 diagrams, and a dynamic
-completion cap that keeps the estimated prompt plus output below Groq's 8K
-free-plan tokens-per-minute envelope. Raise `ATOM_GROQ_TOKEN_BUDGET`,
-`ATOM_MAX_QUESTIONS_PER_REQUEST`, `ATOM_MAX_DIAGRAMS_PER_REQUEST`, and
-`ATOM_ASSIGNMENT_MAX_COMPLETION_TOKENS` if your Groq plan allows more.
-
 ## Project structure
 
 ```

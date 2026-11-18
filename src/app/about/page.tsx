@@ -5,7 +5,7 @@ import { SITE_DESCRIPTION, absoluteUrl } from "@/lib/seo";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Learn what DocuPeer is, why it exists, and how Rahul Awasthi is building a free peer review platform for research papers, including its wholly owned subsidiaries Atom Edu and DocuClerk HQ.",
+    "Learn what DocuPeer is, why it exists, and how Rahul Awasthi is building a free peer review platform for research papers, including its wholly owned subsidiary DocuClerk HQ.",
   alternates: {
     canonical: "/about",
   },
@@ -56,14 +56,6 @@ const FOUNDERS: Person[] = [
 ];
 
 const SUBSIDIARIES: Subsidiary[] = [
-  {
-    name: "Atom Edu",
-    href: "https://atom-edu.org",
-    logo: "/partners/atom-edu-logo-tight.png",
-    logoAlt: "Atom Edu logo",
-    body: "Atom Edu is an edtech company committed to saving teachers time and making it easier to manage students, create assignments, and keep classroom work moving with less friction.",
-    logoClassName: "mix-blend-multiply",
-  },
   {
     name: "DocuClerk HQ",
     href: "https://docuclerkhq.com/about.html",
@@ -200,13 +192,6 @@ export default function AboutPage() {
         subOrganization: [
           {
             "@type": "Organization",
-            name: "Atom Edu",
-            url: "https://atom-edu.org",
-            description:
-              "A wholly owned DocuPeer subsidiary building edtech tools that save teachers time and make student management easier.",
-          },
-          {
-            "@type": "Organization",
             name: "DocuClerk HQ",
             url: "https://docuclerkhq.com/about.html",
             description:
@@ -254,7 +239,7 @@ export default function AboutPage() {
       {/* Subsidiary */}
       <section className="mt-24">
         <SectionHeader title="Our subsidiaries" />
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="mx-auto max-w-2xl">
           {SUBSIDIARIES.map((subsidiary) => (
             <SubsidiaryCard key={subsidiary.name} subsidiary={subsidiary} />
           ))}

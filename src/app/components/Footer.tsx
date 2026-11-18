@@ -19,7 +19,6 @@ const COLUMNS: Col[] = [
       { href: "/submit", label: "Submit your paper" },
       { href: "/dashboard", label: "Dashboard" },
       { href: "/history", label: "History" },
-      { href: "/live", label: "DocuPeer Podcasts" },
     ],
   },
   {
@@ -56,8 +55,6 @@ export function Footer() {
   const isStatusSurface =
     pathname === "/status" ||
     pathname === "/status-manage" ||
-    pathname === "/live" ||
-    pathname === "/live-manage" ||
     (typeof window !== "undefined" && window.location.hostname.startsWith("status."));
 
   if (isStatusSurface) return null;
@@ -110,28 +107,6 @@ export function Footer() {
                 {domain}
               </a>
             </div>
-            <Link
-              href="/live"
-              className="group inline-flex items-center gap-1.5 text-deep-text-soft transition hover:text-deep-accent"
-            >
-              Watch DocuPeer Podcasts
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                className="transition group-hover:translate-x-0.5"
-                aria-hidden
-              >
-                <path
-                  d="M5 12h14M13 6l6 6-6 6"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </Link>
           </div>
         </div>
       </div>

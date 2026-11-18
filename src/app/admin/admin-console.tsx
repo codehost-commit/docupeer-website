@@ -116,7 +116,7 @@ export function AdminConsole() {
 
   function finishLogin() {
     checkSession();
-    if (nextPath === "/live-manage" || nextPath === "/status-manage") {
+    if (nextPath === "/status-manage") {
       router.push(nextPath);
     }
   }
@@ -181,9 +181,6 @@ export function AdminConsole() {
             <Link href="/" className="rounded-md border border-[#d6d0c5] bg-white px-4 py-2 text-sm font-semibold text-[#2d3342] transition hover:border-[#1f3447]">
               Public page
             </Link>
-            <Link href="/live-manage" className="rounded-md border border-[#d6d0c5] bg-white px-4 py-2 text-sm font-semibold text-[#2d3342] transition hover:border-[#1f3447]">
-              Live console
-            </Link>
             <Link href="/status-manage" className="rounded-md border border-[#d6d0c5] bg-white px-4 py-2 text-sm font-semibold text-[#2d3342] transition hover:border-[#1f3447]">
               Status console
             </Link>
@@ -235,9 +232,6 @@ export function AdminConsole() {
             <section className="rounded-lg border border-[#dcd6cb] bg-white p-5 shadow-[0_18px_50px_rgba(29,33,42,0.07)]">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#707887]">Operations</p>
               <div className="mt-5 grid gap-3">
-                <Link href="/live-manage" className="rounded-md border border-[#d6d0c5] bg-[#fbfaf7] px-4 py-4 text-sm font-semibold text-[#2d3342] transition hover:border-[#1f3447]">
-                  Open Live console
-                </Link>
                 <Link href="/status-manage" className="rounded-md border border-[#d6d0c5] bg-[#fbfaf7] px-4 py-4 text-sm font-semibold text-[#2d3342] transition hover:border-[#1f3447]">
                   Open Status console
                 </Link>

@@ -156,13 +156,6 @@ export default function Home() {
       subOrganization: [
         {
           "@type": "Organization",
-          name: "Atom Edu",
-          url: "https://atom-edu.org",
-          description:
-            "A wholly owned DocuPeer subsidiary building edtech tools that help teachers save time and manage student work more easily.",
-        },
-        {
-          "@type": "Organization",
           name: "DocuClerk HQ",
           url: "https://docuclerkhq.com/about.html",
           description:
@@ -340,21 +333,6 @@ export default function Home() {
             Our Featured Partners
           </h2>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-x-16 gap-y-10">
-            <a
-              href="https://atom-edu.org"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Visit Atom Edu"
-              className="inline-flex h-28 w-44 items-center justify-center rounded-md px-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-deep-accent focus-visible:ring-offset-2 focus-visible:ring-offset-deep-bg sm:h-32 sm:w-52"
-            >
-              <Image
-                src="/partners/atom-edu-logo-tight.png"
-                alt="Atom Edu"
-                width={220}
-                height={220}
-                className="h-24 w-auto object-contain mix-blend-multiply sm:h-28"
-              />
-            </a>
             <a
               href="https://docuclerkhq.com/about.html"
               target="_blank"

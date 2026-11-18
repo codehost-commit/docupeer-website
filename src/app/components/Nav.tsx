@@ -17,8 +17,6 @@ export function Nav() {
   const isStatusSurface =
     pathname === "/status" ||
     pathname === "/status-manage" ||
-    pathname === "/live" ||
-    pathname === "/live-manage" ||
     (typeof window !== "undefined" && window.location.hostname.startsWith("status."));
 
   if (isStatusSurface) return null;
@@ -31,7 +29,6 @@ export function Nav() {
 
   const links = !isLaunched
     ? [
-        { href: "/live", label: "DocuPeer Podcasts" },
         { href: "/about", label: "About" },
       ]
     : me
@@ -41,12 +38,10 @@ export function Nav() {
         { href: "/dashboard", label: "Dashboard" },
         { href: "/secretariat", label: "Secretariat" },
         { href: "/history", label: "History" },
-        { href: "/live", label: "DocuPeer Podcasts" },
         { href: "/about", label: "About" },
       ]
     : [
         { href: "/review", label: "Start reviewing" },
-        { href: "/live", label: "DocuPeer Podcasts" },
         { href: "/about", label: "About" },
       ];
 

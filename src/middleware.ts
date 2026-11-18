@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const STATUS_HOST = "status.docupeer.org";
-const ATOM_HOST = "atom.docupeer.org";
 
 function hostname(req: NextRequest) {
   return req.headers.get("host")?.split(":")[0].toLowerCase() ?? "";
@@ -10,9 +9,6 @@ function hostname(req: NextRequest) {
 function isStaticPath(pathname: string) {
   return (
     pathname.startsWith("/_next") ||
-    pathname.startsWith("/atom/") ||
-    pathname === "/atom-sw.js" ||
-    pathname === "/atom-manifest.webmanifest" ||
     pathname.startsWith("/fonts") ||
     pathname.startsWith("/partners") ||
     pathname.startsWith("/team") ||
@@ -33,17 +29,12 @@ function isStatusHost(host: string) {
   return host === STATUS_HOST || host.startsWith("status.localhost");
 }
 
-function isAtomHost(host: string) {
-  return host === ATOM_HOST || host.startsWith("atom.localhost");
-}
-
 function statusUrl(req: NextRequest) {
   const configured = process.env.NEXT_PUBLIC_STATUS_URL || `https://${STATUS_HOST}`;
   if (hostname(req).endsWith("localhost")) return `${req.nextUrl.origin}/status`;
   return configured.replace(/\/$/, "");
 }
 
-// Shared maintenance probe (used by both the atom host and the main site).
 async function isMaintenance(req: NextRequest): Promise<boolean> {
   try {
     const controller = new AbortController();
@@ -90,7 +81,6 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   if (pathname.startsWith("/api/launch")) return NextResponse.next();
-  if (pathname.startsWith("/api/atom")) return NextResponse.next();
 
   if (isStatusHost(host)) {
     if (pathname === "/" || pathname === "/status") {
@@ -108,33 +98,11 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  if (isAtomHost(host)) {
-    if (isStaticPath(pathname)) return NextResponse.next();
-    // Let API routes (including the status probe below) run on the atom host
-    // without re-entering this branch.
-    if (pathname.startsWith("/api/")) return NextResponse.next();
-
-    if (pathname === "/" || pathname === "/atom") {
-      const url = req.nextUrl.clone();
-      url.pathname = "/atom";
-      return NextResponse.rewrite(url);
-    }
-
-    // Everything else on the atom host returns to the app root (it is a single-page app).
-    const url = req.nextUrl.clone();
-    url.pathname = "/";
-    url.search = "";
-    return NextResponse.redirect(url);
-  }
-
   if (
     (pathname.startsWith("/api/auth") && pathname !== "/api/auth/register") ||
     pathname === "/status" ||
     pathname === "/status-manage" ||
     pathname.startsWith("/api/status") ||
-    pathname === "/live" ||
-    pathname === "/live-manage" ||
-    pathname.startsWith("/api/live") ||
     pathname === "/admin" ||
     pathname.startsWith("/api/admin") ||
     isStaticPath(pathname)

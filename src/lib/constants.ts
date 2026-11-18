@@ -101,9 +101,6 @@ export const AI_MODEL_MAIN = "openai/gpt-oss-120b";
 export const AI_MODEL_SMALL = "openai/gpt-oss-20b";
 
 export const GROQ_CHAT_COMPLETIONS_URL = "https://api.groq.com/openai/v1/chat/completions";
-export const AI_MODEL_ATOM_ASSIGNMENT = "openai/gpt-oss-120b";
-export const AI_MODEL_ATOM_LABEL_PRIMARY = AI_MODEL_ATOM_ASSIGNMENT;
-export const AI_MODEL_ATOM_LABEL_BACKUP = AI_MODEL_SMALL;
 
 export function countWords(text: string): number {
   const t = text.trim();
